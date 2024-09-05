@@ -10,6 +10,7 @@ builder.Services.AddAutoMapper(typeof(MappingConfig));
 builder.Services.AddSingleton<DapperContext>();
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddTransient<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IVehiclesAssignRepository, VehiclesAssignRepository>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
