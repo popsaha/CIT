@@ -19,10 +19,16 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    //app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "CIT.API v1");
+        // Optionally set RoutePrefix to an empty string to make swagger accessible at the root
+        // c.RoutePrefix = string.Empty;
+    });
 }
 
 app.UseHttpsRedirection();
