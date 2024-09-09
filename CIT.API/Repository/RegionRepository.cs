@@ -1,69 +1,62 @@
 ﻿using AutoMapper;
 using CIT.API.Context;
-using CIT.API.Models;
 using CIT.API.Models.Dto;
-using CIT.API.Repository.IRepository;
+using CIT.API.Models;
 using Dapper;
 using System.Data;
+using CIT.API.Repository.IRepository;
 
 namespace CIT.API.Repository
 {
-    public class CustomerRepository : ICustomerRepository
+    public class RegionRepository: IRegionRepository
     {
         private readonly DapperContext _db;
         private readonly string _secretKey;
         private readonly IMapper _mapper;
-        public CustomerRepository(DapperContext db, IMapper mapper, IConfiguration configuration)
+        public RegionRepository(DapperContext db, IMapper mapper, IConfiguration configuration)
         {
             _db = db;
             _mapper = mapper;
             _secretKey = configuration.GetValue<string>("ApiSettings:Secret");
         }
-        public async Task<int> AddCustomer(CustomerDTO customerDTO)
+        public async Task<int> AddRegion(RegionDTO regionDTO)
         {
             int Res = 0;
             using (var connection = _db.CreateConnection())
             {
                 DynamicParameters parameters = new DynamicParameters();
-
                 parameters.Add("Flag", "C");
-                parameters.Add("CustomerName", customerDTO.CustomerName);
-                parameters.Add("Address", customerDTO.Address);
-                parameters.Add("ContactNumber", customerDTO.ContactNumber);
-                parameters.Add("Email", customerDTO.Email);
-                parameters.Add("DataSource", customerDTO.DataSource);
-                parameters.Add("IsActive", customerDTO.IsActive);
-                parameters.Add("CreatedBy", customerDTO.CreatedBy);
-                parameters.Add("ModifiedBy", customerDTO.ModifiedBy);
-                parameters.Add("DeletedBy", customerDTO.DeletedBy);
+                parameters.Add("RegionName", regionDTO.RegionName);
+                parameters.Add("DataSource", regionDTO.DataSource);
+                parameters.Add("CreatedBy", regionDTO.CreatedBy);
+
                 Res = await connection.ExecuteScalarAsync<int>("spCustomer", parameters, commandType: CommandType.StoredProcedure);
             };
             return Res;
         }
-
-        public async Task<IEnumerable<Customer>> GetCustomers()
+        public async Task<IEnumerable<RegionMaster>> GetallRegion()
         {
             using (var con = _db.CreateConnection())
             {
                 DynamicParameters parameters = new DynamicParameters();
                 parameters.Add("Flag", "A");
-                var customers = await con.QueryAsync<Customer>("spCustomer", parameters, commandType: CommandType.StoredProcedure);
-                return customers.ToList();
+                var regionMasters = await con.QueryAsync<RegionMaster>("spCustomer", parameters, commandType: CommandType.StoredProcedure);
+                return regionMasters.ToList();
             }
         }
-        public async Task<Customer> GetCustomer(int customerid)
+        public async Task<RegionMaster> GetRegion(int RegionID)
         {
-            Customer customer = new Customer();
+            RegionMaster customer = new RegionMaster();
             using (var connection = _db.CreateConnection())
             {
                 DynamicParameters parameters = new DynamicParameters();
                 parameters.Add("Flag", "R");
-                parameters.Add("CustomerID", customerid);
-                customer = await connection.ExecuteScalarAsync<Customer>("spCustomer", parameters, commandType: CommandType.StoredProcedure);
+                parameters.Add("RegionID", RegionID);
+                customer = await connection.ExecuteScalarAsync<RegionMaster>("spCustomer", parameters, commandType: CommandType.StoredProcedure);
             }
             return customer;
         }
-        public async Task<int> DeleteCustomer(int customerid, int deletedBy)
+        public async Task<int> DeleteRegion(int RegionID, int deletedBy)
         {
             int Res = 0;
             using (var connection = _db.CreateConnection())
@@ -71,12 +64,12 @@ namespace CIT.API.Repository
                 DynamicParameters parameters = new DynamicParameters();
                 parameters.Add("Flag", "D");
                 parameters.Add("DeletedBy", deletedBy);
-                parameters.Add("CustomerID", customerid);
+                parameters.Add("RegionID", RegionID);
                 Res = await connection.ExecuteScalarAsync<int>("spCustomer", parameters, commandType: CommandType.StoredProcedure);
             };
             return Res;
         }
-        public async Task<int> UpdateCustomer(CustomerDTO customerDTO)
+        public async Task<int> UpdateRegion(RegionDTO regionDTO)
         {
             int Res = 0;
             try
@@ -85,11 +78,10 @@ namespace CIT.API.Repository
                 {
                     DynamicParameters parameters = new DynamicParameters();
                     parameters.Add("Flag", "U");
-                    parameters.Add("CustomerName", customerDTO.CustomerName);
-                    parameters.Add("Address", customerDTO.Address);
-                    parameters.Add("ContactNumber", customerDTO.ContactNumber);
-                    parameters.Add("Email", customerDTO.Email);
-                    parameters.Add("ModifiedBy", customerDTO.ModifiedBy);
+                    parameters.Add("RegionID", regionDTO.RegionID);
+                    parameters.Add("RegionName", regionDTO.RegionName);
+                    parameters.Add("DataSource", regionDTO.DataSource);
+                    parameters.Add("ModifiedBy", regionDTO.ModifiedBy);
                     Res = await connection.ExecuteScalarAsync<int>("spCustomer", parameters, commandType: CommandType.StoredProcedure);
                 }
             }
@@ -99,6 +91,5 @@ namespace CIT.API.Repository
             }
             return Res;
         }
-
     }
 }

@@ -1,39 +1,35 @@
 ﻿using CIT.API.Models.Dto;
 using CIT.API.Models;
-using CIT.API.Repository;
 using CIT.API.Repository.IRepository;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CIT.API.Controllers
 {
-    [Route("api/customers")]
+    [Route("api/Region")]
     [ApiController]
-    public class CustomersController : ControllerBase
+    public class RegionController : ControllerBase
     {
-        private readonly ICustomerRepository _customerRepo;
-        public CustomersController(ICustomerRepository customerRepo)
+        private readonly IRegionRepository _regionRepository;
+        public RegionController(IRegionRepository regionRepository)
         {
-            _customerRepo = customerRepo;
+            _regionRepository = regionRepository;
         }
-
-        [HttpGet("GetCustomersAPI")]
-        public async Task<IActionResult> GetCustomers()
+        [HttpGet("GetRegionAPI")]
+        public async Task<IActionResult> GetallRegion()
         {
-            var customers = await _customerRepo.GetCustomers();
+            var customers = await _regionRepository.GetallRegion();
             return Ok(customers);
         }
 
-        [HttpPost("AddCustomerAPI")]
-        public async Task<IActionResult> AddCustomer(CustomerDTO customerDTO)
+        [HttpPost("AddRegionAPI")]
+        public async Task<IActionResult> AddRegion(RegionDTO regionDTO)
         {
             int Res = 0;
             try
             {
                 if (ModelState.IsValid)
                 {
-
-                    Res = await _customerRepo.AddCustomer(customerDTO);
-
+                    Res = await _regionRepository.AddRegion(regionDTO);
                 }
                 return Ok(Res);
             }
@@ -45,13 +41,13 @@ namespace CIT.API.Controllers
         }
 
         [HttpGet("GetCustomerAPI")]
-        public async Task<IActionResult> GetCustomer([FromRoute(Name = "customerId")] int customerId)
+        public async Task<IActionResult> GetCustomer([FromRoute(Name = "RegionID")] int RegionID)
         {
-            Customer customer = new Customer();
+            RegionMaster regionMaster = new RegionMaster();
             try
             {
-                customer = await _customerRepo.GetCustomer(customerId);
-                return Ok(customer);
+                regionMaster = await _regionRepository.GetRegion(RegionID);
+                return Ok(regionMaster);
             }
             catch (Exception ex)
             {
@@ -59,13 +55,13 @@ namespace CIT.API.Controllers
             }
         }
 
-        [HttpPut("UpdateCustomerAPI")]
-        public async Task<IActionResult> UpdateCustomer(CustomerDTO customerDTO)
+        [HttpPut("UpdateRegionAPI")]
+        public async Task<IActionResult> UpdateRegion(RegionDTO regionDTO)
         {
             int Res = 0;
             try
             {
-                Res = await _customerRepo.UpdateCustomer(customerDTO);
+                Res = await _regionRepository.UpdateRegion(regionDTO);
                 return Ok(Res);
             }
             catch (Exception ex)
@@ -75,13 +71,13 @@ namespace CIT.API.Controllers
             }
         }
 
-        [HttpDelete("DeleteCustomerAPI")]
-        public async Task<IActionResult> DeleteCustomer(int customerId, int deletedBy)
+        [HttpDelete("DeleteRegionAPI")]
+        public async Task<IActionResult> DeleteRegion(int RegionID, int deletedBy)
         {
             int Res = 0;
             try
             {
-                Res = await _customerRepo.DeleteCustomer(customerId, deletedBy);
+                Res = await _regionRepository.DeleteRegion(RegionID, deletedBy);
                 return Ok("The user is Deleted");
             }
             catch (Exception ex)

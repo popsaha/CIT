@@ -9,7 +9,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddAutoMapper(typeof(MappingConfig));
 builder.Services.AddSingleton<DapperContext>();
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
-builder.Services.AddTransient<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IBranchRepositoty, BranchRepositoty>();
+builder.Services.AddScoped<IOrderTypeRepository, OrderTypeRepository>();
+builder.Services.AddScoped<IRegionRepository, RegionRepository>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

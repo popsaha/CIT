@@ -5,6 +5,7 @@ using CIT.API.Models.Dto;
 using CIT.API.Repository.IRepository;
 using Dapper;
 using Microsoft.IdentityModel.Tokens;
+using System.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -36,9 +37,12 @@ namespace CIT.API.Repository
         {
             using (var connection = _db.CreateConnection())
             {
-                string query = "SELECT * FROM UserMaster WHERE LOWER(UserName) = LOWER(@Username) AND PasswordHash = @PasswordHash";
-
-                var user = await connection.QuerySingleOrDefaultAsync<UserMaster>(query, new { Username = loginRequestDTO.UserName, PasswordHash = loginRequestDTO.Password });
+                //string query = "SELECT * FROM UserMaster WHERE LOWER(UserName) = LOWER(@Username) AND PasswordHash = @PasswordHash";
+                DynamicParameters parameters = new DynamicParameters();
+                parameters.Add("Flag", "LoginUser");
+                parameters.Add("UserName", loginRequestDTO.UserName);
+                parameters.Add("PasswordHash", loginRequestDTO.Password);
+                var user = await connection.QuerySingleOrDefaultAsync<UserMaster>("spUserMaster", parameters, commandType: CommandType.StoredProcedure);
 
                 if (user == null)
                 {
