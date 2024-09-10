@@ -1,5 +1,6 @@
 using CIT.API;
 using CIT.API.Context;
+using CIT.API.Models;
 using CIT.API.Repository;
 using CIT.API.Repository.IRepository;
 
@@ -11,6 +12,7 @@ builder.Services.AddSingleton<DapperContext>();
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddTransient<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IVehiclesAssignmentRepository, VehiclesAssignmentRepository>();
+builder.Services.AddScoped<APIResponse>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

@@ -7,10 +7,12 @@ namespace CIT.API.Repository.IRepository
     {
         IEnumerable<VehicleAssignment> GetAllAssignOrder();
 
-        //CommonResponseModel AddAssignOrder(VehicleAssignment vehicleAssignRequestDTO);
-        //IEnumerable<TaskGrouping> GetAllTaskGroup();
-        //CommonResponseModel AddTaskGroup(TaskGroupingRequestDTO taskGroupRequestModel);
-        //CommonResponseModel UpdateTaskGroup(TaskGrouping taskGroupModel);
-        //CommonResponseModel DeleteTaskGroup(int id);
+        VehicleAssignmentRequestDTO AddAssignOrder(VehicleAssignmentRequestDTO vehicleAssignRequestDTO);
+        
+        IEnumerable<TaskGrouping> GetAllTaskGroup();
+
+        TaskGroupingRequestDTO AddTaskGroup(TaskGroupingRequestDTO taskGroupingRequestDTO);
+        
+        bool DeleteTaskGroup(int id);
     }
 }
