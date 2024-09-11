@@ -1,7 +1,7 @@
-﻿using CIT.API.Models.Dto;
-using CIT.API.Models;
-using Microsoft.AspNetCore.Mvc;
+﻿using CIT.API.Models;
+using CIT.API.Models.Dto;
 using CIT.API.Repository.IRepository;
+using Microsoft.AspNetCore.Mvc;
 
 namespace CIT.API.Controllers
 {

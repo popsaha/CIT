@@ -1,6 +1,5 @@
 ﻿using CIT.API.Models;
 using CIT.API.Models.Dto;
-using CIT.API.Repository;
 using CIT.API.Repository.IRepository;
 using Microsoft.AspNetCore.Mvc;
 
@@ -39,7 +38,7 @@ namespace CIT.API.Controllers
         [HttpPost("GetOrderDetails")]
         public async Task<IActionResult> GetOrderDetails(int ResourceId)
         {
-            OrderResponse orderResponse =new OrderResponse();
+            OrderResponse orderResponse = new OrderResponse();
             int Res = 0;
             try
             {

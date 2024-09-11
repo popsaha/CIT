@@ -1,5 +1,5 @@
-﻿using CIT.API.Models.Dto;
-using CIT.API.Models;
+﻿using CIT.API.Models;
+using CIT.API.Models.Dto;
 using CIT.API.Repository.IRepository;
 using Microsoft.AspNetCore.Mvc;
 
