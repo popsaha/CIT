@@ -8,7 +8,7 @@ namespace CIT.API.Repository.IRepository
         Task<IEnumerable<BranchMaster>> GetAllBranch();
         Task<int> AddBranch(BranchDTO branchdto);
         Task<BranchMaster> GetBranch(int branchId);
-        Task<int> UpdateBranch(BranchDTO branchDTO);
+        Task<int> UpdateBranch(BranchMaster branchDTO);
         Task<int> DeleteBranch(int branchId, int deletedBy);
     }
 }

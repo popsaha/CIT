@@ -31,10 +31,7 @@ namespace CIT.API.Repository
                 parameters.Add("Address", Branchdto.Address);
                 parameters.Add("ContactNumber", Branchdto.ContactNumber);
                 parameters.Add("DataSource", Branchdto.DataSource);
-                parameters.Add("IsActive", Branchdto.IsActive);
                 parameters.Add("CreatedBy", Branchdto.CreatedBy);
-                parameters.Add("ModifiedBy", Branchdto.ModifiedBy);
-                parameters.Add("DeletedBy", Branchdto.DeletedBy);
                 Res = await connection.ExecuteScalarAsync<int>("spBranch", parameters, commandType: CommandType.StoredProcedure);
             };
             return Res;
@@ -46,7 +43,9 @@ namespace CIT.API.Repository
             using (var connection = _db.CreateConnection())
             {
                 DynamicParameters parameters = new DynamicParameters();
+                parameters.Add("Flag", "D");
                 parameters.Add("DeletedBy", deletedBy);
+                parameters.Add("BranchID", branchId);
                 Res = await connection.ExecuteScalarAsync<int>("spBranch", parameters, commandType: CommandType.StoredProcedure);
             };
             return Res;
@@ -73,12 +72,12 @@ namespace CIT.API.Repository
                 DynamicParameters parameters = new DynamicParameters();
                 parameters.Add("Flag", "R");
                 parameters.Add("BranchId", branchId);
-                branchMaster = await connection.ExecuteScalarAsync<BranchMaster>("spBranch", parameters, commandType: CommandType.StoredProcedure);
+                branchMaster = await connection.QuerySingleOrDefaultAsync<BranchMaster>("spBranch", parameters, commandType: CommandType.StoredProcedure);
             }
             return branchMaster;
         }
 
-        public async Task<int> UpdateBranch(BranchDTO branchDTO)
+        public async Task<int> UpdateBranch(BranchMaster branchDTO)
         {
             int Res = 0;
             try
@@ -86,11 +85,12 @@ namespace CIT.API.Repository
                 using (var connection = _db.CreateConnection())
                 {
                     DynamicParameters parameters = new DynamicParameters();
-                    parameters.Add("Flag", "D");
+                    parameters.Add("Flag", "U");
+                    parameters.Add("BranchId", branchDTO.BranchID);
                     parameters.Add("BranchName", branchDTO.BranchName);
                     parameters.Add("Address", branchDTO.Address);
                     parameters.Add("ContactNumber", branchDTO.ContactNumber);
-                    parameters.Add("ModifiedBy", branchDTO.ModifiedBy);
+                    parameters.Add("ModifiedBy", branchDTO.CreatedBy);
                     Res = await connection.ExecuteScalarAsync<int>("spBranch", parameters, commandType: CommandType.StoredProcedure);
                 }
             }
