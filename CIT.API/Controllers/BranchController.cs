@@ -3,6 +3,7 @@ using CIT.API.Models;
 using CIT.API.Models.Dto;
 using CIT.API.Models.Dto.Customer;
 using CIT.API.Repository.IRepository;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
@@ -56,7 +57,7 @@ namespace CIT.API.Controllers
             }
         }
 
-        //[HttpGet("GetBranchAPI")]
+        [HttpGet("GetBranchAPI")]
         [HttpGet("{branchId:int}", Name = "GetBranch")]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -132,7 +133,7 @@ namespace CIT.API.Controllers
         }
 
         [HttpPut("{BranchID:int}", Name = "UpdateBranch")]
-        //[Authorize(Roles = "admin")]
+        [Authorize(Roles = "admin")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<APIResponse>> UpdateBranch(int BranchID, BranchDTO branchRequestModel)
@@ -164,7 +165,7 @@ namespace CIT.API.Controllers
         }
 
         [HttpDelete("{branchId:int}", Name = "DeleteBranch")]
-        //[Authorize(Roles = "admin")]
+        [Authorize(Roles = "admin")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
