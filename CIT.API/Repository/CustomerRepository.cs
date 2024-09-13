@@ -56,12 +56,6 @@ namespace CIT.API.Repository
                 parameters.Add("Address", customerDTO.Address);
                 parameters.Add("ContactNumber", customerDTO.ContactNumber);
                 parameters.Add("Email", customerDTO.Email);
-                //parameters.Add("DataSource", customerDTO.DataSource);
-                //parameters.Add("IsActive", customerDTO.IsActive);
-                //parameters.Add("CreatedBy", customerDTO.CreatedBy);
-                //parameters.Add("ModifiedBy", customerDTO.ModifiedBy);
-                //parameters.Add("DeletedBy", customerDTO.DeletedBy);
-
                 var customerId = await connection.ExecuteScalarAsync<int>("spCustomer", parameters, commandType: CommandType.StoredProcedure);
 
                 return customerId;

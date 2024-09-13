@@ -8,7 +8,7 @@ namespace CIT.API.Repository.IRepository
         public Task<IEnumerable<RegionMaster>> GetallRegion();
         Task<int> AddRegion(RegionDTO regionDTO);
         Task<RegionMaster> GetRegion(int RegionID);
-        Task<int> UpdateRegion(RegionDTO regionDTO);
+        Task<int> UpdateRegion(RegionMaster regionDTO);
         Task<int> DeleteRegion(int RegionID, int deletedBy);
     }
 }

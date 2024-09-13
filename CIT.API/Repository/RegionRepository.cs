@@ -25,12 +25,11 @@ namespace CIT.API.Repository
             using (var connection = _db.CreateConnection())
             {
                 DynamicParameters parameters = new DynamicParameters();
-                parameters.Add("Flag", "C");
+                parameters.Add("flag", "AddRegion");
                 parameters.Add("RegionName", regionDTO.RegionName);
                 parameters.Add("DataSource", regionDTO.DataSource);
                 parameters.Add("CreatedBy", regionDTO.CreatedBy);
-
-                Res = await connection.ExecuteScalarAsync<int>("spCustomer", parameters, commandType: CommandType.StoredProcedure);
+                Res = await connection.ExecuteScalarAsync<int>("spRegoin", parameters, commandType: CommandType.StoredProcedure);
             };
             return Res;
         }
@@ -39,8 +38,8 @@ namespace CIT.API.Repository
             using (var con = _db.CreateConnection())
             {
                 DynamicParameters parameters = new DynamicParameters();
-                parameters.Add("Flag", "A");
-                var regionMasters = await con.QueryAsync<RegionMaster>("spCustomer", parameters, commandType: CommandType.StoredProcedure);
+                parameters.Add("flag", "GetRegion");
+                var regionMasters = await con.QueryAsync<RegionMaster>("spRegoin", parameters, commandType: CommandType.StoredProcedure);
                 return regionMasters.ToList();
             }
         }
@@ -50,9 +49,9 @@ namespace CIT.API.Repository
             using (var connection = _db.CreateConnection())
             {
                 DynamicParameters parameters = new DynamicParameters();
-                parameters.Add("Flag", "R");
+                parameters.Add("flag", "GetRegionById");
                 parameters.Add("RegionID", RegionID);
-                customer = await connection.ExecuteScalarAsync<RegionMaster>("spCustomer", parameters, commandType: CommandType.StoredProcedure);
+                customer = await connection.QuerySingleOrDefaultAsync<RegionMaster>("spRegoin", parameters, commandType: CommandType.StoredProcedure);
             }
             return customer;
         }
@@ -62,14 +61,14 @@ namespace CIT.API.Repository
             using (var connection = _db.CreateConnection())
             {
                 DynamicParameters parameters = new DynamicParameters();
-                parameters.Add("Flag", "D");
-                parameters.Add("DeletedBy", deletedBy);
+                parameters.Add("flag", "DeleteRegion");
+                parameters.Add("CreatedBy", deletedBy);
                 parameters.Add("RegionID", RegionID);
-                Res = await connection.ExecuteScalarAsync<int>("spCustomer", parameters, commandType: CommandType.StoredProcedure);
+                Res = await connection.ExecuteScalarAsync<int>("spRegoin", parameters, commandType: CommandType.StoredProcedure);
             };
             return Res;
         }
-        public async Task<int> UpdateRegion(RegionDTO regionDTO)
+        public async Task<int> UpdateRegion(RegionMaster regionDTO)
         {
             int Res = 0;
             try
@@ -77,12 +76,12 @@ namespace CIT.API.Repository
                 using (var connection = _db.CreateConnection())
                 {
                     DynamicParameters parameters = new DynamicParameters();
-                    parameters.Add("Flag", "U");
+                    parameters.Add("Flag", "UpdateRegion");
                     parameters.Add("RegionID", regionDTO.RegionID);
                     parameters.Add("RegionName", regionDTO.RegionName);
                     parameters.Add("DataSource", regionDTO.DataSource);
-                    parameters.Add("ModifiedBy", regionDTO.ModifiedBy);
-                    Res = await connection.ExecuteScalarAsync<int>("spCustomer", parameters, commandType: CommandType.StoredProcedure);
+                    parameters.Add("CreatedBy", regionDTO.ModifiedBy);
+                    Res = await connection.ExecuteScalarAsync<int>("spRegoin", parameters, commandType: CommandType.StoredProcedure);
                 }
             }
             catch (Exception ex)

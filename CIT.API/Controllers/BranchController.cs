@@ -25,7 +25,7 @@ namespace CIT.API.Controllers
             _response = new();
         }
 
-        [HttpGet("GetAllBranchAPI")]
+        [HttpGet]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -57,7 +57,6 @@ namespace CIT.API.Controllers
             }
         }
 
-        [HttpGet("GetBranchAPI")]
         [HttpGet("{branchId:int}", Name = "GetBranch")]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -109,6 +108,7 @@ namespace CIT.API.Controllers
                     _response.ErrorMessages.Add("Invalid Branch data");
                     return BadRequest(_response);
                 }
+                var branch = _mapper.Map<BranchMaster>(branchDTO);
 
                 Res = await _Ibranchrepositoty.AddBranch(branchDTO);
                 if (Res == 0)
@@ -120,9 +120,12 @@ namespace CIT.API.Controllers
                 }
                 if (Res > 0)
                 {
-                    _response.StatusCode = HttpStatusCode.NoContent;
+                    _response.StatusCode = HttpStatusCode.Created;
                     _response.IsSuccess = true;
-                    return Ok(_response);
+                    _response.Result = branch;
+
+                    // Return the created customer with the location of the new resource
+                    return CreatedAtRoute("GetBranch", new { branchId = branch.BranchID }, _response);
                 }
             }
             catch (Exception ex)

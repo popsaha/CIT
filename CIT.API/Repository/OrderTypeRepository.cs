@@ -27,9 +27,9 @@ namespace CIT.API.Repository
                 DynamicParameters parameters = new DynamicParameters();
                 parameters.Add("flag", "AddOrderType");
                 parameters.Add("TypeName", orderTypeDTO.TypeName);
-                parameters.Add("Address", orderTypeDTO.DataSource);             
+                parameters.Add("DataSource", orderTypeDTO.DataSource);             
                 parameters.Add("CreatedBy", orderTypeDTO.CreatedBy);              
-                Res = await connection.ExecuteScalarAsync<int>("AddOrderType", parameters, commandType: CommandType.StoredProcedure);
+                Res = await connection.ExecuteScalarAsync<int>("spOrderType", parameters, commandType: CommandType.StoredProcedure);
             };
             return Res;
         }
@@ -52,7 +52,7 @@ namespace CIT.API.Repository
                 DynamicParameters parameters = new DynamicParameters();
                 parameters.Add("flag", "GetOrderTypeById");
                 parameters.Add("OrderTypeID", OrderTypeID);
-                orderTypeMaster = await connection.ExecuteScalarAsync<OrderTypeMaster>("spOrderType", parameters, commandType: CommandType.StoredProcedure);
+                orderTypeMaster = await connection.QuerySingleOrDefaultAsync<OrderTypeMaster>("spOrderType", parameters, commandType: CommandType.StoredProcedure);
             }
             return orderTypeMaster;
         }
@@ -63,7 +63,7 @@ namespace CIT.API.Repository
             {
                 DynamicParameters parameters = new DynamicParameters();
                 parameters.Add("flag", "DeleteOrderType");
-                parameters.Add("DeletedBy", deletedBy);
+                parameters.Add("CreatedBy", deletedBy);
                 parameters.Add("OrderTypeID", OrderTypeID);
                 Res = await connection.ExecuteScalarAsync<int>("spOrderType", parameters, commandType: CommandType.StoredProcedure);
             };
@@ -80,7 +80,7 @@ namespace CIT.API.Repository
                     parameters.Add("flag", "UpdateOrderType");
                     parameters.Add("OrderTypeID", orderTypeDTO.OrderTypeID);
                     parameters.Add("TypeName", orderTypeDTO.TypeName);
-                    parameters.Add("Address", orderTypeDTO.DataSource);
+                    parameters.Add("DataSource", orderTypeDTO.DataSource);
                     parameters.Add("CreatedBy", orderTypeDTO.CreatedBy);
                     Res = await connection.ExecuteScalarAsync<int>("spOrderType", parameters, commandType: CommandType.StoredProcedure);
                 }
