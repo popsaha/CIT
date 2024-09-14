@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using CIT.API.Models;
-using CIT.API.Models.Dto;
+using CIT.API.Models.Dto.Branch;
 using CIT.API.Models.Dto.Customer;
 using CIT.API.Repository.IRepository;
 using Microsoft.AspNetCore.Authorization;
@@ -33,7 +33,7 @@ namespace CIT.API.Controllers
         {
             try
             {
-                IEnumerable<BranchMaster> branchModels = await _Ibranchrepositoty.GetAllBranch();
+                IEnumerable<BranchUpdateMaster> branchModels = await _Ibranchrepositoty.GetAllBranch();
 
                 if (branchModels == null || !branchModels.Any())
                 {
@@ -65,7 +65,7 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetBranch(int branchId)
         {
-            BranchMaster branchModel = new BranchMaster();
+            BranchUpdateMaster branchModel = new BranchUpdateMaster();
             try
             {
                 if (branchId == 0)
@@ -96,7 +96,7 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<APIResponse>> Addbranch([FromBody] BranchDTO branchDTO)
+        public async Task<ActionResult<APIResponse>> Addbranch([FromBody] BranchCreateDTO branchDTO)
         {
             int Res = 0;
             try
@@ -136,15 +136,15 @@ namespace CIT.API.Controllers
         }
 
         [HttpPut("{BranchID:int}", Name = "UpdateBranch")]
-        [Authorize(Roles = "admin")]
+        //[Authorize(Roles = "admin")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<APIResponse>> UpdateBranch(int BranchID, BranchDTO branchRequestModel)
+        public async Task<ActionResult<APIResponse>> UpdateBranch(int BranchID, [FromBody] BranchUpdateDTO branchdto)
         {
             int Res = 0;
             try
             {
-                if (branchRequestModel == null || BranchID != branchRequestModel.BranchID)
+                if (branchdto == null || BranchID != branchdto.BranchID)
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
@@ -152,8 +152,10 @@ namespace CIT.API.Controllers
 
                     return BadRequest(_response);
                 }
-                BranchMaster branch = _mapper.Map<BranchMaster>(branchRequestModel);
-                Res = await _Ibranchrepositoty.UpdateBranch(branch);
+                BranchMaster branchmaster = _mapper.Map<BranchMaster>(branchdto);
+
+                Res = await _Ibranchrepositoty.UpdateBranch(branchmaster);
+
                 _response.StatusCode = HttpStatusCode.NoContent;
                 _response.IsSuccess = true;
 

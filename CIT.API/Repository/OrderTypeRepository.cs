@@ -1,10 +1,10 @@
 ﻿using AutoMapper;
 using CIT.API.Context;
-using CIT.API.Models.Dto;
 using CIT.API.Models;
 using CIT.API.Repository.IRepository;
 using Dapper;
 using System.Data;
+using CIT.API.Models.Dto.OrderType;
 
 namespace CIT.API.Repository
 {
@@ -19,7 +19,7 @@ namespace CIT.API.Repository
             _mapper = mapper;
             _secretKey = configuration.GetValue<string>("ApiSettings:Secret");
         }
-        public async Task<int> AddOrderType(OrderTypeDTO orderTypeDTO)
+        public async Task<int> AddOrderType(OrderTypeCreateDTO orderTypeDTO)
         {
             int Res = 0;
             using (var connection = _db.CreateConnection())
@@ -27,8 +27,8 @@ namespace CIT.API.Repository
                 DynamicParameters parameters = new DynamicParameters();
                 parameters.Add("flag", "AddOrderType");
                 parameters.Add("TypeName", orderTypeDTO.TypeName);
-                parameters.Add("DataSource", orderTypeDTO.DataSource);             
-                parameters.Add("CreatedBy", orderTypeDTO.CreatedBy);              
+                parameters.Add("DataSource", orderTypeDTO.DataSource);
+                parameters.Add("CreatedBy", 9);
                 Res = await connection.ExecuteScalarAsync<int>("spOrderType", parameters, commandType: CommandType.StoredProcedure);
             };
             return Res;
@@ -69,7 +69,7 @@ namespace CIT.API.Repository
             };
             return Res;
         }
-        public async Task<int> UpdateOrderType(OrderTypeDTO orderTypeDTO)
+        public async Task<int> UpdateOrderType(OrderTypeMaster orderTypeDTO)
         {
             int Res = 0;
             try
@@ -81,7 +81,7 @@ namespace CIT.API.Repository
                     parameters.Add("OrderTypeID", orderTypeDTO.OrderTypeID);
                     parameters.Add("TypeName", orderTypeDTO.TypeName);
                     parameters.Add("DataSource", orderTypeDTO.DataSource);
-                    parameters.Add("CreatedBy", orderTypeDTO.CreatedBy);
+                    parameters.Add("CreatedBy", 9);
                     Res = await connection.ExecuteScalarAsync<int>("spOrderType", parameters, commandType: CommandType.StoredProcedure);
                 }
             }

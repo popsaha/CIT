@@ -1,10 +1,10 @@
 ﻿using AutoMapper;
 using CIT.API.Context;
-using CIT.API.Models.Dto;
 using CIT.API.Models;
 using Dapper;
 using System.Data;
 using CIT.API.Repository.IRepository;
+using CIT.API.Models.Dto.Region;
 
 namespace CIT.API.Repository
 {

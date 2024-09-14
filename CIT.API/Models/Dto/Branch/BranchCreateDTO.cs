@@ -1,10 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace CIT.API.Models.Dto
+namespace CIT.API.Models.Dto.Branch
 {
-    public class BranchDTO
+    public class BranchCreateDTO
     {
-        public int? BranchID { get; set; }
         [Required]
         [MaxLength(30)]
         public string? BranchName { get; set; }
@@ -12,6 +11,6 @@ namespace CIT.API.Models.Dto
         public string? Address { get; set; }
         public string? ContactNumber { get; set; }
         public string? DataSource { get; set; }
-        public int CreatedBy { get; set; }
+        public int? CreatedBy { get; set; }
     }
 }

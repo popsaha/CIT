@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using CIT.API.Models;
-using CIT.API.Models.Dto;
 using CIT.API.Models.Dto.Customer;
+using CIT.API.Models.Dto.Region;
 using CIT.API.Repository.IRepository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -94,21 +94,21 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<APIResponse>> AddRegion(RegionDTO regionDTO)
+        public async Task<ActionResult<APIResponse>> AddRegion(RegionCreateDTO regioncreateDTO)
         {
             int Res = 0;
             try
             {
-                if (regionDTO == null)
+                if (regioncreateDTO == null)
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("Invalid Region data");
                     return BadRequest(_response);
                 }
-                var region = _mapper.Map<RegionMaster>(regionDTO);
+                var region = _mapper.Map<RegionMaster>(regioncreateDTO);
 
-                Res = await _regionRepository.AddRegion(regionDTO);
+                Res = await _regionRepository.AddRegion(regioncreateDTO);
 
                 if (Res == 0)
                 {
@@ -137,20 +137,21 @@ namespace CIT.API.Controllers
         //[Authorize(Roles = "admin")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<APIResponse>> UpdateRegion(int RegionID, RegionDTO regionDTO)
+        public async Task<ActionResult<APIResponse>> UpdateRegion(int RegionID, RegionUpdateDTO regionupdateDTO)
         {
             int Res = 0;
             try
             {
-                if (regionDTO == null || RegionID != regionDTO.RegionID)
+                if (regionupdateDTO == null || RegionID != regionupdateDTO.RegionID)
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("Invalid region Id.");
                     return BadRequest(_response);
                 }
-                RegionMaster region = _mapper.Map<RegionMaster>(regionDTO);
+                RegionMaster region = _mapper.Map<RegionMaster>(regionupdateDTO);
                 Res = await _regionRepository.UpdateRegion(region);
+
                 _response.StatusCode = HttpStatusCode.NoContent;
                 _response.IsSuccess = true;
                 return Ok(_response);
@@ -165,7 +166,7 @@ namespace CIT.API.Controllers
 
 
         [HttpDelete("{RegionID:int}", Name = "DeleteRegion")]
-       //Authorize(Roles = "admin")]
+        //Authorize(Roles = "admin")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]

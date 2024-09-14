@@ -1,7 +1,10 @@
 ﻿using AutoMapper;
 using CIT.API.Models;
 using CIT.API.Models.Dto;
+using CIT.API.Models.Dto.Branch;
 using CIT.API.Models.Dto.Customer;
+using CIT.API.Models.Dto.OrderType;
+using CIT.API.Models.Dto.Region;
 
 namespace CIT.API
 {
@@ -24,23 +27,17 @@ namespace CIT.API
                 .ForMember(dest => dest.taskmodellist, opt => opt.MapFrom(src => src.taskmodellist))
                 .ReverseMap();
 
-            CreateMap<BranchMaster, BranchDTO>()
-               .ForMember(dest => dest.BranchID, opt => opt.MapFrom(src => src.BranchID))
-               .ForMember(dest => dest.BranchName, opt => opt.MapFrom(src => src.BranchName))
-               .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Address))
-               .ReverseMap();
+            CreateMap<BranchMaster, BranchDTO>().ReverseMap();
+            CreateMap<BranchMaster, BranchUpdateDTO>().ReverseMap();
+            CreateMap<BranchMaster, BranchCreateDTO>().ReverseMap();
 
-            CreateMap<OrderTypeMaster, OrderTypeDTO>()
-               .ForMember(dest => dest.OrderTypeID, opt => opt.MapFrom(src => src.OrderTypeID))
-               .ForMember(dest => dest.TypeName, opt => opt.MapFrom(src => src.TypeName))
-               .ForMember(dest => dest.DataSource, opt => opt.MapFrom(src => src.DataSource))
-               .ReverseMap();
+            CreateMap<OrderTypeMaster, OrderTypeDTO>().ReverseMap();
+            CreateMap<OrderTypeMaster, OrderTypeUpdateDTO>().ReverseMap();
+            CreateMap<OrderTypeMaster, OrderTypeCreateDTO>().ReverseMap();
 
-            CreateMap<RegionMaster, RegionDTO>()
-               .ForMember(dest => dest.RegionID, opt => opt.MapFrom(src => src.RegionID))
-               .ForMember(dest => dest.RegionName, opt => opt.MapFrom(src => src.RegionName))
-               .ForMember(dest => dest.DataSource, opt => opt.MapFrom(src => src.DataSource))
-               .ReverseMap();
+            CreateMap<RegionMaster, RegionDTO>().ReverseMap();
+            CreateMap<RegionMaster, RegionUpdateDTO>().ReverseMap();
+            CreateMap<RegionMaster, RegionCreateDTO>().ReverseMap();
         }
     }
 }

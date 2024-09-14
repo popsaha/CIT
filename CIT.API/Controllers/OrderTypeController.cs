@@ -1,9 +1,10 @@
 ﻿using AutoMapper;
 using CIT.API.Models;
-using CIT.API.Models.Dto;
 using CIT.API.Models.Dto.Customer;
+using CIT.API.Models.Dto.OrderType;
 using CIT.API.Repository.IRepository;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
@@ -98,20 +99,21 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<APIResponse>> AddOrderType(OrderTypeDTO orderTypeDTO)
+        public async Task<ActionResult<APIResponse>> AddOrderType(OrderTypeCreateDTO orderTypecreateDTO)
         {
             int Res = 0;
             try
             {
-                if (orderTypeDTO == null)
+                if (orderTypecreateDTO == null)
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("Invalid Order Type data");
                     return BadRequest(_response);
                 }
+                var orderTypeMaster = _mapper.Map<OrderTypeMaster>(orderTypecreateDTO);
 
-                Res = await _orderTypeRepository.AddOrderType(orderTypeDTO);
+                Res = await _orderTypeRepository.AddOrderType(orderTypecreateDTO);
 
                 if (Res == 0)
                 {
@@ -140,12 +142,12 @@ namespace CIT.API.Controllers
         //[Authorize(Roles = "admin")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]    
-        public async Task<ActionResult<APIResponse>> UpdateOrderType(int OrderTypeID, OrderTypeDTO orderTypeDTO)
+        public async Task<ActionResult<APIResponse>> UpdateOrderType(int OrderTypeID, OrderTypeUpdateDTO orderTypeupdateDTO)
         {
             int Res = 0;
             try
             {
-                if (orderTypeDTO == null || OrderTypeID != orderTypeDTO.OrderTypeID)
+                if (orderTypeupdateDTO == null || OrderTypeID != orderTypeupdateDTO.OrderTypeID)
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
@@ -153,7 +155,9 @@ namespace CIT.API.Controllers
 
                     return BadRequest(_response);
                 }
-                Res = await _orderTypeRepository.UpdateOrderType(orderTypeDTO);
+                OrderTypeMaster ordertypemaster = _mapper.Map<OrderTypeMaster>(orderTypeupdateDTO);
+
+                Res = await _orderTypeRepository.UpdateOrderType(ordertypemaster);
                 _response.StatusCode = HttpStatusCode.NoContent;
                 _response.IsSuccess = true;
 

@@ -107,6 +107,7 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<APIResponse>> CreateCustomer([FromBody] CustomerCreateDTO createDTO)
         {
+            int Res = 0;
             try
             {
 
@@ -117,28 +118,24 @@ namespace CIT.API.Controllers
                     _response.ErrorMessages.Add("Invalid customer data.");
                     return BadRequest(_response);
                 }
+                var customer = _mapper.Map<Customer>(createDTO);
 
-                // Check if customer already exists (assuming you have a method for this)
-                var existingCustomer = await _customerRepo.GetCustomerByName(createDTO.CustomerName);
-                if (existingCustomer != null)
+                Res = await _customerRepo.AddCustomer(createDTO);
+                if (Res == 0)
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("Customer already exists.");
                     return BadRequest(_response);
                 }
-
-                var customer = _mapper.Map<Customer>(createDTO);
-
-                await _customerRepo.AddCustomer(createDTO);
-
-                _response.StatusCode = HttpStatusCode.Created;
-                _response.IsSuccess = true;
-                _response.Result = customer;
-
-                // Return the created customer with the location of the new resource
-                return CreatedAtRoute("GetCustomer", new { customerId = customer.CustomerId }, _response);
-
+                if (Res > 0)
+                {
+                    _response.StatusCode = HttpStatusCode.Created;
+                    _response.IsSuccess = true;
+                    _response.Result = customer;
+                    return CreatedAtRoute("GetCustomer", new { customerId = customer.CustomerId }, _response);
+                }
+                // Return the created customer with the location of the new resource              
             }
             catch (Exception ex)
             {
