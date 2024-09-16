@@ -2,6 +2,7 @@
 using CIT.API.Models;
 using CIT.API.Models.Dto;
 using CIT.API.Repository.IRepository;
+using CIT.API.Utility;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
@@ -43,7 +44,7 @@ namespace CIT.API.Controllers
             {
                 var orderAssignService = _serviceProvider.GetRequiredService<IVehiclesAssignmentRepository>();
                 var order = orderAssignService.AddAssignOrder(vehicleAssignRequestDTO);
-                if (order == null) 
+                if (order == null)
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
@@ -76,31 +77,64 @@ namespace CIT.API.Controllers
             }
         }
 
+        //[HttpPost]
+        //[Route("AddTaskGroup")]
+        //public IActionResult AddTaskGroup(TaskGroupingRequestDTO taskGroupingRequestDTO)
+        //{
+        //    try
+        //    {
+        //        var orderAssignService = _serviceProvider.GetRequiredService<IVehiclesAssignmentRepository>();
+        //        var task = orderAssignService.AddTaskGroup(taskGroupingRequestDTO);
+        //        if (task == null)
+        //        {
+        //            _response.StatusCode = HttpStatusCode.BadRequest;
+        //            _response.IsSuccess = false;
+        //            _response.ErrorMessages.Add("The task could not be processed. Please check the provided information and try again.");
+        //            return BadRequest(_response);
+        //        }
+        //        _response.StatusCode = HttpStatusCode.OK;
+        //        _response.IsSuccess = true;
+        //        _response.Result = task;
+        //        return Ok(_response);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return Problem(ex.Message, ex.StackTrace);
+        //    }
+        //}
+
         [HttpPost]
         [Route("AddTaskGroup")]
-        public IActionResult AddTaskGroup(TaskGroupingRequestDTO taskGroupingRequestDTO)
+        public IActionResult AddTaskGroups(List<TaskGroupingRequestDTO> taskGroupingRequestDTOs)
         {
             try
             {
                 var orderAssignService = _serviceProvider.GetRequiredService<IVehiclesAssignmentRepository>();
-                var task = orderAssignService.AddTaskGroup(taskGroupingRequestDTO);
-                if (task == null)
+                var tasks = orderAssignService.AddTaskGroups(taskGroupingRequestDTOs);
+
+                if (tasks == null || !tasks.Any())
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("The task could not be processed. Please check the provided information and try again.");
+                    _response.ErrorMessages.Add("Please check the provided information and try again.");
                     return BadRequest(_response);
                 }
+
                 _response.StatusCode = HttpStatusCode.OK;
                 _response.IsSuccess = true;
-                _response.Result = task;
+                _response.Result = tasks;
                 return Ok(_response);
             }
             catch (Exception ex)
             {
-                return Problem(ex.Message, ex.StackTrace);
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add("An error occurred while processing your request.");
+                return StatusCode((int)HttpStatusCode.InternalServerError, _response);
             }
         }
+
+
 
         [HttpDelete]
         [Route("DeleteTaskGroup")]

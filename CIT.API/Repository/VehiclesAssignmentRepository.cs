@@ -18,7 +18,7 @@ namespace CIT.API.Repository
         {
             object paramObjects = new
             {
-                 Flag = BaseEnumType.GetAll
+                Flag = BaseEnumType.GetAll
             };
 
             List<VehicleAssignment> result = ExecuteStoredProcedure<VehicleAssignment>("proc_VehicleAssignment", paramObjects);
@@ -57,22 +57,30 @@ namespace CIT.API.Repository
             return result;
         }
 
-        public TaskGroupingRequestDTO AddTaskGroup(TaskGroupingRequestDTO taskGroupingRequestDTO)
+        public List<TaskGroupingRequestDTO> AddTaskGroups(List<TaskGroupingRequestDTO> taskGroupingRequestDTOs)
         {
-            try
+            var resultList = new List<TaskGroupingRequestDTO>();
+
+            foreach (var taskGroupingRequestDTO in taskGroupingRequestDTOs)
             {
-                object paramObjects = new
+                try
                 {
-                    Flag = BaseEnumType.Create,
-                    @GroupName = taskGroupingRequestDTO.GroupName,
-                };
-                ExecuteStoredProcedure<object>("cit.spTaskGroup", paramObjects);
-                return taskGroupingRequestDTO;
+                    object paramObjects = new
+                    {
+                        Flag = BaseEnumType.Create,
+                        @GroupName = taskGroupingRequestDTO.GroupName,
+                        @TaskId = taskGroupingRequestDTO.TaskID,
+                        @TaskDate = taskGroupingRequestDTO.TaskDate,
+                    };
+                    ExecuteStoredProcedure<object>("cit.spTaskGroup", paramObjects);
+                    resultList.Add(taskGroupingRequestDTO);
+                }
+                catch (Exception ex)
+                {
+                    return resultList;
+                }
             }
-            catch (Exception ex)
-            {
-                return null;
-            }
+            return resultList;
         }
 
         public bool DeleteTaskGroup(int id)

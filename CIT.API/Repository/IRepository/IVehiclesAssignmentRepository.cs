@@ -8,11 +8,12 @@ namespace CIT.API.Repository.IRepository
         IEnumerable<VehicleAssignment> GetAllAssignOrder();
 
         VehicleAssignmentRequestDTO AddAssignOrder(VehicleAssignmentRequestDTO vehicleAssignRequestDTO);
-        
+
         IEnumerable<TaskGrouping> GetAllTaskGroup();
 
-        TaskGroupingRequestDTO AddTaskGroup(TaskGroupingRequestDTO taskGroupingRequestDTO);
-        
+        List<TaskGroupingRequestDTO> AddTaskGroups(List<TaskGroupingRequestDTO> taskGroupingRequestDTOs);
+
+
         bool DeleteTaskGroup(int id);
     }
 }
