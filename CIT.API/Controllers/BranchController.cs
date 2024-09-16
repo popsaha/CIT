@@ -25,7 +25,7 @@ namespace CIT.API.Controllers
             _response = new();
         }
 
-        [HttpGet]
+        [HttpGet("GetAllbranch")]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -33,7 +33,7 @@ namespace CIT.API.Controllers
         {
             try
             {
-                IEnumerable<BranchUpdateMaster> branchModels = await _Ibranchrepositoty.GetAllBranch();
+                IEnumerable<BranchMaster> branchModels = await _Ibranchrepositoty.GetAllBranch();
 
                 if (branchModels == null || !branchModels.Any())
                 {
@@ -57,20 +57,22 @@ namespace CIT.API.Controllers
             }
         }
 
-        [HttpGet("{branchId:int}", Name = "GetBranch")]
+        //[HttpGet("{branchId:int}", Name = "GetBranch")]
+        [HttpGet("GetBranch")]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetBranch(int branchId)
+        public async Task<ActionResult<APIResponse>> GetBranch(int branchId)
         {
-            BranchUpdateMaster branchModel = new BranchUpdateMaster();
+            BranchMaster branchModel = new BranchMaster();
             try
             {
                 if (branchId == 0)
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.ErrorMessages.Add("Invalid branch id passed");
                     return BadRequest(_response);
                 }
                 branchModel = await _Ibranchrepositoty.GetBranch(branchId);
@@ -79,6 +81,7 @@ namespace CIT.API.Controllers
                 {
                     _response.StatusCode = HttpStatusCode.NotFound;
                     _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Data not found");
                     return NotFound(_response);
                 }
                 _response.Result = _mapper.Map<BranchDTO>(branchModel);
@@ -125,7 +128,7 @@ namespace CIT.API.Controllers
                     _response.Result = branch;
 
                     // Return the created customer with the location of the new resource
-                    return CreatedAtRoute("GetBranch", new { branchId = branch.BranchID }, _response);
+                    return CreatedAtRoute("GetBranch", new { branchId = Res }, _response);
                 }
             }
             catch (Exception ex)
@@ -169,8 +172,9 @@ namespace CIT.API.Controllers
             return _response;
         }
 
-        [HttpDelete("{branchId:int}", Name = "DeleteBranch")]
-        [Authorize(Roles = "admin")]
+        [HttpDelete("DeleteBranch")]
+         // [HttpDelete("{branchId:int}", Name = "DeleteBranch")]     
+        [Authorize]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]

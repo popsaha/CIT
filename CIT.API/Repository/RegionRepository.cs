@@ -19,7 +19,7 @@ namespace CIT.API.Repository
             _mapper = mapper;
             _secretKey = configuration.GetValue<string>("ApiSettings:Secret");
         }
-        public async Task<int> AddRegion(RegionDTO regionDTO)
+        public async Task<int> AddRegion(RegionCreateDTO regionDTO)
         {
             int Res = 0;
             using (var connection = _db.CreateConnection())
@@ -28,7 +28,7 @@ namespace CIT.API.Repository
                 parameters.Add("flag", "AddRegion");
                 parameters.Add("RegionName", regionDTO.RegionName);
                 parameters.Add("DataSource", regionDTO.DataSource);
-                parameters.Add("CreatedBy", regionDTO.CreatedBy);
+                parameters.Add("CreatedBy", 9);
                 Res = await connection.ExecuteScalarAsync<int>("spRegoin", parameters, commandType: CommandType.StoredProcedure);
             };
             return Res;

@@ -53,26 +53,26 @@ namespace CIT.API.Repository
 
         public async Task<IEnumerable<BranchMaster>> GetAllBranch()
         {
-            IEnumerable<BranchUpdateMaster> branchMasterlist;
+            IEnumerable<BranchMaster> branchMasterlist;
 
             using (var connection = _db.CreateConnection())
             {
                 DynamicParameters parameters = new DynamicParameters();
                 parameters.Add("Flag", "A");
-                branchMasterlist = await connection.QueryAsync<BranchUpdateMaster>("spBranch", parameters, commandType: CommandType.StoredProcedure);
+                branchMasterlist = await connection.QueryAsync<BranchMaster>("spBranch", parameters, commandType: CommandType.StoredProcedure);
             }
             return branchMasterlist;
         }
 
         public async Task<BranchMaster> GetBranch(int branchId)
         {
-            BranchUpdateMaster branchMaster = new BranchUpdateMaster();
+            BranchMaster branchMaster = new BranchMaster();
             using (var connection = _db.CreateConnection())
             {
                 DynamicParameters parameters = new DynamicParameters();
                 parameters.Add("Flag", "R");
                 parameters.Add("BranchId", branchId);
-                branchMaster = await connection.QuerySingleOrDefaultAsync<BranchUpdateMaster>("spBranch", parameters, commandType: CommandType.StoredProcedure);
+                branchMaster = await connection.QuerySingleOrDefaultAsync<BranchMaster>("spBranch", parameters, commandType: CommandType.StoredProcedure);
             }
             return branchMaster;
         }
