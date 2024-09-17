@@ -25,55 +25,24 @@ namespace CIT.API.Repository
             return result;
         }
 
-        public VehicleAssignmentRequestDTO AddAssignOrder(VehicleAssignmentRequestDTO vehicleAssignRequestDTO)
+        public List<VehicleAssignmentRequestDTO> AddAssignOrder(List<VehicleAssignmentRequestDTO> vehicleAssignRequestDTO)
         {
-            try
-            {
-                object paramObjects = new
-                {
-                    Flag = BaseEnumType.Create,
-                    @LeadID = vehicleAssignRequestDTO.LeadID,
-                    @ChaseID = vehicleAssignRequestDTO.ChaseID,
-                    @CrewCommanderID = vehicleAssignRequestDTO.CrewCommanderID,
-                    @VehicleAssignDate = vehicleAssignRequestDTO.VehicleAssignDate,
-                };
-
-                ExecuteStoredProcedure<object>("proc_VehicleAssignment", paramObjects);
-                return vehicleAssignRequestDTO;
-            }
-            catch (Exception ex)
-            {
-                return null;
-            }
-        }
-
-        public IEnumerable<TaskGrouping> GetAllTaskGroup()
-        {
-            object paramObjects = new
-            {
-                Flag = BaseEnumType.GetAll
-            };
-            List<TaskGrouping> result = ExecuteStoredProcedure<TaskGrouping>("cit.spTaskGroup", paramObjects);
-            return result;
-        }
-
-        public List<TaskGroupingRequestDTO> AddTaskGroups(List<TaskGroupingRequestDTO> taskGroupingRequestDTOs)
-        {
-            var resultList = new List<TaskGroupingRequestDTO>();
-
-            foreach (var taskGroupingRequestDTO in taskGroupingRequestDTOs)
+            var resultList = new List<VehicleAssignmentRequestDTO>();
+            foreach (var vehicle in vehicleAssignRequestDTO)
             {
                 try
                 {
                     object paramObjects = new
                     {
                         Flag = BaseEnumType.Create,
-                        @GroupName = taskGroupingRequestDTO.GroupName,
-                        @TaskId = taskGroupingRequestDTO.TaskID,
-                        @TaskDate = taskGroupingRequestDTO.TaskDate,
+                        @LeadID = vehicle.LeadID,
+                        @ChaseID = vehicle.ChaseID,
+                        @CrewCommanderID = vehicle.CrewCommanderID,
+                        @VehicleAssignDate = vehicle.VehicleAssignDate
                     };
-                    ExecuteStoredProcedure<object>("cit.spTaskGroup", paramObjects);
-                    resultList.Add(taskGroupingRequestDTO);
+
+                    ExecuteStoredProcedure<object>("proc_VehicleAssignment", paramObjects);
+                    resultList.Add(vehicle);
                 }
                 catch (Exception ex)
                 {
@@ -81,25 +50,6 @@ namespace CIT.API.Repository
                 }
             }
             return resultList;
-        }
-
-        public bool DeleteTaskGroup(int id)
-        {
-            try
-            {
-                object paramObjects = new
-                {
-                    Flag = BaseEnumType.Delete,
-                    @ID = id
-                };
-
-                ExecuteStoredProcedure<object>("cit.spTaskGroup", paramObjects);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                return false;
-            }
         }
     }
 }
