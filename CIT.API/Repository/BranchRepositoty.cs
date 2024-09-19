@@ -31,7 +31,7 @@ namespace CIT.API.Repository
                 parameters.Add("Address", Branchdto.Address);
                 parameters.Add("ContactNumber", Branchdto.ContactNumber);
                 parameters.Add("DataSource", Branchdto.DataSource);
-                parameters.Add("CreatedBy", Branchdto.CreatedBy);
+                parameters.Add("CreatedBy", 1);
                 Res = await connection.ExecuteScalarAsync<int>("spBranch", parameters, commandType: CommandType.StoredProcedure);
             };
             return Res;

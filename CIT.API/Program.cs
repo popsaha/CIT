@@ -19,6 +19,10 @@ builder.Services.AddScoped<IBranchRepositoty, BranchRepositoty>();
 builder.Services.AddScoped<IOrderTypeRepository, OrderTypeRepository>();
 builder.Services.AddScoped<IRegionRepository, RegionRepository>();
 
+builder.Services.AddScoped<ITaskListRepository, TaskListRepository>();
+builder.Services.AddScoped<ITaskListRepository, TaskListRepository>();
+
+
 var key = builder.Configuration.GetValue<string>("ApiSettings:Secret");
 
 builder.Services.AddAuthentication(x =>

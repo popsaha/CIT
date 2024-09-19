@@ -6,6 +6,7 @@ using CIT.API.Models.Dto.Customer;
 using CIT.API.Models.Dto.OrderType;
 using CIT.API.Models.Dto.Region;
 
+
 namespace CIT.API
 {
     public class MappingConfig : Profile
@@ -38,6 +39,10 @@ namespace CIT.API
             CreateMap<RegionMaster, RegionDTO>().ReverseMap();
             CreateMap<RegionMaster, RegionUpdateDTO>().ReverseMap();
             CreateMap<RegionMaster, RegionCreateDTO>().ReverseMap();
+
+
+           
+            
         }
     }
 }
