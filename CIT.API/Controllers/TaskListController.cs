@@ -31,7 +31,7 @@ namespace CIT.API.Controllers
         {
             try
             {
-                IEnumerable<TaskListDTO> taskList = await _listRepository.GetAllTaskList();
+                IEnumerable<TaskList> taskList = await _listRepository.GetAllTaskList();
 
                 if (taskList == null || !taskList.Any())
                 {

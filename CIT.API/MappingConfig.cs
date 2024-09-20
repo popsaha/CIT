@@ -40,9 +40,9 @@ namespace CIT.API
             CreateMap<RegionMaster, RegionUpdateDTO>().ReverseMap();
             CreateMap<RegionMaster, RegionCreateDTO>().ReverseMap();
 
+            CreateMap<TaskList, TaskListDTO>().ReverseMap();
 
-           
-            
+
         }
     }
 }

@@ -1,10 +1,11 @@
-﻿using CIT.API.Models.Dto;
+﻿using CIT.API.Models;
+using CIT.API.Models.Dto;
 
 namespace CIT.API.Repository.IRepository
 {
     public interface ITaskListRepository
     {
-        public Task<IEnumerable<TaskListDTO>> GetAllTaskList();
+        public Task<IEnumerable<TaskList>> GetAllTaskList();
 
     }
 }

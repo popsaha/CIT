@@ -20,11 +20,11 @@ namespace CIT.API.Repository
             _secretKey = configuration.GetValue<string>("ApiSettings:Secret");
         }
 
-        public async Task<IEnumerable<TaskListDTO>> GetAllTaskList()
+        public async Task<IEnumerable<TaskList>> GetAllTaskList()
         {
             using (var con = _db.CreateConnection())
             {   
-                var taskList = await con.QueryAsync<TaskListDTO>("spTaskList", commandType: CommandType.StoredProcedure);
+                var taskList = await con.QueryAsync<TaskList>("spTaskList", commandType: CommandType.StoredProcedure);
                 return taskList.ToList();
             }
         }
