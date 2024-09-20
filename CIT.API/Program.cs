@@ -11,6 +11,7 @@ builder.Services.AddAutoMapper(typeof(MappingConfig));
 builder.Services.AddSingleton<DapperContext>();
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddTransient<IUserRepository, UserRepository>();
+builder.Services.AddTransient<ITaskGroupRepository , TaskGroupRepository>();
 builder.Services.AddScoped<IVehiclesAssignmentRepository, VehiclesAssignmentRepository>();
 builder.Services.AddScoped<APIResponse>();
 
