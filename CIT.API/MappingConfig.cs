@@ -5,6 +5,7 @@ using CIT.API.Models.Dto.Branch;
 using CIT.API.Models.Dto.Customer;
 using CIT.API.Models.Dto.OrderType;
 using CIT.API.Models.Dto.Region;
+using CIT.API.Models.Dto.TaskGroupList;
 
 
 namespace CIT.API
@@ -43,6 +44,8 @@ namespace CIT.API
             CreateMap<TaskList, TaskListDTO>().ReverseMap();
 
             CreateMap<TaskGrouping, TaskGroupingRequestDTO>().ReverseMap();
+
+            CreateMap<TaskGroupList, TaskGroupListDTO>().ReverseMap();
         }
     }
 }

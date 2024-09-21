@@ -2,6 +2,7 @@
 {
     public class TaskListDTO
     {
+        public int TaskId { get; set; }
         public string OrderType { get; set; }
         public string PickupCustomerName { get; set; }
         public string DeliveryCustomerName { get; set; }

@@ -19,11 +19,21 @@ builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IBranchRepositoty, BranchRepositoty>();
 builder.Services.AddScoped<IOrderTypeRepository, OrderTypeRepository>();
 builder.Services.AddScoped<IRegionRepository, RegionRepository>();
-
-
 builder.Services.AddScoped<ITaskListRepository, TaskListRepository>();
-
 builder.Services.AddScoped<ITaskGroupRepository, TaskGroupRepository>();
+builder.Services.AddScoped<ITaskGroupListRepository , TaskGroupListRepository>();
+
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigin",
+        builder =>
+        {
+            builder.WithOrigins("https://localhost:7091") // Client URL
+                   .AllowAnyMethod()
+                   .AllowAnyHeader();
+        });
+});
 
 var key = builder.Configuration.GetValue<string>("ApiSettings:Secret");
 
@@ -93,6 +103,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors("AllowSpecificOrigin"); // Use the CORS policy
 app.UseAuthentication();
 app.UseAuthorization();
 

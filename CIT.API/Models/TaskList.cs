@@ -3,6 +3,7 @@
     public class TaskList
     {
         public int Id { get; set; }
+        public int TaskId { get; set; }
         public string OrderType { get; set; }
         public string PickupCustomerName { get; set; }
         public string DeliveryCustomerName { get; set; }
