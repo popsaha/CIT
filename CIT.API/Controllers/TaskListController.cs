@@ -37,7 +37,7 @@ namespace CIT.API.Controllers
                 {
                     _response.StatusCode = HttpStatusCode.NotFound;
                     _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("No Tasl List found.");
+                    _response.ErrorMessages.Add("No Task List found.");
                     return NotFound(_response);
                 }
 
