@@ -6,7 +6,7 @@ namespace CIT.API.Repository.IRepository
     public interface IVehiclesAssignmentRepository
     {
         IEnumerable<VehicleAssignment> GetAllAssignOrder();
-
-        List<VehicleAssignmentRequestDTO> AddAssignOrder(List<VehicleAssignmentRequestDTO> vehicleAssignRequestDTO);
+        List<VehicleAssignmentRequestDTO> AddAssignOrder(VehicleAssignmentRequestDTO vehicleAssignRequestDTO);
+        List<string> ValidateVehicleAssignmentRequest(VehicleAssignmentRequestDTO vehicleAssignRequestDTO);
     }
 }

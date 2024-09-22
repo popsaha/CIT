@@ -2,9 +2,8 @@
 {
     public class VehicleAssignmentRequestDTO
     {
-        public int? LeadID { get; set; }
-        public int? ChaseID { get; set; }
-        public int? CrewCommanderID { get; set; }
-        public string? VehicleAssignDate { get; set; } 
+        public List<int>? LeadID { get; set; } 
+        public List<int>? ChaseID { get; set; }  
+        public List<int>? CrewCommanderID { get; set; }
     }
 }

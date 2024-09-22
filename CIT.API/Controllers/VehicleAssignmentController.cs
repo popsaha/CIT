@@ -38,11 +38,21 @@ namespace CIT.API.Controllers
 
         [HttpPost]
         [Route("AddAssignOrder")]
-        public IActionResult AddOrderDistribute(List<VehicleAssignmentRequestDTO> vehicleAssignRequestDTO)
+        public IActionResult AddOrderDistribute(VehicleAssignmentRequestDTO vehicleAssignRequestDTO)
         {
             try
             {
                 var orderAssignService = _serviceProvider.GetRequiredService<IVehiclesAssignmentRepository>();
+                //Validate Request
+                var validationErrors = orderAssignService.ValidateVehicleAssignmentRequest(vehicleAssignRequestDTO);
+                if (validationErrors.Any())
+                {
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.AddRange(validationErrors);
+                    return BadRequest(_response);
+                }
+                
                 var order = orderAssignService.AddAssignOrder(vehicleAssignRequestDTO);
                 if (order == null)
                 {
