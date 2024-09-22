@@ -22,6 +22,10 @@ builder.Services.AddScoped<IRegionRepository, RegionRepository>();
 builder.Services.AddScoped<ITaskListRepository, TaskListRepository>();
 builder.Services.AddScoped<ITaskGroupRepository, TaskGroupRepository>();
 builder.Services.AddScoped<ITaskGroupListRepository , TaskGroupListRepository>();
+builder.Services.AddScoped<IVehiclesAssignmentRepository, VehiclesAssignmentRepository>();
+builder.Services.AddScoped<IVehicleRepository, VehicleRepository>();
+builder.Services.AddScoped<ICrewCommanderRepository, CrewCommanderRepository>();
+
 
 
 builder.Services.AddCors(options =>

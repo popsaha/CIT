@@ -2,10 +2,12 @@
 using CIT.API.Models;
 using CIT.API.Models.Dto;
 using CIT.API.Models.Dto.Branch;
+using CIT.API.Models.Dto.CrewCommander;
 using CIT.API.Models.Dto.Customer;
 using CIT.API.Models.Dto.OrderType;
 using CIT.API.Models.Dto.Region;
 using CIT.API.Models.Dto.TaskGroupList;
+using CIT.API.Models.Dto.Vehicle;
 
 
 namespace CIT.API
@@ -46,6 +48,14 @@ namespace CIT.API
             CreateMap<TaskGrouping, TaskGroupingRequestDTO>().ReverseMap();
 
             CreateMap<TaskGroupList, TaskGroupListDTO>().ReverseMap();
+
+            CreateMap<VehicleAssignment, VehicleAssignmentRequestDTO>().ReverseMap();
+
+            CreateMap<Vehicle, VehicleDTO>().ReverseMap();
+
+            CreateMap<CrewCommander, CrewCommanderDTO>().ReverseMap();
+
+
         }
     }
 }
