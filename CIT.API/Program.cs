@@ -18,6 +18,7 @@ builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IBranchRepositoty, BranchRepositoty>();
 builder.Services.AddScoped<IOrderTypeRepository, OrderTypeRepository>();
 builder.Services.AddScoped<IRegionRepository, RegionRepository>();
+builder.Services.AddScoped<ITaskRepository, TaskRepository>();
 
 var key = builder.Configuration.GetValue<string>("ApiSettings:Secret");
 
