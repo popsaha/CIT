@@ -25,17 +25,17 @@ builder.Services.AddScoped<ITaskGroupListRepository , TaskGroupListRepository>()
 builder.Services.AddScoped<IVehiclesAssignmentRepository, VehiclesAssignmentRepository>();
 builder.Services.AddScoped<IVehicleRepository, VehicleRepository>();
 builder.Services.AddScoped<ICrewCommanderRepository, CrewCommanderRepository>();
-
+builder.Services.AddScoped<ITaskRepository, TaskRepository>();
 
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowSpecificOrigin",
+    options.AddPolicy("AllowAllOrigins",
         builder =>
         {
-            builder.WithOrigins("https://localhost:7091") // Client URL
-                   .AllowAnyMethod()
-                   .AllowAnyHeader();
+            builder.AllowAnyOrigin()    // Allow all origins
+                   .AllowAnyMethod()    // Allow all HTTP methods (GET, POST, PUT, DELETE, etc.)
+                   .AllowAnyHeader();   // Allow any headers
         });
 });
 
@@ -107,7 +107,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors("AllowSpecificOrigin"); // Use the CORS policy
+app.UseCors("AllowAllOrigins"); // Use the CORS policy
 app.UseAuthentication();
 app.UseAuthorization();
 
