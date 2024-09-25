@@ -66,7 +66,7 @@ namespace CIT.API.Repository
             {
                 DynamicParameters parameters = new DynamicParameters();
                 parameters.Add("flag", "7");
-                parameters.Add("CustomerID", CustomerID);
+                parameters.Add("CustomerId", CustomerID);
                 var branches = (List<TaskBranch>)await connection.QueryAsync<TaskBranch>("usp_Order", parameters, commandType: CommandType.StoredProcedure);
                 return branches.ToList();
             }

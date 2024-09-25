@@ -4,6 +4,7 @@ namespace CIT.API.Models.Dto.Task
 {
     public class TaskCreateDTO
     {
+        //[Required]
         public string OrderId { get; set; }
         [Required]
         public int OrderTypeID { get; set; }
