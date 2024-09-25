@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using CIT.API.Models;
 using CIT.API.Models.Dto;
-using CIT.API.Models.Dto.Customer;
 using CIT.API.Repository.IRepository;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
@@ -12,7 +11,7 @@ namespace CIT.API.Controllers
     [ApiController]
     public class TaskListController : Controller
     {
-        private readonly  ITaskListRepository _listRepository;
+        private readonly ITaskListRepository _listRepository;
         protected APIResponse _response;
         private readonly IMapper _mapper;
 
@@ -27,11 +26,11 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult<APIResponse>> GetAllTasks()
+        public async Task<ActionResult<APIResponse>> GetAllTasks(DateTime date)
         {
             try
             {
-                IEnumerable<TaskList> taskList = await _listRepository.GetAllTaskList();
+                IEnumerable<TaskList> taskList = await _listRepository.GetAllTaskList(date);
 
                 if (taskList == null || !taskList.Any())
                 {
