@@ -3,6 +3,7 @@ using CIT.API.Models;
 using CIT.API.Models.Dto;
 using CIT.API.Repository.IRepository;
 using Microsoft.AspNetCore.Mvc;
+using System.Globalization;
 using System.Net;
 
 namespace CIT.API.Controllers
@@ -26,11 +27,18 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult<APIResponse>> GetAllTasks(DateTime date)
+        public async Task<ActionResult<APIResponse>> GetAllTasks([FromQuery] TaskDateDTO request)
         {
             try
             {
-                IEnumerable<TaskList> taskList = await _listRepository.GetAllTaskList(date);
+                if (!DateTime.TryParseExact(request.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime validDate))
+                {
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Invalid date format.");
+                    return BadRequest(_response);
+                }
+                IEnumerable<TaskList> taskList = await _listRepository.GetAllTaskList(validDate);
 
                 if (taskList == null || !taskList.Any())
                 {
