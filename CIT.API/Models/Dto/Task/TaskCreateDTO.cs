@@ -4,7 +4,6 @@ namespace CIT.API.Models.Dto.Task
 {
     public class TaskCreateDTO
     {
-        [Required]
         public string OrderId { get; set; }
         [Required]
         public int OrderTypeID { get; set; }
@@ -16,13 +15,13 @@ namespace CIT.API.Models.Dto.Task
         public int CustomerId { get; set; }
         [Required]
         public int BranchID { get; set; }
-        [Required]
+        //[Required]
         public int CustomerRecipiantId { get; set; }
-        [Required]
+        //[Required]
         public int CustomerRecipiantLocationId { get; set; }
-        [Required]
+        //[Required]
         public int RepeatId { get; set; }
-        [Required]
+        //[Required]
         public string OrderCreateDate { get; set; }
         public string RepeatDaysName { get; set; }     
         public string EndOnDate { get; set; }
