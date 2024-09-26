@@ -1,4 +1,6 @@
-﻿namespace CIT.API.Models.Dto
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace CIT.API.Models.Dto
 {
     public class TaskListDTO
     {
@@ -12,4 +14,12 @@
         public string DeliveryLocation { get; set; }
         public DateTime OrderDate { get; set; }
     }
+
+    public class TaskDateDTO
+    {
+        [Required(ErrorMessage = "Date is required.")]
+        [RegularExpression(@"\d{4}-\d{2}-\d{2}", ErrorMessage = "The date format must be yyyy-MM-dd.")]
+        public string Date { get; set; }
+    }
+
 }
