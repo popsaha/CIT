@@ -22,10 +22,17 @@ namespace CIT.API.Repository
 
         public async Task<IEnumerable<TaskList>> GetAllTaskList()
         {
-            using (var con = _db.CreateConnection())
-            {   
-                var taskList = await con.QueryAsync<TaskList>("spTaskList", commandType: CommandType.StoredProcedure);
-                return taskList.ToList();
+            try
+            {
+                using (var con = _db.CreateConnection())
+                {
+                    var taskList = await con.QueryAsync<TaskList>("spTaskList", commandType: CommandType.StoredProcedure);
+                    return taskList.ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw;
             }
         }
     }
