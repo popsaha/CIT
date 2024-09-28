@@ -8,7 +8,8 @@ namespace CIT.API.Repository.IRepository
     {      
       public Task<IEnumerable<TaskBranch>> GetBranchById(int CustomerID);
 
-        public Task<IEnumerable<VaultLovationMaster>> GetVaultLocation();
+        public Task<IEnumerable<VaultLocationMaster>> GetVaultLocation();
+        public Task<IEnumerable<OrderRoutes>> GetOrderRoutes();
         Task<int> CreateTask(TaskMaster taskmaster);
     }
 }

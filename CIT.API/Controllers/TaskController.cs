@@ -72,8 +72,8 @@ namespace CIT.API.Controllers
         {
             try
             {
-                IEnumerable<VaultLovationMaster> vaultLovationmasters = await _taskRepo.GetVaultLocation();
-                if (vaultLovationmasters == null || !vaultLovationmasters.Any())
+                IEnumerable<VaultLocationMaster> vaultLocationMasters = await _taskRepo.GetVaultLocation();
+                if (vaultLocationMasters == null || !vaultLocationMasters.Any())
                 {
                     _response.StatusCode = HttpStatusCode.NotFound;
                     _response.IsSuccess = false;
@@ -83,7 +83,7 @@ namespace CIT.API.Controllers
 
                 _response.StatusCode = HttpStatusCode.OK;
                 _response.IsSuccess = true;
-                _response.Result = _mapper.Map<List<VaultLovationMaster>>(vaultLovationmasters);
+                _response.Result = _mapper.Map<List<VaultLocationMaster>>(vaultLocationMasters);
 
                 return Ok(_response);
             }
@@ -137,6 +137,40 @@ namespace CIT.API.Controllers
                 return Problem(ex.Message, ex.StackTrace);
             }
             return _response;
+        }
+
+        [HttpGet("GetOrderRoutes")]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<APIResponse>> GetOrderRoutes()
+        {
+            try
+            {
+                IEnumerable<OrderRoutes> orderroutes = await _taskRepo.GetOrderRoutes();
+                if (orderroutes == null || !orderroutes.Any())
+                {
+                    _response.StatusCode = HttpStatusCode.NotFound;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("No Order Route Found");
+                    return NotFound(_response);
+                }
+
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.IsSuccess = true;
+                _response.Result = _mapper.Map<List<OrderRoutes>>(orderroutes);
+
+                return Ok(_response);
+            }
+            catch (Exception ex)
+            {
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add(ex.Message);
+
+                return StatusCode((int)HttpStatusCode.InternalServerError, _response);
+            }
+
         }
     }
 }

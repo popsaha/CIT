@@ -29,5 +29,7 @@ namespace CIT.API.Models.Dto.Task
         public int VaultID { get; set; }
         public bool isVault { get; set; }
         public bool isVaultFinal { get; set; }
+        public int OrderRouteId { get; set; }
+        public bool NewVehicleRequired { get; set; }
     }
 }

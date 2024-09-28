@@ -46,15 +46,17 @@ namespace CIT.API.Repository
                     parameters.Add("isVault", taskmaster.isVault);
                     parameters.Add("VaultID", taskmaster.VaultID);
                     parameters.Add("isVaultFinal", taskmaster.isVaultFinal);
+                    parameters.Add("OrderRouteId", taskmaster.OrderRouteId);                 
+                    parameters.Add("NewVehicleRequired", taskmaster.NewVehicleRequired);
 
-                    Res = await connection.ExecuteScalarAsync<int>("usp_Order", parameters, commandType: CommandType.StoredProcedure);
+        Res = await connection.ExecuteScalarAsync<int>("usp_Order", parameters, commandType: CommandType.StoredProcedure);
                 };
             }
             catch (Exception ex)
             {
                 throw ex;
             }
-            
+
             return Res;
         }
 
@@ -72,17 +74,35 @@ namespace CIT.API.Repository
             }
         }
 
-        public async Task<IEnumerable<VaultLovationMaster>> GetVaultLocation()
+        public async Task<IEnumerable<OrderRoutes>> GetOrderRoutes()
         {
-            VaultLovationMaster VaultLovationMaster = new VaultLovationMaster();
+            //OrderRoutes orderroutes = new OrderRoutes();
+
+            using (var connection = _db.CreateConnection())
+            {
+                DynamicParameters parameters = new DynamicParameters();
+                parameters.Add("flag", "6");
+                var orderroutes = (List<OrderRoutes>)await connection.QueryAsync<OrderRoutes>("usp_Order", parameters, commandType: CommandType.StoredProcedure);
+                return orderroutes.ToList();
+            }
+        }
+
+        public async Task<IEnumerable<VaultLocationMaster>> GetVaultLocation()
+        {
+            VaultLocationMaster VaultLovationMaster = new VaultLocationMaster();
 
             using (var connection = _db.CreateConnection())
             {
                 DynamicParameters parameters = new DynamicParameters();
                 parameters.Add("flag", "5");
-                var vaultLovations = (List<VaultLovationMaster>)await connection.QueryAsync<VaultLovationMaster>("usp_Order", parameters, commandType: CommandType.StoredProcedure);
+                var vaultLovations = (List<VaultLocationMaster>)await connection.QueryAsync<VaultLocationMaster>("usp_Order", parameters, commandType: CommandType.StoredProcedure);
                 return vaultLovations.ToList();
             }
+        }
+
+        Task<IEnumerable<VaultLocationMaster>> ITaskRepository.GetVaultLocation()
+        {
+            throw new NotImplementedException();
         }
     }
 }

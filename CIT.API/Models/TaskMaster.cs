@@ -17,17 +17,25 @@
         public int VaultID { get; set; }
         public bool isVault { get; set; }
         public bool isVaultFinal { get; set; }
+        public int OrderRouteId { get; set; }
+        public bool NewVehicleRequired { get; set; }
         public List<TaskBranch> taskbranchlist { get; set; }
-        public List<VaultLovationMaster> vaultLovationMasters { get; set; }
+        public List<VaultLocationMaster> vaultLocationMasters { get; set; }
+        public List<OrderRoutes> Orderrouteslst { get; set; }
     }
     public class TaskBranch
     {
         public int BranchID { get; set; }
         public string BranchName { get; set; }
     }
-    public class VaultLovationMaster
+    public class VaultLocationMaster
     {
         public int VaultID { get; set; }
         public string VaultName { get; set; }
+    }
+    public class OrderRoutes
+    {
+        public int OrderRouteId { get; set; }
+        public string RouteName { get; set; }
     }
 }
