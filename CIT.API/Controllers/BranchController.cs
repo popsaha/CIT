@@ -1,12 +1,9 @@
 ﻿using AutoMapper;
 using CIT.API.Models;
 using CIT.API.Models.Dto.Branch;
-using CIT.API.Models.Dto.Customer;
 using CIT.API.Repository.IRepository;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
 using System.Net;
 
 namespace CIT.API.Controllers
@@ -18,10 +15,13 @@ namespace CIT.API.Controllers
         public readonly IBranchRepositoty _Ibranchrepositoty;
         protected APIResponse _response;
         private readonly IMapper _mapper;
-        public BranchController(IBranchRepositoty branchRepositoty, IMapper mapper)
+        private readonly ILogger<BranchController> _logger;
+
+        public BranchController(IBranchRepositoty branchRepositoty, IMapper mapper, ILogger<BranchController> logger)
         {
             _Ibranchrepositoty = branchRepositoty;
             _mapper = mapper;
+            _logger = logger;
             _response = new();
         }
 
@@ -31,6 +31,8 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<APIResponse>> GetAllbranch()
         {
+            _logger.LogInformation("GetAllbranch method called at {time}.", DateTime.UtcNow);
+
             try
             {
                 IEnumerable<BranchMaster> branchModels = await _Ibranchrepositoty.GetAllBranch();
@@ -45,11 +47,14 @@ namespace CIT.API.Controllers
                 _response.StatusCode = HttpStatusCode.OK;
                 _response.IsSuccess = true;
                 _response.Result = _mapper.Map<List<BranchDTO>>(branchModels);
+
                 return Ok(_response);
             }
 
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error retrieving branches at {time}.", DateTime.UtcNow);
+
                 _response.StatusCode = HttpStatusCode.InternalServerError;
                 _response.IsSuccess = false;
                 _response.ErrorMessages.Add(ex.Message);
@@ -173,7 +178,7 @@ namespace CIT.API.Controllers
         }
 
         [HttpDelete("DeleteBranch")]
-         // [HttpDelete("{branchId:int}", Name = "DeleteBranch")]     
+        // [HttpDelete("{branchId:int}", Name = "DeleteBranch")]     
         [Authorize]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
