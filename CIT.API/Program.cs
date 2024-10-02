@@ -1,14 +1,26 @@
 using CIT.API;
 using CIT.API.Context;
+using CIT.API.Middlewares;
 using CIT.API.Models;
 using CIT.API.Repository;
 using CIT.API.Repository.IRepository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Serilog;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .WriteTo.File("Logs/Cit_Log.txt", rollingInterval: RollingInterval.Day)
+    .MinimumLevel.Information()
+    .CreateLogger();
+
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog(logger);
+
 builder.Services.AddScoped<APIResponse>();
 // Add services to the container.
 builder.Services.AddAutoMapper(typeof(MappingConfig));
@@ -21,7 +33,7 @@ builder.Services.AddScoped<IOrderTypeRepository, OrderTypeRepository>();
 builder.Services.AddScoped<IRegionRepository, RegionRepository>();
 builder.Services.AddScoped<ITaskListRepository, TaskListRepository>();
 builder.Services.AddScoped<ITaskGroupRepository, TaskGroupRepository>();
-builder.Services.AddScoped<ITaskGroupListRepository , TaskGroupListRepository>();
+builder.Services.AddScoped<ITaskGroupListRepository, TaskGroupListRepository>();
 builder.Services.AddScoped<IVehiclesAssignmentRepository, VehiclesAssignmentRepository>();
 builder.Services.AddScoped<IVehicleRepository, VehicleRepository>();
 builder.Services.AddScoped<ICrewCommanderRepository, CrewCommanderRepository>();
@@ -105,6 +117,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseMiddleware<ExceptionHandlerMiddleware>();
 
 app.UseHttpsRedirection();
 app.UseCors("AllowAllOrigins"); // Use the CORS policy
