@@ -6,6 +6,7 @@
         public int OrderTypeID { get; set; }
         public int PriorityId { get; set; }
         public int PickUpTypeId { get; set; }
+        public string OrderNumber { get; set; }
         public int CustomerId { get; set; }
         public int BranchID { get; set; }
         public int CustomerRecipiantId { get; set; }
@@ -19,6 +20,10 @@
         public bool isVaultFinal { get; set; }
         public int OrderRouteId { get; set; }
         public bool NewVehicleRequired { get; set; }
+        public int OrderSubRouteID { get; set; }
+        public int NoOfVehicles { get; set; }
+        public int SubRouteNumber { get; set; }
+        public bool fullDayCheck { get; set; }
         public List<TaskBranch> taskbranchlist { get; set; }
         public List<VaultLocationMaster> vaultLocationMasters { get; set; }
         public List<OrderRoutes> Orderrouteslst { get; set; }

@@ -33,12 +33,12 @@ namespace CIT.API.Repository
                     parameters.Add("OrderId", taskmaster.OrderId);
                     parameters.Add("OrderTypeID", taskmaster.OrderTypeID);
                     parameters.Add("PriorityId", taskmaster.PriorityId);
-                    parameters.Add("OrderNumber", taskmaster.OrderId);
+                    parameters.Add("OrderNumber", taskmaster.OrderNumber);
                     parameters.Add("PickUpTypeId", taskmaster.PickUpTypeId);
-                    parameters.Add("CustomerId", taskmaster.CustomerId);
-                    parameters.Add("BranchID", taskmaster.BranchID);
-                    parameters.Add("CustomerRecipiantId", taskmaster.CustomerRecipiantId);
-                    parameters.Add("CustomerRecipiantLocationId", taskmaster.CustomerRecipiantLocationId);
+                    parameters.Add("CustomerId", taskmaster.CustomerId == 0 ? null : taskmaster.CustomerId);
+                    parameters.Add("BranchID", taskmaster.BranchID == 0 ? null : taskmaster.BranchID);
+                    parameters.Add("CustomerRecipiantId", taskmaster.CustomerRecipiantId == 0 ? null : taskmaster.CustomerRecipiantId);
+                    parameters.Add("CustomerRecipiantLocationId", taskmaster.CustomerRecipiantLocationId == 0 ? null : taskmaster.CustomerRecipiantLocationId);
                     parameters.Add("RepeatId", taskmaster.RepeatId);
                     parameters.Add("OrderCreateDate", taskmaster.OrderCreateDate);
                     parameters.Add("RepeatDaysName", taskmaster.RepeatDaysName);
@@ -46,10 +46,11 @@ namespace CIT.API.Repository
                     parameters.Add("isVault", taskmaster.isVault);
                     parameters.Add("VaultID", taskmaster.VaultID);
                     parameters.Add("isVaultFinal", taskmaster.isVaultFinal);
-                    parameters.Add("OrderRouteId", taskmaster.OrderRouteId);                 
+                    parameters.Add("OrderRouteId", taskmaster.OrderRouteId);
                     parameters.Add("NewVehicleRequired", taskmaster.NewVehicleRequired);
+                    parameters.Add("IsFullDayAssignment", taskmaster.fullDayCheck);
 
-        Res = await connection.ExecuteScalarAsync<int>("usp_Order", parameters, commandType: CommandType.StoredProcedure);
+                    Res = await connection.ExecuteScalarAsync<int>("usp_Order", parameters, commandType: CommandType.StoredProcedure);
                 };
             }
             catch (Exception ex)
@@ -76,14 +77,32 @@ namespace CIT.API.Repository
 
         public async Task<IEnumerable<OrderRoutes>> GetOrderRoutes()
         {
-            //OrderRoutes orderroutes = new OrderRoutes();
-
             using (var connection = _db.CreateConnection())
             {
                 DynamicParameters parameters = new DynamicParameters();
                 parameters.Add("flag", "6");
                 var orderroutes = (List<OrderRoutes>)await connection.QueryAsync<OrderRoutes>("usp_Order", parameters, commandType: CommandType.StoredProcedure);
                 return orderroutes.ToList();
+            }
+        }
+
+        public async Task<TaskMaster> GetOrderTaskData(string OrderNumber)
+        {
+            try
+            {
+                TaskMaster taskMaster = new TaskMaster();
+                using (var connection = _db.CreateConnection())
+                {
+                    DynamicParameters parameters = new DynamicParameters();
+                    parameters.Add("flag", "8");
+                    parameters.Add("OrderNumber", OrderNumber);
+                    taskMaster = await connection.QueryFirstOrDefaultAsync<TaskMaster>("usp_Order", parameters, commandType: CommandType.StoredProcedure);
+                    return taskMaster;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
             }
         }
 
@@ -98,11 +117,6 @@ namespace CIT.API.Repository
                 var vaultLovations = (List<VaultLocationMaster>)await connection.QueryAsync<VaultLocationMaster>("usp_Order", parameters, commandType: CommandType.StoredProcedure);
                 return vaultLovations.ToList();
             }
-        }
-
-        Task<IEnumerable<VaultLocationMaster>> ITaskRepository.GetVaultLocation()
-        {
-            throw new NotImplementedException();
         }
     }
 }
