@@ -1,7 +1,9 @@
 ﻿using CIT.API.Models;
 using CIT.API.Models.Dto;
+using CIT.API.Models.Dto.Order;
 using CIT.API.Repository.IRepository;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace CIT.API.Controllers
 {
@@ -11,13 +13,19 @@ namespace CIT.API.Controllers
     {
         public readonly IOrderRepository _orderRepository;
         protected APIResponse _response;
-        public OrderController(IOrderRepository orderRepository)
+        private readonly ILogger<OrderController> _logger;
+
+        public OrderController(IOrderRepository orderRepository, ILogger<OrderController> logger)
         {
             _orderRepository = orderRepository;
             _response = new();
+            _logger = logger;
         }
 
         [HttpPost("CreateOrder")]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> CreateOrder([FromBody] OrderDTO orderDTO)
         {
             int Res = 0;
@@ -52,6 +60,34 @@ namespace CIT.API.Controllers
             {
                 return Problem(ex.Message, ex.StackTrace);
             }
+        }
+
+        // POST: api/order/updateroute
+        [HttpPost("updateRoute")]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> UpdateOrderRoute([FromBody] OrderRouteUpdateDTO orderUpdateRouteDTO)
+        {
+            if (orderUpdateRouteDTO == null || !orderUpdateRouteDTO.OrderIds.Any())
+            {
+                return BadRequest(new APIResponse
+                {
+                    StatusCode = HttpStatusCode.BadRequest,
+                    IsSuccess = false,
+                    ErrorMessages = new List<string> { "Invalid input data" }
+                });
+            }
+
+            var response = await _orderRepository.UpdateOrderRouteAsync(orderUpdateRouteDTO);
+
+            if (!response.IsSuccess)
+            {
+                return StatusCode((int)response.StatusCode, response);
+            }
+
+            return Ok(response);
+
         }
     }
 }
