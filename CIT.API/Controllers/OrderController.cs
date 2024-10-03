@@ -1,8 +1,8 @@
 ﻿using CIT.API.Models;
-using CIT.API.Models.Dto;
 using CIT.API.Models.Dto.Order;
 using CIT.API.Repository.IRepository;
 using Microsoft.AspNetCore.Mvc;
+using System.Globalization;
 using System.Net;
 
 namespace CIT.API.Controllers
@@ -62,7 +62,8 @@ namespace CIT.API.Controllers
             }
         }
 
-        // POST: api/order/updateroute
+
+        // POST: api/order/updateRoute
         [HttpPost("updateRoute")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -92,5 +93,50 @@ namespace CIT.API.Controllers
             return Ok(response);
 
         }
+
+
+        [HttpGet("getOrdersList")]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetOrders([FromQuery] OrderDateDTO selectedDate)
+        {
+            try
+            {
+                if (!DateTime.TryParseExact(selectedDate.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime validDate))
+                {
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Invalid date format.");
+                    return BadRequest(_response);
+                }
+
+                var orders = await _orderRepository.GetOrdersWithTaskListAsync(validDate);
+
+                if (orders == null || !orders.Any())
+                {
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("No orders found for the selected date.");
+                    _response.StatusCode = HttpStatusCode.NotFound;
+                }
+                else
+                {
+                    _response.Result = orders;
+                    _response.StatusCode = HttpStatusCode.OK;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting order ids");
+
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add(ex.Message);
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+            }
+
+            return StatusCode((int)_response.StatusCode, _response);
+        }
+
     }
 }

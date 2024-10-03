@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using CIT.API.Context;
 using CIT.API.Models;
-using CIT.API.Models.Dto;
 using CIT.API.Models.Dto.Order;
 using CIT.API.Repository.IRepository;
 using Dapper;
@@ -64,7 +63,7 @@ namespace CIT.API.Repository
             return Res;
         }
 
-        public int AddTask(int OrderId, List<Models.Dto.TaskModel> taskmodellist)
+        public int AddTask(int OrderId, List<Models.Dto.Order.TaskModel> taskmodellist)
         {
             int res = 0;
             foreach (var taskobj in taskmodellist)
@@ -144,5 +143,51 @@ namespace CIT.API.Repository
                 };
             }
         }
+
+        public async Task<IEnumerable<OrderListDTO>> GetOrdersWithTaskListAsync(DateTime selectedDate)
+        {
+            //var sql = @"cit.spOrderList";  // Stored procedure name
+
+            using (var connection = _db.CreateConnection())
+            {
+                var parameters = new DynamicParameters();
+                parameters.Add("@SelectedDate", selectedDate, DbType.Date);
+
+                // Execute the stored procedure
+                var orders = await connection.QueryAsync<OrderListDTO>(
+                    "cit.spOrderList", // Name of your stored procedure
+                    parameters,
+                    commandType: CommandType.StoredProcedure
+                );
+                return orders;
+
+                //Dictionary<int, OrderListDTO> orderDictionary = new();
+
+                //var orders = await connection.QueryAsync<OrderListDTO, TaskListDTO, OrderListDTO>(
+                //    sql,
+                //    (order, task) =>
+                //    {
+                //        // Check if the order already exists in the dictionary
+                //        if (!orderDictionary.TryGetValue(order.OrderID, out var currentOrder))
+                //        {
+                //            currentOrder = order;
+                //            currentOrder.Tasks = new List<TaskListDTO>();
+                //            orderDictionary.Add(order.OrderID, currentOrder);
+                //        }
+
+                //        // Add tasks to the current order
+                //        currentOrder.Tasks.Add(task);
+                //        return currentOrder;
+                //    },
+                //    parameters,
+                //    splitOn: "TaskId",  // Field to split on
+                //    commandType: CommandType.StoredProcedure
+                //);
+
+                //return orderDictionary.Values;
+            }
+        }
+
+
     }
 }

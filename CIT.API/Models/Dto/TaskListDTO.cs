@@ -2,7 +2,7 @@
 
 namespace CIT.API.Models.Dto
 {
-    public class TaskListDTO
+    public class TaskListsDTO
     {
         public int TaskId { get; set; }
         public string OrderType { get; set; }
