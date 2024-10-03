@@ -79,6 +79,9 @@ namespace CIT.API.Controllers
                 });
             }
 
+            // Trim the RouteName before calling the method
+            orderUpdateRouteDTO.RouteName = orderUpdateRouteDTO.RouteName?.Trim();
+
             var response = await _orderRepository.UpdateOrderRouteAsync(orderUpdateRouteDTO);
 
             if (!response.IsSuccess)
