@@ -1,11 +1,13 @@
 ﻿using AutoMapper;
 using CIT.API.Context;
 using CIT.API.Models;
+using CIT.API.Models.Dto;
 using CIT.API.Models.Dto.Branch;
 using CIT.API.Models.Dto.Task;
 using CIT.API.Repository.IRepository;
 using Dapper;
 using System.Data;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace CIT.API.Repository
 {
@@ -33,14 +35,14 @@ namespace CIT.API.Repository
                     parameters.Add("OrderId", taskmaster.OrderId);
                     parameters.Add("OrderTypeID", taskmaster.OrderTypeID);
                     parameters.Add("PriorityId", taskmaster.PriorityId);
-                    parameters.Add("OrderNumber", taskmaster.OrderNumber);
+                    parameters.Add("OrderNumber", taskmaster.OrderNumber == "" ? 0 : Convert.ToInt64(taskmaster.OrderNumber));
                     parameters.Add("PickUpTypeId", taskmaster.PickUpTypeId);
                     parameters.Add("CustomerId", taskmaster.CustomerId == 0 ? null : taskmaster.CustomerId);
                     parameters.Add("BranchID", taskmaster.BranchID == 0 ? null : taskmaster.BranchID);
                     parameters.Add("CustomerRecipiantId", taskmaster.CustomerRecipiantId == 0 ? null : taskmaster.CustomerRecipiantId);
                     parameters.Add("CustomerRecipiantLocationId", taskmaster.CustomerRecipiantLocationId == 0 ? null : taskmaster.CustomerRecipiantLocationId);
                     parameters.Add("RepeatId", taskmaster.RepeatId);
-                    parameters.Add("OrderCreateDate", taskmaster.OrderCreateDate);
+                    parameters.Add("OrderCreateDate", ConvertOrderDate(taskmaster.OrderCreateDate));
                     parameters.Add("RepeatDaysName", taskmaster.RepeatDaysName);
                     parameters.Add("EndOnDate", taskmaster.EndOnDate);
                     parameters.Add("isVault", taskmaster.isVault);
@@ -117,6 +119,17 @@ namespace CIT.API.Repository
                 var vaultLovations = (List<VaultLocationMaster>)await connection.QueryAsync<VaultLocationMaster>("usp_Order", parameters, commandType: CommandType.StoredProcedure);
                 return vaultLovations.ToList();
             }
+        }
+
+        public string ConvertOrderDate(string orderdate)
+        {
+            string Result = "";
+            string[] GetDate = orderdate.Split("-");
+            string day = GetDate[0];
+            string month = GetDate[1];
+            string year = GetDate[2];
+            Result = year + "-" + month + "-" + day;
+            return Result;
         }
     }
 }
