@@ -8,6 +8,7 @@ namespace CIT.API.Models.Dto.Order
         public long OrderNumber { get; set; }
         public string OrderType { get; set; }
         public string OrderDate { get; set; }
+        public string RouteName { get; set; }
 
         //public List<TaskListDTO> Tasks { get; set; } = new();
         public int TaskID { get; set; }
