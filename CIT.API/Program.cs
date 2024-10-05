@@ -38,7 +38,7 @@ builder.Services.AddScoped<IVehiclesAssignmentRepository, VehiclesAssignmentRepo
 builder.Services.AddScoped<IVehicleRepository, VehicleRepository>();
 builder.Services.AddScoped<ICrewCommanderRepository, CrewCommanderRepository>();
 builder.Services.AddScoped<ITaskRepository, TaskRepository>();
-
+builder.Services.AddScoped<IOrderAssignmentRepository, OrderAssignmentRepository>();
 
 builder.Services.AddCors(options =>
 {
