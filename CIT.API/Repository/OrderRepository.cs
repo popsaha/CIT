@@ -1,10 +1,11 @@
 ﻿using AutoMapper;
 using CIT.API.Context;
 using CIT.API.Models;
-using CIT.API.Models.Dto;
+using CIT.API.Models.Dto.Order;
 using CIT.API.Repository.IRepository;
 using Dapper;
 using System.Data;
+using System.Net;
 
 namespace CIT.API.Repository
 {
@@ -13,11 +14,13 @@ namespace CIT.API.Repository
         private readonly DapperContext _db;
         private readonly string _secretKey;
         private readonly IMapper _mapper;
-        public OrderRepository(DapperContext db, IMapper mapper, IConfiguration configuration)
+        private readonly ILogger<OrderRepository> _logger;
+        public OrderRepository(DapperContext db, IMapper mapper, IConfiguration configuration, ILogger<OrderRepository> logger)
         {
             _db = db;
             _mapper = mapper;
             _secretKey = configuration.GetValue<string>("ApiSettings:Secret");
+            _logger = logger;
         }
 
         public async Task<int> CreateOrder(OrderDTO orderDTO)
@@ -60,7 +63,7 @@ namespace CIT.API.Repository
             return Res;
         }
 
-        public int AddTask(int OrderId, List<Models.Dto.TaskModel> taskmodellist)
+        public int AddTask(int OrderId, List<Models.Dto.Order.TaskModel> taskmodellist)
         {
             int res = 0;
             foreach (var taskobj in taskmodellist)
@@ -98,5 +101,93 @@ namespace CIT.API.Repository
             }
             return Orderresponse;
         }
+
+        public async Task<APIResponse> UpdateOrderRouteAsync(OrderRouteUpdateDTO updateRouteDTO)
+        {
+            try
+            {
+                // Convert list of order IDs to a comma-separated string
+                string orderIds = string.Join(",", updateRouteDTO.OrderIds);
+
+                using (var connection = _db.CreateConnection())
+                {
+                    var parameters = new DynamicParameters();
+                    parameters.Add("@OrderIds", orderIds);
+                    parameters.Add("@RouteName", updateRouteDTO.RouteName);
+
+                    // Call the stored procedure to update the routes                  
+
+                    var result = await connection.QueryAsync<string>(
+                        "spUpdateOrdersRoute",
+                        parameters,
+                        commandType: CommandType.StoredProcedure);
+
+                    return new APIResponse
+                    {
+                        StatusCode = HttpStatusCode.OK,
+                        IsSuccess = true,
+                        Result = result.FirstOrDefault()
+                    };
+                }
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating order route");
+
+                return new APIResponse
+                {
+                    StatusCode = HttpStatusCode.InternalServerError,
+                    IsSuccess = false,
+                    ErrorMessages = new List<string> { "Error updating order route" }
+                };
+            }
+        }
+
+        public async Task<IEnumerable<OrderListDTO>> GetOrdersWithTaskListAsync(DateTime selectedDate)
+        {
+            //var sql = @"cit.spOrderList";  // Stored procedure name
+
+            using (var connection = _db.CreateConnection())
+            {
+                var parameters = new DynamicParameters();
+                parameters.Add("@SelectedDate", selectedDate, DbType.Date);
+
+                // Execute the stored procedure
+                var orders = await connection.QueryAsync<OrderListDTO>(
+                    "cit.spOrderList", // Name of your stored procedure
+                    parameters,
+                    commandType: CommandType.StoredProcedure
+                );
+                return orders;
+
+                //Dictionary<int, OrderListDTO> orderDictionary = new();
+
+                //var orders = await connection.QueryAsync<OrderListDTO, TaskListDTO, OrderListDTO>(
+                //    sql,
+                //    (order, task) =>
+                //    {
+                //        // Check if the order already exists in the dictionary
+                //        if (!orderDictionary.TryGetValue(order.OrderID, out var currentOrder))
+                //        {
+                //            currentOrder = order;
+                //            currentOrder.Tasks = new List<TaskListDTO>();
+                //            orderDictionary.Add(order.OrderID, currentOrder);
+                //        }
+
+                //        // Add tasks to the current order
+                //        currentOrder.Tasks.Add(task);
+                //        return currentOrder;
+                //    },
+                //    parameters,
+                //    splitOn: "TaskId",  // Field to split on
+                //    commandType: CommandType.StoredProcedure
+                //);
+
+                //return orderDictionary.Values;
+            }
+        }
+
+
     }
 }

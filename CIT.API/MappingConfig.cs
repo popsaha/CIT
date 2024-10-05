@@ -4,6 +4,7 @@ using CIT.API.Models.Dto;
 using CIT.API.Models.Dto.Branch;
 using CIT.API.Models.Dto.CrewCommander;
 using CIT.API.Models.Dto.Customer;
+using CIT.API.Models.Dto.Order;
 using CIT.API.Models.Dto.OrderType;
 using CIT.API.Models.Dto.Region;
 using CIT.API.Models.Dto.Task;
@@ -44,7 +45,7 @@ namespace CIT.API
             CreateMap<RegionMaster, RegionUpdateDTO>().ReverseMap();
             CreateMap<RegionMaster, RegionCreateDTO>().ReverseMap();
 
-            CreateMap<TaskList, TaskListDTO>().ReverseMap();
+            CreateMap<TaskList, TaskListsDTO>().ReverseMap();
 
             CreateMap<TaskGrouping, TaskGroupingRequestDTO>().ReverseMap();
 
@@ -58,7 +59,7 @@ namespace CIT.API
 
             CreateMap<CrewCommander, CrewCommanderDTO>().ReverseMap();
 
-            CreateMap<TaskMaster, OrderTaskGetData>().ReverseMap();
+            CreateMap<TaskMaster, TaskDTO>().ReverseMap();
             CreateMap<TaskMaster, TaskCreateDTO>().ReverseMap();
 
 

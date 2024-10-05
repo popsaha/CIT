@@ -50,7 +50,7 @@ namespace CIT.API.Controllers
 
                 _response.StatusCode = HttpStatusCode.OK;
                 _response.IsSuccess = true;
-                _response.Result = _mapper.Map<List<TaskListDTO>>(taskList);
+                _response.Result = _mapper.Map<List<TaskListsDTO>>(taskList);
 
                 return Ok(_response);
             }

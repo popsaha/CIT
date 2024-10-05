@@ -1,4 +1,4 @@
-﻿namespace CIT.API.Models.Dto
+﻿namespace CIT.API.Models.Dto.Order
 {
     public class OrderDTO
     {
