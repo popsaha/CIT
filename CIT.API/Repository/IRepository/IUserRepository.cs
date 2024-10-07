@@ -1,4 +1,6 @@
-﻿using CIT.API.Models.Dto;
+﻿using CIT.API.Models;
+using CIT.API.Models.Dto.Login;
+using CIT.API.Models.Dto.Registration;
 
 namespace CIT.API.Repository.IRepository
 {
@@ -6,6 +8,6 @@ namespace CIT.API.Repository.IRepository
     {
         bool IsUniqueUser(string username);
         Task<LoginResponseDTO> Login(LoginRequestDTO loginRequestDTO);
-        //Task<UserDTO> Register(RegisterationRequestDTO registerationRequestDTO);
+        Task<LocalUser> Register(RegisterationRequestDTO registerationRequestDTO);
     }
 }
