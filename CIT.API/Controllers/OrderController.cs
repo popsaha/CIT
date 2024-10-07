@@ -22,6 +22,11 @@ namespace CIT.API.Controllers
             _logger = logger;
         }
 
+        /// <summary>
+        /// Creating a new order.
+        /// </summary>
+        /// <param name="orderDTO"></param>
+        /// <returns></returns>
         [HttpPost("CreateOrder")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -43,6 +48,7 @@ namespace CIT.API.Controllers
             }
         }
 
+
         [HttpPost("GetOrderDetails")]
         public async Task<IActionResult> GetOrderDetails(int ResourceId)
         {
@@ -63,7 +69,11 @@ namespace CIT.API.Controllers
         }
 
 
-        // POST: api/order/updateRoute
+        /// <summary>
+        /// If user wants to update the route of any order.
+        /// </summary>
+        /// <param name="orderUpdateRouteDTO"></param>
+        /// <returns></returns>
         [HttpPost("updateRoute")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -94,7 +104,11 @@ namespace CIT.API.Controllers
 
         }
 
-
+        /// <summary>
+        /// Get order list by a specific date in "yyyy-MM-dd" format to show in the web interface.
+        /// </summary>
+        /// <param name="selectedDate">The date in "yyyy-MM-dd" format.</param>
+        /// <returns>A list of orders for the specified date.</returns>
         [HttpGet("getOrdersList")]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
