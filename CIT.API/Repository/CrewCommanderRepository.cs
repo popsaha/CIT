@@ -3,7 +3,6 @@ using CIT.API.Context;
 using CIT.API.Models;
 using CIT.API.Repository.IRepository;
 using Dapper;
-using System.Data;
 
 namespace CIT.API.Repository
 {
@@ -20,12 +19,16 @@ namespace CIT.API.Repository
             _secretKey = configuration.GetValue<string>("ApiSettings:Secret");
         }
 
-        public async Task<IEnumerable<CrewCommander>> GetAllCrewCommanderList()
+        public async Task<IEnumerable<LocalUser>> GetAllCrewCommanderList()
         {
             using (var con = _db.CreateConnection())
             {
-                var taskList = await con.QueryAsync<CrewCommander>("spCrewCommander", commandType: CommandType.StoredProcedure);
-                return taskList.ToList();
+                var query = @"SELECT Id, UserName, Name, Role 
+                            FROM LocalUser 
+                            WHERE Role = 'crew'";
+                var crewCommanderList = await con.QueryAsync<LocalUser>(query);
+
+                return crewCommanderList.ToList();
             }
         }
     }
