@@ -5,6 +5,7 @@ using CIT.API.Repository.IRepository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using System.Security.Claims;
 
 namespace CIT.API.Controllers
 {
@@ -105,6 +106,7 @@ namespace CIT.API.Controllers
         [Authorize(Roles = "admin")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<APIResponse>> CreateCustomer([FromBody] CustomerCreateDTO createDTO)
         {
@@ -119,9 +121,14 @@ namespace CIT.API.Controllers
                     _response.ErrorMessages.Add("Invalid customer data.");
                     return BadRequest(_response);
                 }
+
+                // Get the userId from the claims (JWT token)
+                var userId = Convert.ToInt32(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
                 var customer = _mapper.Map<Customer>(createDTO);
 
-                Res = await _customerRepo.AddCustomer(createDTO);
+                Res = await _customerRepo.AddCustomer(createDTO, userId);
+
                 if (Res == 0)
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
