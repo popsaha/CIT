@@ -69,40 +69,7 @@ namespace CIT.API.Controllers
         }
 
 
-        /// <summary>
-        /// If user wants to update the route of any order.
-        /// </summary>
-        /// <param name="orderUpdateRouteDTO"></param>
-        /// <returns></returns>
-        [HttpPost("updateRoute")]
-        [ProducesResponseType(StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateOrderRoute([FromBody] OrderRouteUpdateDTO orderUpdateRouteDTO)
-        {
-            if (orderUpdateRouteDTO == null || !orderUpdateRouteDTO.OrderIds.Any())
-            {
-                return BadRequest(new APIResponse
-                {
-                    StatusCode = HttpStatusCode.BadRequest,
-                    IsSuccess = false,
-                    ErrorMessages = new List<string> { "Invalid input data" }
-                });
-            }
 
-            // Trim the RouteName before calling the method
-            orderUpdateRouteDTO.RouteName = orderUpdateRouteDTO.RouteName?.Trim();
-
-            var response = await _orderRepository.UpdateOrderRouteAsync(orderUpdateRouteDTO);
-
-            if (!response.IsSuccess)
-            {
-                return StatusCode((int)response.StatusCode, response);
-            }
-
-            return Ok(response);
-
-        }
 
         /// <summary>
         /// Get order list by a specific date in "yyyy-MM-dd" format to show in the web interface.

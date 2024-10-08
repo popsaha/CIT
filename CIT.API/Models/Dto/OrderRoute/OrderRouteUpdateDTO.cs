@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace CIT.API.Models.Dto.Order
+namespace CIT.API.Models.Dto.OrderRoute
 {
     public class OrderRouteUpdateDTO
     {

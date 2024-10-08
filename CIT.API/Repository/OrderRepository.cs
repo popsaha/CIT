@@ -5,7 +5,6 @@ using CIT.API.Models.Dto.Order;
 using CIT.API.Repository.IRepository;
 using Dapper;
 using System.Data;
-using System.Net;
 
 namespace CIT.API.Repository
 {
@@ -100,48 +99,6 @@ namespace CIT.API.Repository
                 Orderresponse = await connection.ExecuteScalarAsync<OrderResponse>("usp_Order", parameters, commandType: CommandType.StoredProcedure);
             }
             return Orderresponse;
-        }
-
-        public async Task<APIResponse> UpdateOrderRouteAsync(OrderRouteUpdateDTO updateRouteDTO)
-        {
-            try
-            {
-                // Convert list of order IDs to a comma-separated string
-                string orderIds = string.Join(",", updateRouteDTO.OrderIds);
-
-                using (var connection = _db.CreateConnection())
-                {
-                    var parameters = new DynamicParameters();
-                    parameters.Add("@OrderIds", orderIds);
-                    parameters.Add("@RouteName", updateRouteDTO.RouteName);
-
-                    // Call the stored procedure to update the routes                  
-
-                    var result = await connection.QueryAsync<string>(
-                        "spUpdateOrdersRoute",
-                        parameters,
-                        commandType: CommandType.StoredProcedure);
-
-                    return new APIResponse
-                    {
-                        StatusCode = HttpStatusCode.OK,
-                        IsSuccess = true,
-                        Result = result.FirstOrDefault()
-                    };
-                }
-
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error updating order route");
-
-                return new APIResponse
-                {
-                    StatusCode = HttpStatusCode.InternalServerError,
-                    IsSuccess = false,
-                    ErrorMessages = new List<string> { "Error updating order route" }
-                };
-            }
         }
 
         public async Task<IEnumerable<OrderListDTO>> GetOrdersWithTaskListAsync(DateTime selectedDate)
