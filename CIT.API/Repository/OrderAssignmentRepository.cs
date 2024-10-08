@@ -34,13 +34,14 @@ namespace CIT.API.Repository
 
                 try
                 {
-                    var nextDay = assignDate.AddDays(1);
+                    var nextDay = assignDate.AddDays(1).ToString("yyyy-MM-dd");
 
                     // Get orders for the next day
-                    var ordersQuery = @"SELECT OrderRouteId, OrderType 
-                                        FROM Orders 
-                                        WHERE OrderDate = @NextDay";
-                    var orders = await connection.QueryAsync<OrderRoutes>(ordersQuery, new { NextDay = nextDay }, transaction);
+                    var ordersQuery = @"SELECT OrderRouteId, p.PickupTypeName
+                                        FROM Orders o
+                                        INNER JOIN PickUpTypes p on p.pickuptypeid = o.pickuptypeid
+                                        WHERE OrderDate = @nextDay;";
+                    var orderRoutes = await connection.QueryAsync<OrderRoutes>(ordersQuery, new { NextDay = nextDay }, transaction);
 
                     // Get ATM team combinations
                     var atmCombinationsQuery = @"SELECT CrewId, LeadVehicleId 
@@ -50,11 +51,11 @@ namespace CIT.API.Repository
 
                     var assignments = new List<TeamAssignment>();
 
-                    foreach (var order in orders.OrderBy(x => Guid.NewGuid()))
+                    foreach (var orderRoute in orderRoutes.OrderBy(x => Guid.NewGuid()))
                     {
                         int crewId, leadVehicleId, chaseVehicleId;
 
-                        if (order.OrderType == "ATM")
+                        if (orderRoute.PickupTypeName == "ATM")
                         {
                             var fixedCombination = GetRandomATMCombination(atmCombinations);
                             crewId = fixedCombination.CrewId;
@@ -70,7 +71,7 @@ namespace CIT.API.Repository
 
                         assignments.Add(new TeamAssignment
                         {
-                            OrderRouteId = order.OrderRouteId,
+                            OrderRouteId = orderRoute.OrderRouteId,
                             CrewId = crewId,
                             LeadVehicleId = leadVehicleId,
                             ChaseVehicleId = chaseVehicleId,

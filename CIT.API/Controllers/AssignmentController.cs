@@ -7,6 +7,7 @@ using System.Net;
 
 namespace CIT.API.Controllers
 {
+    [Route("api/Assignment")]
     [ApiController]
     public class AssignmentController : ControllerBase
     {
