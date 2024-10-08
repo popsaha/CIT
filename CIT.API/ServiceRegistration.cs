@@ -29,6 +29,7 @@ namespace CIT.API
             services.AddScoped<IVehicleRepository, VehicleRepository>();
             services.AddScoped<ICrewCommanderRepository, CrewCommanderRepository>();
             services.AddScoped<ITaskRepository, TaskRepository>();
+            services.AddScoped<IOrderAssignmentRepository, OrderAssignmentRepository>();
         }
     }
 }
