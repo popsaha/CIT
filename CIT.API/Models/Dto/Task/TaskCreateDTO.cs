@@ -28,5 +28,6 @@ namespace CIT.API.Models.Dto.Task
         public int OrderRouteId { get; set; }
         public bool NewVehicleRequired { get; set; }
         public bool fullDayCheck { get; set; }
+        public bool OrderCreateStatus { get; set; }
     }
 }

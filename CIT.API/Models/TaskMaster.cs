@@ -24,6 +24,7 @@
         public int NoOfVehicles { get; set; }
         public int SubRouteNumber { get; set; }
         public bool fullDayCheck { get; set; }
+        public bool OrderCreateStatus { get; set; }
         public List<TaskBranch> taskbranchlist { get; set; }
         public List<VaultLocationMaster> vaultLocationMasters { get; set; }
         public List<OrderRoutes> Orderrouteslst { get; set; }
