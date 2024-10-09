@@ -34,7 +34,7 @@ namespace CIT.API.Repository
 
                 try
                 {
-                    var nextDay = assignDate.AddDays(1).ToString("yyyy-MM-dd");
+                    var nextDay = assignDate.AddDays(1).ToString("yyyy-dd-MM");
 
                     // Get orders for the next day
                     var ordersQuery = @"SELECT OrderRouteId, p.PickupTypeName
