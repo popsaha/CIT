@@ -22,6 +22,11 @@ namespace CIT.API.Controllers
             _logger = logger;
         }
 
+        /// <summary>
+        /// Creating a new order.
+        /// </summary>
+        /// <param name="orderDTO"></param>
+        /// <returns></returns>
         [HttpPost("CreateOrder")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -43,6 +48,7 @@ namespace CIT.API.Controllers
             }
         }
 
+
         [HttpPost("GetOrderDetails")]
         public async Task<IActionResult> GetOrderDetails(int ResourceId)
         {
@@ -63,38 +69,13 @@ namespace CIT.API.Controllers
         }
 
 
-        // POST: api/order/updateRoute
-        [HttpPost("updateRoute")]
-        [ProducesResponseType(StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateOrderRoute([FromBody] OrderRouteUpdateDTO orderUpdateRouteDTO)
-        {
-            if (orderUpdateRouteDTO == null || !orderUpdateRouteDTO.OrderIds.Any())
-            {
-                return BadRequest(new APIResponse
-                {
-                    StatusCode = HttpStatusCode.BadRequest,
-                    IsSuccess = false,
-                    ErrorMessages = new List<string> { "Invalid input data" }
-                });
-            }
-
-            // Trim the RouteName before calling the method
-            orderUpdateRouteDTO.RouteName = orderUpdateRouteDTO.RouteName?.Trim();
-
-            var response = await _orderRepository.UpdateOrderRouteAsync(orderUpdateRouteDTO);
-
-            if (!response.IsSuccess)
-            {
-                return StatusCode((int)response.StatusCode, response);
-            }
-
-            return Ok(response);
-
-        }
 
 
+        /// <summary>
+        /// Get order list by a specific date in "yyyy-MM-dd" format to show in the web interface.
+        /// </summary>
+        /// <param name="selectedDate">The date in "yyyy-MM-dd" format.</param>
+        /// <returns>A list of orders for the specified date.</returns>
         [HttpGet("getOrdersList")]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]

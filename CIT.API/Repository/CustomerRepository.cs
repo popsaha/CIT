@@ -11,11 +11,13 @@ namespace CIT.API.Repository
     public class CustomerRepository : ICustomerRepository
     {
         private readonly DapperContext _db;
+        private readonly ILogger<CustomerRepository> _logger;
         private readonly string _secretKey;
         private readonly IMapper _mapper;
-        public CustomerRepository(DapperContext db, IMapper mapper, IConfiguration configuration)
+        public CustomerRepository(DapperContext db, IMapper mapper, IConfiguration configuration, ILogger<CustomerRepository> logger)
         {
             _db = db;
+            _logger = logger;
             _mapper = mapper;
             _secretKey = configuration.GetValue<string>("ApiSettings:Secret");
         }
@@ -44,24 +46,32 @@ namespace CIT.API.Repository
             return customer;
         }
 
-        public async Task<int> AddCustomer(CustomerCreateDTO customerDTO)
+        public async Task<int> AddCustomer(CustomerCreateDTO customerDTO, int userId)
         {
-            int Res = 0;
-            using (var connection = _db.CreateConnection())
+            try
             {
-                DynamicParameters parameters = new DynamicParameters();
+                using (var connection = _db.CreateConnection())
+                {
+                    DynamicParameters parameters = new DynamicParameters();
 
-                parameters.Add("Flag", "C");
-                parameters.Add("CustomerName", customerDTO.CustomerName);
-                parameters.Add("Address", customerDTO.Address);
-                parameters.Add("ContactNumber", customerDTO.ContactNumber);
-                parameters.Add("Email", customerDTO.Email);
-                var customerId = await connection.ExecuteScalarAsync<int>("spCustomer", parameters, commandType: CommandType.StoredProcedure);
+                    parameters.Add("Flag", "C");
+                    parameters.Add("CustomerName", customerDTO.CustomerName);
+                    parameters.Add("Address", customerDTO.Address);
+                    parameters.Add("ContactNumber", customerDTO.ContactNumber);
+                    parameters.Add("Email", customerDTO.Email);
+                    parameters.Add("CreatedBy", userId);
 
-                return customerId;
-            };
+                    var customerId = await connection.ExecuteScalarAsync<int>("spCustomer", parameters, commandType: CommandType.StoredProcedure);
 
+                    return customerId;
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while adding a customer. UserId: {UserId}, CustomerName: {CustomerName}", userId, customerDTO.CustomerName);
 
+                throw;
+            }
         }
 
         public async Task<int> DeleteCustomer(int customerid, int deletedBy)

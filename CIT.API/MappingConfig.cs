@@ -55,9 +55,9 @@ namespace CIT.API
 
             CreateMap<Vehicle, VehicleDTO>().ReverseMap();
 
-            CreateMap<CrewCommander, CrewCommanderDTO>().ReverseMap();
+            CreateMap<LocalUser, CrewCommanderDTO>().ReverseMap();
 
-            CreateMap<CrewCommander, CrewCommanderDTO>().ReverseMap();
+            //CreateMap<CrewCommander, CrewCommanderDTO>().ReverseMap();
 
             CreateMap<TaskMaster, TaskDTO>().ReverseMap();
             CreateMap<TaskMaster, TaskCreateDTO>().ReverseMap();

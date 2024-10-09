@@ -1,5 +1,5 @@
 ﻿using CIT.API.Models;
-using CIT.API.Models.Dto;
+using CIT.API.Models.Dto.Login;
 using CIT.API.Repository.IRepository;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
@@ -22,6 +22,7 @@ namespace CIT.API.Controllers
         public async Task<IActionResult> Login([FromBody] LoginRequestDTO model)
         {
             var loginResponse = await _userRepo.Login(model);
+
             if (loginResponse.User == null || string.IsNullOrEmpty(loginResponse.Token))
             {
                 _response.StatusCode = HttpStatusCode.BadRequest;
@@ -29,6 +30,7 @@ namespace CIT.API.Controllers
                 _response.ErrorMessages.Add("Username or password is incorrect");
                 return BadRequest(_response);
             }
+
             _response.StatusCode = HttpStatusCode.OK;
             _response.IsSuccess = true;
             _response.Result = loginResponse;

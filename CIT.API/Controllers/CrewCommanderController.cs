@@ -1,8 +1,6 @@
 ﻿using AutoMapper;
 using CIT.API.Models;
 using CIT.API.Models.Dto.CrewCommander;
-using CIT.API.Models.Dto.Vehicle;
-using CIT.API.Repository;
 using CIT.API.Repository.IRepository;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
@@ -32,7 +30,7 @@ namespace CIT.API.Controllers
         {
             try
             {
-                IEnumerable<CrewCommander> crewCommanders = await _crewCommander.GetAllCrewCommanderList();
+                IEnumerable<LocalUser> crewCommanders = await _crewCommander.GetAllCrewCommanderList();
 
                 if (crewCommanders == null || !crewCommanders.Any())
                 {

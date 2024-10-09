@@ -1,9 +1,5 @@
 using CIT.API;
-using CIT.API.Context;
 using CIT.API.Middlewares;
-using CIT.API.Models;
-using CIT.API.Repository;
-using CIT.API.Repository.IRepository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -21,23 +17,10 @@ var logger = new LoggerConfiguration()
 builder.Logging.ClearProviders();
 builder.Logging.AddSerilog(logger);
 
-builder.Services.AddScoped<APIResponse>();
+
+
 // Add services to the container.
-builder.Services.AddAutoMapper(typeof(MappingConfig));
-builder.Services.AddSingleton<DapperContext>();
-builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IOrderRepository, OrderRepository>();
-builder.Services.AddScoped<IBranchRepositoty, BranchRepositoty>();
-builder.Services.AddScoped<IOrderTypeRepository, OrderTypeRepository>();
-builder.Services.AddScoped<IRegionRepository, RegionRepository>();
-builder.Services.AddScoped<ITaskListRepository, TaskListRepository>();
-builder.Services.AddScoped<ITaskGroupRepository, TaskGroupRepository>();
-builder.Services.AddScoped<ITaskGroupListRepository, TaskGroupListRepository>();
-builder.Services.AddScoped<IVehiclesAssignmentRepository, VehiclesAssignmentRepository>();
-builder.Services.AddScoped<IVehicleRepository, VehicleRepository>();
-builder.Services.AddScoped<ICrewCommanderRepository, CrewCommanderRepository>();
-builder.Services.AddScoped<ITaskRepository, TaskRepository>();
+builder.Services.AddRepositoryServices();
 
 
 builder.Services.AddCors(options =>
