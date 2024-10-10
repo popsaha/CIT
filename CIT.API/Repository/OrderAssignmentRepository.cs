@@ -34,7 +34,7 @@ namespace CIT.API.Repository
 
                 try
                 {
-                    var nextDay = assignDate.AddDays(1).ToString("yyyy-MM-dd");
+                    var nextDay = assignDate.AddDays(1).ToString("yyyy-dd-MM");
 
                     // Query to get the orders with FullDayOccupancy info
                     var ordersQuery = @"SELECT OrderId, OrderRouteId, IsFullDayAssignment
