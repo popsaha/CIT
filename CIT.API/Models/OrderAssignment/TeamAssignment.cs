@@ -2,7 +2,8 @@
 {
     public class TeamAssignment
     {
-        public int OrderRouteId { get; set; }
+        public int OrderId { get; set; }
+        public int TeamAssignmentId { get; set; }
         public int CrewId { get; set; }
         public int LeadVehicleId { get; set; }
         public int ChaseVehicleId { get; set; }
