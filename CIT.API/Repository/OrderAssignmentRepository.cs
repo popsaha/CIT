@@ -36,52 +36,92 @@ namespace CIT.API.Repository
                 {
                     var nextDay = assignDate.AddDays(1).ToString("yyyy-MM-dd");
 
-                    // Get orders for the next day
-                    var ordersQuery = @"SELECT OrderRouteId, p.PickupTypeName
-                                        FROM Orders o
-                                        INNER JOIN PickUpTypes p on p.pickuptypeid = o.pickuptypeid
-                                        WHERE OrderDate = @nextDay;";
-                    var orderRoutes = await connection.QueryAsync<OrderRoutes>(ordersQuery, new { NextDay = nextDay }, transaction);
+                    // Query to get the orders with FullDayOccupancy info
+                    var ordersQuery = @"SELECT OrderId, OrderRouteId, IsFullDayAssignment
+                                FROM Orders
+                                WHERE OrderDate = @NextDay;";
+                    var orders = await connection.QueryAsync<OrderRoutes>(ordersQuery, new { NextDay = nextDay }, transaction);
 
                     // Get ATM team combinations
-                    var atmCombinationsQuery = @"SELECT CrewId, LeadVehicleId 
-                                             FROM ATMTeamCombinations 
-                                             WHERE @Date BETWEEN StartDate AND EndDate";
-                    var atmCombinations = await connection.QueryAsync<ATMTeamCombination>(atmCombinationsQuery, new { Date = nextDay }, transaction);
+                    //var atmCombinationsQuery = @"SELECT CrewId, LeadVehicleId 
+                    //                         FROM ATMTeamCombinations 
+                    //                         WHERE @Date BETWEEN StartDate AND EndDate";
+                    //var atmCombinations = await connection.QueryAsync<ATMTeamCombination>(atmCombinationsQuery, new { Date = nextDay }, transaction);
 
+                    // Track which routes already have team assignments
+                    var assignedRoutes = new Dictionary<int, int>(); // Dictionary to store OrderRouteId and TeamAssignmentId
                     var assignments = new List<TeamAssignment>();
+                    int teamAssignmentId = 1; // Start assigning team IDs from 1
 
-                    foreach (var orderRoute in orderRoutes.OrderBy(x => Guid.NewGuid()))
+                    foreach (var order in orders)
                     {
                         int crewId, leadVehicleId, chaseVehicleId;
 
-                        if (orderRoute.PickupTypeName == "ATM")
+                        if (order.IsFullDayAssignment)
                         {
-                            var fixedCombination = GetRandomATMCombination(atmCombinations);
-                            crewId = fixedCombination.CrewId;
-                            leadVehicleId = fixedCombination.LeadVehicleId;
-                            chaseVehicleId = GetRandomId(chaseVehicleIds);
-                        }
-                        else
-                        {
+                            // Full day orders get unique teams
                             crewId = GetRandomId(crewIds);
                             leadVehicleId = GetRandomId(leadVehicleIds);
                             chaseVehicleId = GetRandomId(chaseVehicleIds);
+
+                            assignments.Add(new TeamAssignment
+                            {
+                                OrderId = order.OrderId,
+                                TeamAssignmentId = teamAssignmentId++,
+                                CrewId = crewId,
+                                LeadVehicleId = leadVehicleId,
+                                ChaseVehicleId = chaseVehicleId
+                            });
+                        }
+                        else
+                        {
+                            // For non-full-day orders, check if a team is already assigned to this route
+                            if (!assignedRoutes.TryGetValue(order.OrderRouteId, out var existingTeamId))
+                            {
+                                // Assign a new team for this route
+                                crewId = GetRandomId(crewIds);
+                                leadVehicleId = GetRandomId(leadVehicleIds);
+                                chaseVehicleId = GetRandomId(chaseVehicleIds);
+
+                                existingTeamId = teamAssignmentId++;
+                                assignedRoutes[order.OrderRouteId] = existingTeamId;
+
+                                // Store the new assignment
+                                assignments.Add(new TeamAssignment
+                                {
+                                    OrderId = order.OrderId,
+                                    TeamAssignmentId = existingTeamId,
+                                    CrewId = crewId,
+                                    LeadVehicleId = leadVehicleId,
+                                    ChaseVehicleId = chaseVehicleId
+                                });
+                            }
+                            else
+                            {
+                                // Get the team already assigned for this route
+                                var existingTeamAssignment = assignments.First(a => a.TeamAssignmentId == existingTeamId);
+
+                                crewId = existingTeamAssignment.CrewId;
+                                leadVehicleId = existingTeamAssignment.LeadVehicleId;
+                                chaseVehicleId = existingTeamAssignment.ChaseVehicleId;
+
+                                // Assign the existing team for this route
+                                assignments.Add(new TeamAssignment
+                                {
+                                    OrderId = order.OrderId,
+                                    TeamAssignmentId = existingTeamId,
+                                    CrewId = crewId,
+                                    LeadVehicleId = leadVehicleId,
+                                    ChaseVehicleId = chaseVehicleId
+                                });
+                            }
                         }
 
-                        assignments.Add(new TeamAssignment
-                        {
-                            OrderRouteId = orderRoute.OrderRouteId,
-                            CrewId = crewId,
-                            LeadVehicleId = leadVehicleId,
-                            ChaseVehicleId = chaseVehicleId,
-                            AssignDate = assignDate
-                        });
                     }
 
-                    // Insert team assignments
-                    var insertQuery = @"INSERT INTO TeamAssignments (OrderRouteId, CrewId, LeadVehicleId, ChaseVehicleId, AssignDate) 
-                                    VALUES (@OrderRouteId, @CrewId, @LeadVehicleId, @ChaseVehicleId, @AssignDate)";
+                    // Insert assignments into database
+                    var insertQuery = @"INSERT INTO TeamAssignments (OrderId, TeamAssignmentId, CrewId, LeadVehicleId, ChaseVehicleId) 
+                                VALUES (@OrderId, @TeamAssignmentId, @CrewId, @LeadVehicleId, @ChaseVehicleId)";
                     var rowsAffected = await connection.ExecuteAsync(insertQuery, assignments, transaction);
 
                     transaction.Commit();
