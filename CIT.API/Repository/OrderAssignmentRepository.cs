@@ -120,8 +120,8 @@ namespace CIT.API.Repository
                     }
 
                     // Insert assignments into database
-                    var insertQuery = @"INSERT INTO TeamAssignments (OrderId, TeamAssignmentId, CrewId, LeadVehicleId, ChaseVehicleId) 
-                                VALUES (@OrderId, @TeamAssignmentId, @CrewId, @LeadVehicleId, @ChaseVehicleId)";
+                    var insertQuery = @"INSERT INTO TeamAssignments (OrderId, CrewId, LeadVehicleId, ChaseVehicleId) 
+                                VALUES (@OrderId, @CrewId, @LeadVehicleId, @ChaseVehicleId)";
                     var rowsAffected = await connection.ExecuteAsync(insertQuery, assignments, transaction);
 
                     transaction.Commit();
