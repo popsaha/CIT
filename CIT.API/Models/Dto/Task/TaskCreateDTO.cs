@@ -20,7 +20,7 @@ namespace CIT.API.Models.Dto.Task
         public int CustomerRecipiantLocationId { get; set; }
         public int RepeatId { get; set; }
         public string OrderCreateDate { get; set; }
-        public string RepeatDaysName { get; set; }     
+        public string RepeatDaysName { get; set; }
         public string EndOnDate { get; set; }
         public int VaultID { get; set; }
         public bool isVault { get; set; }
@@ -29,5 +29,7 @@ namespace CIT.API.Models.Dto.Task
         public bool NewVehicleRequired { get; set; }
         public bool fullDayCheck { get; set; }
         public bool OrderCreateStatus { get; set; }
+        public int IsEditTask { get; set; }
+        public int TaskId { get; set; }
     }
 }
