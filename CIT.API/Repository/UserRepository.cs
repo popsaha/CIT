@@ -58,11 +58,14 @@ namespace CIT.API.Repository
             {
                 using (var connection = _db.CreateConnection())
                 {
-                    string query = @"SELECT Id, UserName, Name, Role 
-                                    FROM LocalUser 
-                                    WHERE LOWER(UserName) = LOWER(@UserName) AND Password = @Password";
+                    string query = @"
+                        SELECT u.UserId, u.UserName, r.RoleName AS Role 
+                        FROM UserMaster u
+                        INNER JOIN UserRoleMapping urm ON u.UserId = urm.UserId
+                        INNER JOIN RoleMaster r ON urm.RoleId = r.RoleId
+                        WHERE LOWER(u.UserName) = LOWER(@UserName) AND u.Password = @Password";
 
-                    var user = await connection.QueryFirstOrDefaultAsync<LocalUser>(query, new
+                    var user = await connection.QueryFirstOrDefaultAsync<UserMaster>(query, new
                     {
                         UserName = loginRequestDTO.UserName,
                         Password = loginRequestDTO.Password
@@ -103,7 +106,7 @@ namespace CIT.API.Repository
             }
         }
 
-        private string GenerateJwtToken(LocalUser user)
+        private string GenerateJwtToken(UserMaster user)
         {
             // Define the token handler
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -116,7 +119,7 @@ namespace CIT.API.Repository
             {
                 Subject = new ClaimsIdentity(new[]
                 {
-                    new Claim(ClaimTypes.Name, user.Id.ToString()),
+                    new Claim(ClaimTypes.Name, user.UserID.ToString()),
                     new Claim(ClaimTypes.Role, user.Role)
                 }),
                 Expires = DateTime.UtcNow.AddDays(7), // Token expiration
