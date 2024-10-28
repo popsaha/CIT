@@ -94,11 +94,17 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+// Enable static file handling for Swagger UI
+app.UseStaticFiles();  // Add this to serve static files like Swagger
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+        c.RoutePrefix = "swagger"; // Ensure this matches your path setup
+    });
 }
 
 app.UseMiddleware<ExceptionHandlerMiddleware>();

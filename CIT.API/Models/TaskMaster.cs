@@ -25,6 +25,8 @@
         public int SubRouteNumber { get; set; }
         public bool fullDayCheck { get; set; }
         public bool OrderCreateStatus { get; set; }
+        public int IsEditTask { get; set; }
+        public int TaskId { get; set; }
         public List<TaskBranch> taskbranchlist { get; set; }
         public List<VaultLocationMaster> vaultLocationMasters { get; set; }
         public List<OrderRoutes> Orderrouteslst { get; set; }

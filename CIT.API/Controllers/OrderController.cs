@@ -68,9 +68,6 @@ namespace CIT.API.Controllers
             }
         }
 
-
-
-
         /// <summary>
         /// Get order list by a specific date in "yyyy-MM-dd" format to show in the web interface.
         /// </summary>

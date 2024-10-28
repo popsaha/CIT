@@ -30,8 +30,7 @@ namespace CIT.API.Repository
                 using (var connection = _db.CreateConnection())
                 {
                     DynamicParameters parameters = new DynamicParameters();
-
-                    parameters.Add("flag", "4");
+                    parameters.Add("flag", taskmaster.IsEditTask == 1 ? "10" : "4");
                     parameters.Add("OrderId", taskmaster.OrderId);
                     parameters.Add("OrderTypeID", taskmaster.OrderTypeID);
                     parameters.Add("PriorityId", taskmaster.PriorityId);
@@ -51,7 +50,7 @@ namespace CIT.API.Repository
                     parameters.Add("OrderRouteId", taskmaster.OrderRouteId);
                     parameters.Add("NewVehicleRequired", taskmaster.NewVehicleRequired);
                     parameters.Add("IsFullDayAssignment", taskmaster.fullDayCheck);
-
+                    parameters.Add("TaskId", taskmaster.TaskId);
                     Res = await connection.ExecuteScalarAsync<int>("usp_Order", parameters, commandType: CommandType.StoredProcedure);
                 };
             }
@@ -130,6 +129,26 @@ namespace CIT.API.Repository
             string year = GetDate[2];
             Result = year + "-" + month + "-" + day;
             return Result;
+        }
+
+        public async Task<TaskMaster> GetEditTask_Details(int TaskId)
+        {
+            try
+            {
+                TaskMaster taskMaster = new TaskMaster();
+                using (var connection = _db.CreateConnection())
+                {
+                    DynamicParameters parameters = new DynamicParameters();
+                    parameters.Add("flag", "9");
+                    parameters.Add("TaskId", TaskId);
+                    taskMaster = await connection.QueryFirstOrDefaultAsync<TaskMaster>("usp_Order", parameters, commandType: CommandType.StoredProcedure);
+                    return taskMaster;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
         }
     }
 }

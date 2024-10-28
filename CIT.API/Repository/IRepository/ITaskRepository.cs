@@ -12,5 +12,6 @@ namespace CIT.API.Repository.IRepository
         public Task<IEnumerable<OrderRoutes>> GetOrderRoutes();
         Task<int> CreateTask(TaskMaster taskmaster);
         public Task<TaskMaster> GetOrderTaskData(string OrderNumber);
+        public Task<TaskMaster> GetEditTask_Details(int TaskId);
     }
 }
