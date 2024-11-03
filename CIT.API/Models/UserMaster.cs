@@ -6,6 +6,7 @@
         public string UserName { get; set; }  // User's username
         //public string PasswordHash { get; set; }  // Hashed password
         public string Role { get; set; }  // Foreign key to RoleMaster
+        public int RegionID { get; set; } 
 
     }
 }

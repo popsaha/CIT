@@ -101,7 +101,7 @@ namespace CIT.API.Repository
             return Orderresponse;
         }
 
-        public async Task<IEnumerable<OrderListDTO>> GetOrdersWithTaskListAsync(DateTime selectedDate)
+        public async Task<IEnumerable<OrderListDTO>> GetOrdersWithTaskListAsync(DateTime selectedDate,string regionId)
         {
             //var sql = @"cit.spOrderList";  // Stored procedure name
 
@@ -109,6 +109,7 @@ namespace CIT.API.Repository
             {
                 var parameters = new DynamicParameters();
                 parameters.Add("@SelectedDate", selectedDate, DbType.Date);
+                parameters.Add("@regionId", Convert.ToInt32(regionId));
 
                 // Execute the stored procedure
                 var orders = await connection.QueryAsync<OrderListDTO>(

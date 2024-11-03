@@ -31,5 +31,6 @@ namespace CIT.API.Models.Dto.Task
         public bool OrderCreateStatus { get; set; }
         public int IsEditTask { get; set; }
         public int TaskId { get; set; }
+        public int CreatedBy { get; set; }
     }
 }

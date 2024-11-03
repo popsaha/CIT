@@ -8,10 +8,7 @@ namespace CIT.API.Repository.IRepository
         //IEnumerable<RouteMaster> GetRoutelist(int customerId);
         Task<int> CreateOrder(OrderDTO orderDTO);
         Task<OrderResponse> GetOrderDetails(int Response);
-
-
-
         //get Orderlist by date
-        Task<IEnumerable<OrderListDTO>> GetOrdersWithTaskListAsync(DateTime date);
+        Task<IEnumerable<OrderListDTO>> GetOrdersWithTaskListAsync(DateTime date, string regionId);
     }
 }

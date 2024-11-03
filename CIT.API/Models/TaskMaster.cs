@@ -27,6 +27,7 @@
         public bool OrderCreateStatus { get; set; }
         public int IsEditTask { get; set; }
         public int TaskId { get; set; }
+        public int CreatedBy { get; set; }
         public List<TaskBranch> taskbranchlist { get; set; }
         public List<VaultLocationMaster> vaultLocationMasters { get; set; }
         public List<OrderRoutes> Orderrouteslst { get; set; }

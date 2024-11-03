@@ -89,7 +89,7 @@ namespace CIT.API.Controllers
                     return BadRequest(_response);
                 }
 
-                var orders = await _orderRepository.GetOrdersWithTaskListAsync(validDate);
+                var orders = await _orderRepository.GetOrdersWithTaskListAsync(validDate, selectedDate.regionId);
 
                 if (orders == null || !orders.Any())
                 {

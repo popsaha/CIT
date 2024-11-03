@@ -59,19 +59,17 @@ namespace CIT.API.Repository
                 using (var connection = _db.CreateConnection())
                 {
                     string query = @"
-                        SELECT u.UserId, u.UserName, r.RoleName AS Role 
+                        SELECT u.UserId, u.UserName, r.RoleName AS Role, RegionID 
                         FROM UserMaster u
                         INNER JOIN UserRoleMapping urm ON u.UserId = urm.UserId
                         INNER JOIN RoleMaster r ON urm.RoleId = r.RoleId
+                        INNER JOIN UserRegionMapping ON UserRegionMapping.UserID = u.UserID
                         WHERE LOWER(u.UserName) = LOWER(@UserName) AND u.Password = @Password";
-
                     var user = await connection.QueryFirstOrDefaultAsync<UserMaster>(query, new
                     {
                         UserName = loginRequestDTO.UserName,
                         Password = loginRequestDTO.Password
                     });
-
-
                     if (user == null)
                     {
                         return new LoginResponseDTO

@@ -36,5 +36,6 @@ namespace CIT.API.Models.Dto.Order
         [Required(ErrorMessage = "Date is required.")]
         [RegularExpression(@"\d{4}-\d{2}-\d{2}", ErrorMessage = "The date format must be yyyy-MM-dd.")]
         public string? Date { get; set; }
+        public string regionId { get; set; }
     }
 }

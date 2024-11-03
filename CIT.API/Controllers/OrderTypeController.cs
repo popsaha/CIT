@@ -24,6 +24,7 @@ namespace CIT.API.Controllers
             _response = new();
         }
         [HttpGet]
+        //[Authorize]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status200OK)]
