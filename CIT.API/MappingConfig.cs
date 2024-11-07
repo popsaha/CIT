@@ -65,6 +65,9 @@ namespace CIT.API
 
             CreateMap<CrewTaskDetails, CrewTaskDetailsDTO>().ReverseMap();
             CreateMap<CrewTaskDetails, CrewTaskStatusUpdateDTO>().ReverseMap();
+            CreateMap<CrewTaskDetails, CrewTaskParcelDTO>().ReverseMap();
+            CreateMap<CrewTaskDetails, CrewTaskFailedStatusDTO>().ReverseMap();
+
 
 
         }
