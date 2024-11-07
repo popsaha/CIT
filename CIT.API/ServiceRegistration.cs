@@ -31,6 +31,7 @@ namespace CIT.API
             services.AddScoped<ITaskRepository, TaskRepository>();
             services.AddScoped<IOrderAssignmentRepository, OrderAssignmentRepository>();
             services.AddScoped<IPickupTypesRepository, PickupTypesRepository>();
+            services.AddScoped<ICrewTaskDetailsRepository, CrewTaskDetailsRepository>();
         }
     }
 }
