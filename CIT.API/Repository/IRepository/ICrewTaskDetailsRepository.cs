@@ -12,7 +12,9 @@ namespace CIT.API.Repository.IRepository
 
         Task<bool> crewTaskFailedAsync(int crewCommanderId, int taskId, string status, CrewTaskFailedStatusDTO failedDTO, string activityType);
 
-     
+        Task<bool> arrivedDeliveryAsync(int crewCommanderId, int taskId, string status, CrewTaskStatusUpdateDTO arrivedDTO, string activityType);
+
+        Task<string> GetParcelData(int taskId);
 
     }
 }

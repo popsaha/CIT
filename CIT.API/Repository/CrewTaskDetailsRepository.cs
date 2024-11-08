@@ -76,8 +76,7 @@ namespace CIT.API.Repository
                 // Set ScreenId based on specific activity types
                 int screenId = activityType switch
                 {
-                    "Arrived" => 2,
-                    "ArrivedAtDelivery" =>5 ,
+                    "Arrived" => 2,                  
                     "Unloaded" => 6,
                     "Completed" => 7,
                     _ => 1 // Default screenId for other activity types
@@ -145,7 +144,38 @@ namespace CIT.API.Repository
             }
         }
 
- 
+        public async Task<bool> arrivedDeliveryAsync(int crewCommanderId, int taskId, string status, CrewTaskStatusUpdateDTO arrivedDTO, string activityType)
+        {
+            using (var con = _db.CreateConnection())
+            {
+                DynamicParameters parameters = new DynamicParameters();
+                parameters.Add("Flag", 'F');
+                parameters.Add("CrewCommanderId", crewCommanderId);
+                parameters.Add("TaskId", taskId);
+                parameters.Add("Status", status);
+                parameters.Add("UserId", arrivedDTO.UserId);
+
+                int screenId = activityType == "ArrivedDelivery" ? 5 : 4;
+                parameters.Add("ScreenId", screenId);
+                parameters.Add("Time", arrivedDTO.Time);
+                parameters.Add("Lat", arrivedDTO.Location?.Lat);
+                parameters.Add("Long", arrivedDTO.Location?.Long);
+                parameters.Add("ActivityType", activityType);
+
+                var result = await con.ExecuteAsync("spCrewTaskDetails", parameters, commandType: CommandType.StoredProcedure);
+                return result > 0;
+            }
+        }
+
+        // Method to fetch parcel data as comma-separated values
+        public async Task<string> GetParcelData(int taskId)
+        {
+            using (var con = _db.CreateConnection())
+            {
+                var query = "SELECT ParcelsLoaded  FROM CITTASKDETAIL WHERE TaskId = @TaskId";
+                return await con.QueryFirstOrDefaultAsync<string>(query, new { TaskId = taskId });
+            }
+        }
 
     }
 }

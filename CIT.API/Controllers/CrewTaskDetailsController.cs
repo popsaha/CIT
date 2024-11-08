@@ -4,6 +4,7 @@ using CIT.API.Models.Dto.CrewTaskDetails;
 using CIT.API.Repository.IRepository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using System.Linq;
 using System.Net;
 using System.Security.Claims;
@@ -11,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace CIT.API.Controllers
 {
-    [Authorize] 
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class CrewTaskDetailsController : ControllerBase
@@ -92,7 +93,7 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<APIResponse>> GetTaskDetails(int taskId,int userId)
+        public async Task<ActionResult<APIResponse>> GetTaskDetails(int taskId, int userId)
         {
             try
             {
@@ -161,7 +162,6 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-
         public async Task<ActionResult<APIResponse>> StartTask(int taskId, [FromBody] CrewTaskStatusUpdateDTO updateDTO)
         {
             try
@@ -176,8 +176,8 @@ namespace CIT.API.Controllers
 
                 var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name); //code tries to find the user's ID from their claims (data associated with their login session).
 
-                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int authenticatedUserId) || authenticatedUserId != updateDTO.UserId) // If the claim with the user ID is missing, then the user isn’t authorized., If the user ID claim is there but can’t be converted to a valid integer (which the code expects), it’s also unauthorized.
-                                                                                                                                                             //If the user’s ID from the claim doesn’t match the ID in the update request, the user isn’t authorized to update this                        particular task.
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int authenticatedUserId) || authenticatedUserId != updateDTO.UserId) // If the claim with the user ID is missing, then the user isn’t authorized., If the user ID claim is there but can’t be converted to a valid integer (which the code expects), it’s also unauthorized .                                                                     
+                    //If the user’s ID from the claim doesn’t match the ID in the update request, the    user isn’t authorized to update this particular task.
                 {
                     _response.StatusCode = HttpStatusCode.Unauthorized;
                     _response.IsSuccess = false;
@@ -199,12 +199,21 @@ namespace CIT.API.Controllers
 
                 _response.StatusCode = HttpStatusCode.OK;
                 _response.IsSuccess = true;
-                _response.Result = new {                 
-                    status= status,
+                _response.Result = new
+                {
+                    status = status,
                     time = updateDTO.Time.ToString("MM/dd/yyyy HH:mm:ss")
                 };
                 return Ok(_response);
             }
+            catch (SqlException ex) when (ex.Number == 50000) // Check for the custom SQL error number
+            {
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add(ex.Message); // Display the custom message from the procedure
+                return BadRequest(_response);
+            }
+
             catch (Exception ex)
             {
                 _response.StatusCode = HttpStatusCode.InternalServerError;
@@ -264,6 +273,14 @@ namespace CIT.API.Controllers
                 };
                 return Ok(_response);
             }
+            catch (SqlException ex) when (ex.Number == 50000) // Check for the custom SQL error number
+            {
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add(ex.Message); // Display the custom message from the procedure
+                return BadRequest(_response);
+            }
+
             catch (Exception ex)
             {
                 _response.StatusCode = HttpStatusCode.InternalServerError;
@@ -323,6 +340,14 @@ namespace CIT.API.Controllers
                 };
                 return Ok(_response);
             }
+            catch (SqlException ex) when (ex.Number == 50000) // Check for the custom SQL error number
+            {
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add(ex.Message); // Display the custom message from the procedure
+                return BadRequest(_response);
+            }
+
             catch (Exception ex)
             {
                 _response.StatusCode = HttpStatusCode.InternalServerError;
@@ -331,7 +356,6 @@ namespace CIT.API.Controllers
                 return StatusCode((int)HttpStatusCode.InternalServerError, _response);
             }
         }
-
 
         [HttpPost("{taskId}/Loaded")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -382,6 +406,15 @@ namespace CIT.API.Controllers
                 };
                 return Ok(_response);
             }
+
+            catch (SqlException ex) when (ex.Number == 50000) // Check for the custom SQL error number
+            {
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add(ex.Message); // Display the custom message from the procedure
+                return BadRequest(_response);
+            }
+
             catch (Exception ex)
             {
                 _response.StatusCode = HttpStatusCode.InternalServerError;
@@ -390,6 +423,84 @@ namespace CIT.API.Controllers
                 return StatusCode((int)HttpStatusCode.InternalServerError, _response);
             }
         }
+
+        [HttpPost("{taskId}/Arrived_at_Delivery")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<APIResponse>> ArrivedDeliveryTask(int taskId, [FromBody] CrewTaskStatusUpdateDTO arrivedDTO)
+        {
+            try
+            {
+                if (taskId <= 0)
+                {
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Invalid task ID.");
+                    return BadRequest(_response);
+                }
+
+                var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
+
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int authenticatedUserId) || authenticatedUserId != arrivedDTO.UserId)
+                {
+                    _response.StatusCode = HttpStatusCode.Unauthorized;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Unauthorized access to tasks.");
+                    return Unauthorized(_response);
+                }
+
+                string status = "ArrivedAtDelivery";
+                string activityType = "ArrivedDelivery";
+                bool updateResult = await _crewTaskDetailsRepository.arrivedDeliveryAsync(authenticatedUserId, taskId, status, arrivedDTO, activityType);
+
+                if (!updateResult)
+                {
+                    _response.StatusCode = HttpStatusCode.Forbidden;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("You are not allowed to update this task.");
+                    return StatusCode((int)HttpStatusCode.Forbidden, _response);
+                }
+
+                // Fetch parcel data from repository (stored as comma-separated values in CITTASKDETAIL)
+                var parcelData = await _crewTaskDetailsRepository.GetParcelData(taskId);
+
+                // Format parcel data for response
+                List<object> parcels = parcelData != null
+                    ? parcelData.Split(',').Select(qrCode => new { parcelQR = qrCode }).Cast<object>().ToList()
+                    : new List<object>();
+
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.IsSuccess = true;
+                _response.Result = new
+                {
+                    status = status,
+                    time = arrivedDTO.Time.ToString("MM/dd/yyyy HH:mm:ss"),
+                    parcels = parcels
+                };
+
+                return Ok(_response);
+            }
+
+            catch (SqlException ex) when (ex.Number == 50000) // Check for the custom SQL error number
+            {
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add(ex.Message); // Display the custom message from the procedure
+                return BadRequest(_response);
+            }
+
+            catch (Exception ex)
+            {
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add(ex.Message);
+                return StatusCode((int)HttpStatusCode.InternalServerError, _response);
+            }
+        }
+
 
         [HttpPost("{taskId}/Unloaded")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -440,6 +551,15 @@ namespace CIT.API.Controllers
                 };
                 return Ok(_response);
             }
+
+            catch (SqlException ex) when (ex.Number == 50000) // Check for the custom SQL error number
+            {
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add(ex.Message); // Display the custom message from the procedure
+                return BadRequest(_response);
+            }
+
             catch (Exception ex)
             {
                 _response.StatusCode = HttpStatusCode.InternalServerError;
@@ -500,6 +620,15 @@ namespace CIT.API.Controllers
                 };
                 return Ok(_response);
             }
+
+            catch (SqlException ex) when (ex.Number == 50000) // Check for the custom SQL error number
+            {
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add(ex.Message); // Display the custom message from the procedure
+                return BadRequest(_response);
+            }
+
             catch (Exception ex)
             {
                 _response.StatusCode = HttpStatusCode.InternalServerError;
@@ -509,7 +638,7 @@ namespace CIT.API.Controllers
             }
         }
 
-       
+
 
     }
 }
