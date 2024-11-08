@@ -76,8 +76,7 @@ namespace CIT.API.Repository
                 // Set ScreenId based on specific activity types
                 int screenId = activityType switch
                 {
-                    "Arrived" => 2,                  
-                    "Unloaded" => 6,
+                    "Arrived" => 2,                                      
                     "Completed" => 7,
                     _ => 1 // Default screenId for other activity types
                 };
@@ -105,7 +104,15 @@ namespace CIT.API.Repository
                 parameters.Add("TaskId", taskId);
                 parameters.Add("Status", status);
                 parameters.Add("UserId", parcelDTO.UserId);
-                parameters.Add("ScreenId", 4);
+
+                int screenId = activityType switch
+                {
+                    "Loaded" => 4,
+                    "Unloaded" => 6,
+                    
+                    _ => 1 // Default screenId for other activity types
+                };
+                parameters.Add("ScreenId", screenId);
                 parameters.Add("Time", parcelDTO.Time);
                 parameters.Add("Lat", parcelDTO.Location?.Lat);
                 parameters.Add("Long", parcelDTO.Location?.Long);
@@ -114,6 +121,9 @@ namespace CIT.API.Repository
                 // Create a comma-separated string from ParcelQR values
                 var parcelsCsv = string.Join(",", parcelDTO.Parcels.Select(p => p.ParcelQR));
                 parameters.Add("ParcelsLoaded", parcelsCsv);
+
+                var parcelsCsv2 = string.Join(",", parcelDTO.Parcels.Select(p => p.ParcelQR));
+                parameters.Add("ParcelsUnloaded", parcelsCsv2);
 
                 var result = await con.ExecuteAsync("spCrewTaskDetails", parameters, commandType: CommandType.StoredProcedure);
 

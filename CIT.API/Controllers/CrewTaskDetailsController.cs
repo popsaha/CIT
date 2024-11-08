@@ -365,6 +365,7 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<APIResponse>> LoadedTask(int taskId, [FromBody] CrewTaskParcelDTO parcelDTO)
         {
+            
             try
             {
                 if (taskId <= 0)
@@ -508,7 +509,7 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<APIResponse>> UnloadParcel(int taskId, [FromBody] CrewTaskStatusUpdateDTO updateDTO)
+        public async Task<ActionResult<APIResponse>> UnloadParcel(int taskId, [FromBody] CrewTaskParcelDTO parcelDTO)
         {
             try
             {
@@ -522,7 +523,7 @@ namespace CIT.API.Controllers
 
                 var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
 
-                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int authenticatedUserId) || authenticatedUserId != updateDTO.UserId)
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int authenticatedUserId) || authenticatedUserId != parcelDTO.UserId)
                 {
                     _response.StatusCode = HttpStatusCode.Unauthorized;
                     _response.IsSuccess = false;
@@ -532,7 +533,7 @@ namespace CIT.API.Controllers
 
                 string status = "Unloaded";
                 string activityType = "Unloaded";
-                bool updateResult = await _crewTaskDetailsRepository.UpdateTaskStatusAsync(authenticatedUserId, taskId, status, updateDTO, activityType);
+                bool updateResult = await _crewTaskDetailsRepository.parcelLoadStatusAsync(authenticatedUserId, taskId, status, parcelDTO, activityType);
 
                 if (!updateResult)
                 {
@@ -547,7 +548,7 @@ namespace CIT.API.Controllers
                 _response.Result = new
                 {
                     status = status,
-                    time = updateDTO.Time.ToString("MM/dd/yyyy HH:mm:ss")
+                    time = parcelDTO.Time.ToString("MM/dd/yyyy HH:mm:ss")
                 };
                 return Ok(_response);
             }
