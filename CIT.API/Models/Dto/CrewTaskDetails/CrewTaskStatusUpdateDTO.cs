@@ -1,11 +1,16 @@
-﻿namespace CIT.API.Models.Dto.CrewTaskDetails
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace CIT.API.Models.Dto.CrewTaskDetails
 {
     public class CrewTaskStatusUpdateDTO
     {
-     
+        [Required(ErrorMessage = "UserId is required.")]
         public int UserId { get; set; }
-        public int ScreenId { get; set; }
+        [Required(ErrorMessage = "ScreenId is required.")]
+        public string ScreenId { get; set; }
+       
         public DateTime Time { get; set; } = DateTime.UtcNow;
+      
         public Location Location { get; set; }
         
 
@@ -13,7 +18,9 @@
 
     public class Location
     {
+        [Required(ErrorMessage = "Lat is required.")]
         public string Lat { get; set; }
+        [Required(ErrorMessage = "Long is required.")]
         public string Long { get; set; }
     }
     

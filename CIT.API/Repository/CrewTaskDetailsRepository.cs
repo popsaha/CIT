@@ -63,10 +63,62 @@ namespace CIT.API.Repository
         }
 
 
-        public async Task<bool> UpdateTaskStatusAsync(int crewCommanderId, int taskId, string status, CrewTaskStatusUpdateDTO updateDTO, string activityType)
+        public async Task<string> GetNextScreenIdByTaskId(int taskId)
+        {
+            // Get the current ScreenId
+            var currentScreenId = await GetCurrentScreenIdByTaskId(taskId);
+
+            // If current ScreenId is null, initialize to default
+            if (string.IsNullOrEmpty(currentScreenId))
+            {
+                return "CIT-1";
+            }
+
+            // Check if the ScreenId follows the format "CIT-<number>"
+            if (currentScreenId.StartsWith("CIT-"))
+            {
+                // Extract the numeric part of the ScreenId
+                var screenNumberPart = currentScreenId.Substring(4);
+
+                if (int.TryParse(screenNumberPart, out int currentNumber))
+                {
+                    // Increment the numeric part to get the next screen ID
+                    int nextNumber = currentNumber + 1;
+                    return $"CIT-{nextNumber}";
+                }
+            }
+
+            // Default value if ScreenId is in an unexpected format
+            return "CIT-1";
+        }
+
+
+        public async Task<string> GetCurrentScreenIdByTaskId(int taskId)
         {
             using (var con = _db.CreateConnection())
             {
+                var query = "SELECT ScreenId FROM Task WHERE TaskID = @TaskId";
+                var screenId = await con.QueryFirstOrDefaultAsync<string>(query, new { TaskId = taskId });
+                if (screenId == null)
+                {
+                    Console.WriteLine($"ScreenId could not be found for TaskID: {taskId}");
+                }
+                return screenId;
+            }
+        }
+
+        public async Task<bool> UpdateTaskStatusAsync(int crewCommanderId, int taskId, string status, CrewTaskStatusUpdateDTO updateDTO, string activityType)
+        {
+
+            using (var con = _db.CreateConnection())
+            {
+                // Check if current ScreenId is already CIT-6 before proceeding
+                var currentScreenId = await GetCurrentScreenIdByTaskId(taskId);
+                if (currentScreenId == "CIT-6")
+                {
+                    return false; // Prevent update if task is marked as completed
+                }
+
                 DynamicParameters parameters = new DynamicParameters();
                 parameters.Add("Flag", 'C');
                 parameters.Add("CrewCommanderId", crewCommanderId);
@@ -74,15 +126,14 @@ namespace CIT.API.Repository
                 parameters.Add("Status", status);
                 parameters.Add("UserId", updateDTO.UserId);
                 // Set ScreenId based on specific activity types
-                int screenId = activityType switch
-                {
-                    "Arrived" => 2,                  
-                    "Unloaded" => 6,
-                    "Completed" => 7,
-                    _ => 1 // Default screenId for other activity types
-                };
+                //int screenId = activityType switch
+                //{
+                //    "Arrived" => 2,                                      
+                //    "Completed" => 7,
+                //    _ => 1 // Default screenId for other activity types
+                //};
 
-                parameters.Add("ScreenId", screenId); // Set ScreenId based on activityType  // Set ScreenId to 1 as required by the update
+                parameters.Add("ScreenId", updateDTO.ScreenId); // Set ScreenId based on activityType  // Set ScreenId to 1 as required by the update
                 parameters.Add("Time", updateDTO.Time);  // Pass the start time from DTO
                 parameters.Add("Lat", updateDTO.Location?.Lat);  // Pass Latitude if available
                 parameters.Add("Long", updateDTO.Location?.Long);  // Pass Longitude if available
@@ -99,21 +150,37 @@ namespace CIT.API.Repository
         {
             using (var con = _db.CreateConnection())
             {
+                // Check if current ScreenId is already CIT-6 before proceeding
+                var currentScreenId = await GetCurrentScreenIdByTaskId(taskId);
+                if (currentScreenId == "CIT-6")
+                {
+                    return false; // Prevent update if task is marked as completed
+                }
+
+                // Check for duplicate ParcelQR values
+                var parcelQRs = parcelDTO.Parcels.Select(p => p.ParcelQR).ToList();
+                if (parcelQRs.Count != parcelQRs.Distinct().Count())
+                {
+                    Console.WriteLine("Duplicate Parcel QR codes detected.");
+                    return false; // Duplicate ParcelQR codes detected
+                }
+
                 DynamicParameters parameters = new DynamicParameters();
                 parameters.Add("Flag", 'D');
                 parameters.Add("CrewCommanderId", crewCommanderId);
                 parameters.Add("TaskId", taskId);
                 parameters.Add("Status", status);
                 parameters.Add("UserId", parcelDTO.UserId);
-                parameters.Add("ScreenId", 4);
+                parameters.Add("ScreenId", parcelDTO.ScreenId);
                 parameters.Add("Time", parcelDTO.Time);
                 parameters.Add("Lat", parcelDTO.Location?.Lat);
                 parameters.Add("Long", parcelDTO.Location?.Long);
                 parameters.Add("ActivityType", activityType);
 
-                // Create a comma-separated string from ParcelQR values
-                var parcelsCsv = string.Join(",", parcelDTO.Parcels.Select(p => p.ParcelQR));
+                // Create a comma-separated string from unique ParcelQR values
+                var parcelsCsv = string.Join(",", parcelQRs);
                 parameters.Add("ParcelsLoaded", parcelsCsv);
+                parameters.Add("ParcelsUnloaded", parcelsCsv);
 
                 var result = await con.ExecuteAsync("spCrewTaskDetails", parameters, commandType: CommandType.StoredProcedure);
 
@@ -121,17 +188,24 @@ namespace CIT.API.Repository
             }
         }
 
+
         public async Task<bool> crewTaskFailedAsync(int crewCommanderId, int taskId, string status, CrewTaskFailedStatusDTO failedDTO, string activityType)
         {
             using (var con = _db.CreateConnection())
             {
+                var currentScreenId = await GetCurrentScreenIdByTaskId(taskId);
+                if (currentScreenId == "CIT-7")
+                {
+                    return false; // Prevent update if task is already marked as failed
+                }
+
                 DynamicParameters parameters = new DynamicParameters();
                 parameters.Add("Flag", 'E');
                 parameters.Add("CrewCommanderId", crewCommanderId);
                 parameters.Add("TaskId", taskId);
                 parameters.Add("Status", status);
                 parameters.Add("UserId", failedDTO.UserId);
-                parameters.Add("ScreenId", 3);
+                parameters.Add("ScreenId", failedDTO.ScreenId);
                 parameters.Add("Time", failedDTO.Time);
                 parameters.Add("Lat", failedDTO.Location?.Lat);
                 parameters.Add("Long", failedDTO.Location?.Long);
@@ -148,6 +222,13 @@ namespace CIT.API.Repository
         {
             using (var con = _db.CreateConnection())
             {
+                // Check if current ScreenId is already CIT-6 before proceeding
+                var currentScreenId = await GetCurrentScreenIdByTaskId(taskId);
+                if (currentScreenId == "CIT-6")
+                {
+                    return false; // Prevent update if task is marked as completed
+                }
+
                 DynamicParameters parameters = new DynamicParameters();
                 parameters.Add("Flag", 'F');
                 parameters.Add("CrewCommanderId", crewCommanderId);
@@ -155,8 +236,8 @@ namespace CIT.API.Repository
                 parameters.Add("Status", status);
                 parameters.Add("UserId", arrivedDTO.UserId);
 
-                int screenId = activityType == "ArrivedDelivery" ? 5 : 4;
-                parameters.Add("ScreenId", screenId);
+                //int screenId = activityType == "ArrivedDelivery" ? 5 : 4;
+                parameters.Add("ScreenId", arrivedDTO.ScreenId);
                 parameters.Add("Time", arrivedDTO.Time);
                 parameters.Add("Lat", arrivedDTO.Location?.Lat);
                 parameters.Add("Long", arrivedDTO.Location?.Long);

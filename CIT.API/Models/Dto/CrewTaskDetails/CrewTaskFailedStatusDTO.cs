@@ -1,11 +1,18 @@
-﻿namespace CIT.API.Models.Dto.CrewTaskDetails
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace CIT.API.Models.Dto.CrewTaskDetails
 {
     public class CrewTaskFailedStatusDTO
     {
+        [Required(ErrorMessage = "UserId is required.")]
         public int UserId { get; set; }
-        public int ScreenId { get; set; }
+        [Required(ErrorMessage = "ScreenId is required.")]
+        public string ScreenId { get; set; }
+        [Required]
         public DateTime Time { get; set; } = DateTime.UtcNow;
+        
         public Location Location { get; set; }
+        [Required(ErrorMessage = "FailureReason is required.")]
         public string FailureReason { get; set; }
 
 
