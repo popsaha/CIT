@@ -118,7 +118,8 @@ namespace CIT.API.Repository
                 Subject = new ClaimsIdentity(new[]
                 {
                     new Claim(ClaimTypes.Name, user.UserID.ToString()),
-                    new Claim(ClaimTypes.Role, user.Role)
+                    new Claim(ClaimTypes.Role, user.Role),
+                     new Claim("regionID", user.RegionID.ToString())
                 }),
                 Expires = DateTime.UtcNow.AddDays(7), // Token expiration
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
