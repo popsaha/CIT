@@ -274,10 +274,7 @@ namespace CIT.API.Controllers
 
             try
             {
-                if (updateDTO.Location.Long == "string" || updateDTO.Location.Lat == "string")
-                {
-                    return BadRequest(new { message = "In location Lat and Log is Required." });
-                }
+               
 
                 if (taskId <= 0)
                 {
@@ -296,6 +293,12 @@ namespace CIT.API.Controllers
                     _response.ErrorMessages.Add("Unauthorized access to tasks.");
                     return Unauthorized(_response);
                 }
+
+                if (updateDTO.Location.Long == "string" || updateDTO.Location.Lat == "string")
+                {
+                    return BadRequest(new { message = "In location Lat and Log is Required." });
+                }
+             
 
                 //// Retrieve the current ScreenId for validation
                 //var currentScreenId = await _crewTaskDetailsRepository.GetCurrentScreenIdByTaskId(taskId);
@@ -386,18 +389,6 @@ namespace CIT.API.Controllers
 
             try
             {
-                if (failedDTO.Location.Long == "string" || failedDTO.Location.Lat == "string")
-                {
-                    return BadRequest(new { message = "In location Lat and Log is Required." });
-                }
-                else if (failedDTO.FailureReason == "string")
-                {
-                    return BadRequest(new { message = "FailureReason is Required." });
-                }
-                else if (failedDTO.ScreenId == "string")
-                {
-                    return BadRequest(new { message = "ScreenId is Required." });
-                }
 
                 if (taskId <= 0)
                 {
@@ -416,6 +407,20 @@ namespace CIT.API.Controllers
                     _response.ErrorMessages.Add("Unauthorized access to tasks.");
                     return Unauthorized(_response);
                 }
+
+                if (failedDTO.Location.Long == "string" || failedDTO.Location.Lat == "string")
+                {
+                    return BadRequest(new { message = "In location Lat and Log is Required." });
+                }
+                else if (failedDTO.FailureReason == "string")
+                {
+                    return BadRequest(new { message = "FailureReason is Required." });
+                }
+                else if (failedDTO.ScreenId == "string")
+                {
+                    return BadRequest(new { message = "ScreenId is Required." });
+                }
+              
 
                 // Step 1: Retrieve the current screen ID for this task
                 var currentScreenId = await _crewTaskDetailsRepository.GetCurrentScreenIdByTaskId(taskId);
@@ -494,11 +499,7 @@ namespace CIT.API.Controllers
 
             try
             {
-                if (parcelDTO.Location.Long == "string" || parcelDTO.Location.Lat == "string")
-                {
-                    return BadRequest(new { message = "In location Lat and Log is Required." });
-                }
-
+               
                 // Validate for duplicate ParcelQR values
                 var parcelQRs = parcelDTO.Parcels.Select(p => p.ParcelQR).ToList();
                 if (parcelQRs.Count != parcelQRs.Distinct().Count())
@@ -526,6 +527,12 @@ namespace CIT.API.Controllers
                     _response.ErrorMessages.Add("Unauthorized access to tasks.");
                     return Unauthorized(_response);
                 }
+
+                if (parcelDTO.Location.Long == "string" || parcelDTO.Location.Lat == "string")
+                {
+                    return BadRequest(new { message = "In location Lat and Log is Required." });
+                }
+
 
                 // Step 1: Retrieve the current screen ID for this task
                 var currentScreenId = await _crewTaskDetailsRepository.GetCurrentScreenIdByTaskId(taskId);
@@ -606,10 +613,7 @@ namespace CIT.API.Controllers
 
             try
             {
-                if (arrivedDTO.Location.Long == "string" || arrivedDTO.Location.Lat == "string")
-                {
-                    return BadRequest(new { message = "In location Lat and Log is Required." });
-                }
+               
 
                 if (taskId <= 0)
                 {
@@ -629,6 +633,10 @@ namespace CIT.API.Controllers
                     return Unauthorized(_response);
                 }
 
+                if (arrivedDTO.Location.Long == "string" || arrivedDTO.Location.Lat == "string")
+                {
+                    return BadRequest(new { message = "In location Lat and Log is Required." });
+                }
 
                 // Step 1: Retrieve the current screen ID for this task
                 var currentScreenId = await _crewTaskDetailsRepository.GetCurrentScreenIdByTaskId(taskId);
@@ -721,10 +729,7 @@ namespace CIT.API.Controllers
 
             try
             {
-                if (parcelDTO.Location.Long == "string" || parcelDTO.Location.Lat == "string")
-                {
-                    return BadRequest(new { message = "In location Lat and Log is Required." });
-                }
+                
                 // Validate for duplicate ParcelQR values
                 var parcelQRs = parcelDTO.Parcels.Select(p => p.ParcelQR).ToList();
                 if (parcelQRs.Count != parcelQRs.Distinct().Count())
@@ -751,6 +756,11 @@ namespace CIT.API.Controllers
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("Unauthorized access to tasks.");
                     return Unauthorized(_response);
+                }
+
+                if (parcelDTO.Location.Long == "string" || parcelDTO.Location.Lat == "string")
+                {
+                    return BadRequest(new { message = "In location Lat and Log is Required." });
                 }
 
                 // Step 1: Retrieve the current screen ID for this task
@@ -833,10 +843,7 @@ namespace CIT.API.Controllers
 
             try
             {
-                if (updateDTO.Location.Long == "string" || updateDTO.Location.Lat == "string")
-                {
-                    return BadRequest(new { message = "In location Lat and Log is Required." });
-                }
+                
 
                 if (taskId <= 0)
                 {
@@ -855,6 +862,11 @@ namespace CIT.API.Controllers
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("Unauthorized access to tasks.");
                     return Unauthorized(_response);
+                }
+
+                if (updateDTO.Location.Long == "string" || updateDTO.Location.Lat == "string")
+                {
+                    return BadRequest(new { message = "In location Lat and Log is Required." });
                 }
 
                 // Step 1: Retrieve the current screen ID for this task
