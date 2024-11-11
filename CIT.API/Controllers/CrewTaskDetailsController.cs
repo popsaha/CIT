@@ -34,7 +34,7 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<APIResponse>> GetCrewTasks(int userId)
+        public async Task<ActionResult<APIResponse>> GetCrewTasks(int userId, DateTime? orderDate = null)
         {
             try
             {
@@ -60,7 +60,7 @@ namespace CIT.API.Controllers
                 }
 
                 // Retrieve assigned tasks from repository based on user ID
-                var crewTasks = await _crewTaskDetailsRepository.GetCrewTasksByCommanderIdAsync(authenticatedUserId, userId);
+                var crewTasks = await _crewTaskDetailsRepository.GetCrewTasksByCommanderIdAsync(authenticatedUserId, userId, orderDate);
 
                 if (crewTasks == null || !crewTasks.Any())
                 {
@@ -165,19 +165,11 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<APIResponse>> StartTask(int taskId, [FromBody] CrewTaskStatusUpdateDTO updateDTO)
         {
-            if (!ModelState.IsValid)
-            {
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.IsSuccess = false;
-                _response.ErrorMessages = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
-                return BadRequest(_response);
-            }
 
             try
             {
+               
+
                 if (taskId <= 0)
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
@@ -195,9 +187,13 @@ namespace CIT.API.Controllers
                     return Unauthorized(_response);
                 }
 
+                if (updateDTO.Location.Long == "string" || updateDTO.Location.Lat == "string")
+                {
+                    return BadRequest(new { message = "In location Lat and Log is Required." });
+                }
 
                 // Step 1: Retrieve the current screen ID for this task
-                var currentScreenId = await _crewTaskDetailsRepository.GetCurrentScreenIdByTaskId(taskId);
+                var currentScreenId = await _crewTaskDetailsRepository.GetCurrentScreenIdByTaskId(taskId);               
                 if (currentScreenId == null)
                 {
                     return BadRequest(new { message = "Task screen ID could not be retrieved." });
@@ -208,6 +204,12 @@ namespace CIT.API.Controllers
                 if (currentScreenId == "CIT-6")
                 {
                     return BadRequest(new { message = "Task is already marked as completed and cannot be modified further." });
+                }
+
+                // Prevent further modification if the task is already marked as failed with ScreenId "CIT-7"
+                if (currentScreenId == "CIT-7")
+                {
+                    return BadRequest(new { message = "Task has already been marked as failed and cannot be modified further." });
                 }
 
                 // Step 2: Calculate the next expected screen ID
@@ -267,18 +269,16 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<APIResponse>> ArriveTask(int taskId, [FromBody] CrewTaskStatusUpdateDTO updateDTO)
         {
-            if (!ModelState.IsValid)
-            {
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.IsSuccess = false;
-                _response.ErrorMessages = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
-                return BadRequest(_response);
-            }
+
+
+
             try
             {
+                if (updateDTO.Location.Long == "string" || updateDTO.Location.Lat == "string")
+                {
+                    return BadRequest(new { message = "In location Lat and Log is Required." });
+                }
+
                 if (taskId <= 0)
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
@@ -318,6 +318,12 @@ namespace CIT.API.Controllers
                 if (currentScreenId == "CIT-6")
                 {
                     return BadRequest(new { message = "Task is already marked as completed and cannot be modified further." });
+                }
+
+                // Prevent further modification if the task is already marked as failed with ScreenId "CIT-7"
+                if (currentScreenId == "CIT-7")
+                {
+                    return BadRequest(new { message = "Task has already been marked as failed and cannot be modified further." });
                 }
 
                 // Step 2: Calculate the next expected screen ID
@@ -376,19 +382,23 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<APIResponse>> FailedTask(int taskId, [FromBody] CrewTaskFailedStatusDTO failedDTO)
         {
-            if (!ModelState.IsValid)
-            {
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.IsSuccess = false;
-                _response.ErrorMessages = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
-                return BadRequest(_response);
-            }
+
 
             try
             {
+                if (failedDTO.Location.Long == "string" || failedDTO.Location.Lat == "string")
+                {
+                    return BadRequest(new { message = "In location Lat and Log is Required." });
+                }
+                else if (failedDTO.FailureReason == "string")
+                {
+                    return BadRequest(new { message = "FailureReason is Required." });
+                }
+                else if (failedDTO.ScreenId == "string")
+                {
+                    return BadRequest(new { message = "ScreenId is Required." });
+                }
+
                 if (taskId <= 0)
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
@@ -409,7 +419,7 @@ namespace CIT.API.Controllers
 
                 // Step 1: Retrieve the current screen ID for this task
                 var currentScreenId = await _crewTaskDetailsRepository.GetCurrentScreenIdByTaskId(taskId);
-             
+
 
                 // Prevent further modification if ScreenId is already "CIT-7"
                 if (currentScreenId == null)
@@ -427,10 +437,10 @@ namespace CIT.API.Controllers
                 var expectedNextScreenId = await _crewTaskDetailsRepository.GetNextScreenIdByTaskId(taskId);
 
                 // Step 3: Check if the request ScreenId matches the expected next ScreenId
-                if (failedDTO.ScreenId != expectedNextScreenId)
-                {
-                    return BadRequest(new { message = "Invalid screen transition. The task has already passed this stage." });
-                }
+                //if (failedDTO.ScreenId != expectedNextScreenId)
+                //{
+                //    return BadRequest(new { message = "Invalid screen transition. The task has already passed this stage." });
+                //}
 
                 string status = "Failed";
                 string activityType = "Failed";
@@ -479,18 +489,26 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<APIResponse>> LoadedTask(int taskId, [FromBody] CrewTaskParcelDTO parcelDTO)
         {
-            if (!ModelState.IsValid)
-            {
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.IsSuccess = false;
-                _response.ErrorMessages = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
-                return BadRequest(_response);
-            }
+
+
+
             try
             {
+                if (parcelDTO.Location.Long == "string" || parcelDTO.Location.Lat == "string")
+                {
+                    return BadRequest(new { message = "In location Lat and Log is Required." });
+                }
+
+                // Validate for duplicate ParcelQR values
+                var parcelQRs = parcelDTO.Parcels.Select(p => p.ParcelQR).ToList();
+                if (parcelQRs.Count != parcelQRs.Distinct().Count())
+                {
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Duplicate Parcel QR codes detected.");
+                    return BadRequest(_response);
+                }
+
                 if (taskId <= 0)
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
@@ -520,6 +538,12 @@ namespace CIT.API.Controllers
                 if (currentScreenId == "CIT-6")
                 {
                     return BadRequest(new { message = "Task is already marked as completed and cannot be modified further." });
+                }
+
+                // Prevent further modification if the task is already marked as failed with ScreenId "CIT-7"
+                if (currentScreenId == "CIT-7")
+                {
+                    return BadRequest(new { message = "Task has already been marked as failed and cannot be modified further." });
                 }
 
                 // Step 2: Calculate the next expected screen ID
@@ -578,19 +602,15 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<APIResponse>> ArrivedDeliveryTask(int taskId, [FromBody] CrewTaskStatusUpdateDTO arrivedDTO)
         {
-            if (!ModelState.IsValid)
-            {
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.IsSuccess = false;
-                _response.ErrorMessages = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
-                return BadRequest(_response);
-            }
+
 
             try
             {
+                if (arrivedDTO.Location.Long == "string" || arrivedDTO.Location.Lat == "string")
+                {
+                    return BadRequest(new { message = "In location Lat and Log is Required." });
+                }
+
                 if (taskId <= 0)
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
@@ -621,6 +641,12 @@ namespace CIT.API.Controllers
                 if (currentScreenId == "CIT-6")
                 {
                     return BadRequest(new { message = "Task is already marked as completed and cannot be modified further." });
+                }
+
+                // Prevent further modification if the task is already marked as failed with ScreenId "CIT-7"
+                if (currentScreenId == "CIT-7")
+                {
+                    return BadRequest(new { message = "Task has already been marked as failed and cannot be modified further." });
                 }
 
                 // Step 2: Calculate the next expected screen ID
@@ -692,19 +718,23 @@ namespace CIT.API.Controllers
         public async Task<ActionResult<APIResponse>> UnloadParcel(int taskId, [FromBody] CrewTaskParcelDTO parcelDTO)
         {
 
-            if (!ModelState.IsValid)
-            {
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.IsSuccess = false;
-                _response.ErrorMessages = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
-                return BadRequest(_response);
-            }
 
             try
             {
+                if (parcelDTO.Location.Long == "string" || parcelDTO.Location.Lat == "string")
+                {
+                    return BadRequest(new { message = "In location Lat and Log is Required." });
+                }
+                // Validate for duplicate ParcelQR values
+                var parcelQRs = parcelDTO.Parcels.Select(p => p.ParcelQR).ToList();
+                if (parcelQRs.Count != parcelQRs.Distinct().Count())
+                {
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Duplicate Parcel QR codes detected.");
+                    return BadRequest(_response);
+                }
+
                 if (taskId <= 0)
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
@@ -734,6 +764,12 @@ namespace CIT.API.Controllers
                 if (currentScreenId == "CIT-6")
                 {
                     return BadRequest(new { message = "Task is already marked as completed and cannot be modified further." });
+                }
+
+                // Prevent further modification if the task is already marked as failed with ScreenId "CIT-7"
+                if (currentScreenId == "CIT-7")
+                {
+                    return BadRequest(new { message = "Task has already been marked as failed and cannot be modified further." });
                 }
 
                 // Step 2: Calculate the next expected screen ID
@@ -794,19 +830,14 @@ namespace CIT.API.Controllers
 
         public async Task<ActionResult<APIResponse>> CompletedTask(int taskId, [FromBody] CrewTaskStatusUpdateDTO updateDTO)
         {
-            if (!ModelState.IsValid)
-            {
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.IsSuccess = false;
-                _response.ErrorMessages = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
-                return BadRequest(_response);
-            }
 
             try
             {
+                if (updateDTO.Location.Long == "string" || updateDTO.Location.Lat == "string")
+                {
+                    return BadRequest(new { message = "In location Lat and Log is Required." });
+                }
+
                 if (taskId <= 0)
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
@@ -837,6 +868,12 @@ namespace CIT.API.Controllers
                 if (currentScreenId == "CIT-6")
                 {
                     return BadRequest(new { message = "Task is already marked as completed and cannot be modified further." });
+                }
+
+                // Prevent further modification if the task is already marked as failed with ScreenId "CIT-7"
+                if (currentScreenId == "CIT-7")
+                {
+                    return BadRequest(new { message = "Task has already been marked as failed and cannot be modified further." });
                 }
 
                 // Step 2: Calculate the next expected screen ID

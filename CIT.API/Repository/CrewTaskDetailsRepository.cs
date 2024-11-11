@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 using System.Linq;
 using System.Threading.Tasks;
 using CIT.API.Models;
+using CIT.API.Models.Dto.Order;
 
 namespace CIT.API.Repository
 {
@@ -22,7 +23,7 @@ namespace CIT.API.Repository
             _mapper = mapper;
         }
         // New method to get tasks for a specific Crew Commander
-        public async Task<IEnumerable<CrewTaskDetailsDTO>> GetCrewTasksByCommanderIdAsync(int crewCommanderId, int userId)
+        public async Task<IEnumerable<CrewTaskDetailsDTO>> GetCrewTasksByCommanderIdAsync(int crewCommanderId, int userId, DateTime? orderDate = null)
         {
             using (var con = _db.CreateConnection())
             {
@@ -30,6 +31,9 @@ namespace CIT.API.Repository
                 parameters.Add("Flag", 'A'); // Use flag 'A' for getting all tasks
                 parameters.Add("CrewCommanderId", crewCommanderId); // Pass the crew commander ID
                 parameters.Add("UserId", userId);
+
+                if (orderDate.HasValue)
+                    parameters.Add("OrderDate", orderDate.Value);
 
                 var crewTasks = await con.QueryAsync<CrewTaskDetailsDTO>(
                     "spCrewTaskDetails",
@@ -41,7 +45,7 @@ namespace CIT.API.Repository
             }
         }
 
-        public async Task<CrewTaskDetailsDTO> GetTaskDetailsByTaskIdAsync(int crewCommanderId, int taskId, int userId)
+        public async Task<CrewTaskDetailsByTaskIdDTO> GetTaskDetailsByTaskIdAsync(int crewCommanderId, int taskId, int userId)
         {
             using (var con = _db.CreateConnection())
             {
@@ -50,9 +54,10 @@ namespace CIT.API.Repository
                 parameters.Add("CrewCommanderId", crewCommanderId); // Ensure this crew commander is authorized for this task
                 parameters.Add("TaskId", taskId); // Pass TaskId to get specific task details
                 parameters.Add("UserId", userId);
+              
 
                 // Use QueryFirstOrDefaultAsync to ensure that the query returns null if no record is found
-                var taskDetails = await con.QueryFirstOrDefaultAsync<CrewTaskDetailsDTO>(
+                var taskDetails = await con.QueryFirstOrDefaultAsync<CrewTaskDetailsByTaskIdDTO>(
                     "spCrewTaskDetails", // This stored procedure must ensure that crewCommanderId is checked
                     parameters,
                     commandType: CommandType.StoredProcedure
@@ -113,11 +118,11 @@ namespace CIT.API.Repository
             using (var con = _db.CreateConnection())
             {
                 // Check if current ScreenId is already CIT-6 before proceeding
-                var currentScreenId = await GetCurrentScreenIdByTaskId(taskId);
-                if (currentScreenId == "CIT-6")
-                {
-                    return false; // Prevent update if task is marked as completed
-                }
+                //var currentScreenId = await GetCurrentScreenIdByTaskId(taskId);
+                //if (currentScreenId == "CIT-6")
+                //{
+                //    return false; // Prevent update if task is marked as completed
+                //}
 
                 DynamicParameters parameters = new DynamicParameters();
                 parameters.Add("Flag", 'C');
@@ -151,11 +156,11 @@ namespace CIT.API.Repository
             using (var con = _db.CreateConnection())
             {
                 // Check if current ScreenId is already CIT-6 before proceeding
-                var currentScreenId = await GetCurrentScreenIdByTaskId(taskId);
-                if (currentScreenId == "CIT-6")
-                {
-                    return false; // Prevent update if task is marked as completed
-                }
+                //var currentScreenId = await GetCurrentScreenIdByTaskId(taskId);
+                //if (currentScreenId == "CIT-6")
+                //{
+                //    return false; // Prevent update if task is marked as completed
+                //}
 
                 // Check for duplicate ParcelQR values
                 var parcelQRs = parcelDTO.Parcels.Select(p => p.ParcelQR).ToList();
@@ -223,11 +228,11 @@ namespace CIT.API.Repository
             using (var con = _db.CreateConnection())
             {
                 // Check if current ScreenId is already CIT-6 before proceeding
-                var currentScreenId = await GetCurrentScreenIdByTaskId(taskId);
-                if (currentScreenId == "CIT-6")
-                {
-                    return false; // Prevent update if task is marked as completed
-                }
+                //var currentScreenId = await GetCurrentScreenIdByTaskId(taskId);
+                //if (currentScreenId == "CIT-6")
+                //{
+                //    return false; // Prevent update if task is marked as completed
+                //}
 
                 DynamicParameters parameters = new DynamicParameters();
                 parameters.Add("Flag", 'F');
