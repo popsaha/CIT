@@ -59,7 +59,7 @@ namespace CIT.API.Repository
                 using (var connection = _db.CreateConnection())
                 {
                     string query = @"
-                        SELECT u.UserId, u.UserName, r.RoleName AS Role, RegionID 
+                        SELECT u.UserId, u.UserName, r.RoleName AS Role, RegionID, u.UUID 
                         FROM UserMaster u
                         INNER JOIN UserRoleMapping urm ON u.UserId = urm.UserId
                         INNER JOIN RoleMaster r ON urm.RoleId = r.RoleId
@@ -119,9 +119,10 @@ namespace CIT.API.Repository
                 {
                     new Claim(ClaimTypes.Name, user.UserID.ToString()),
                     new Claim(ClaimTypes.Role, user.Role),
-                     new Claim("regionID", user.RegionID.ToString())
+                    new Claim("regionID", user.RegionID.ToString()),
+                    new Claim("uuid", user.UUID.ToString())
                 }),
-                Expires = DateTime.UtcNow.AddDays(7), // Token expiration
+                Expires = DateTime.UtcNow.AddDays(1), // Token expiration
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
 
