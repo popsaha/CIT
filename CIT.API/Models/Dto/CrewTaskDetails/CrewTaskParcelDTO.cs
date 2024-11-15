@@ -5,7 +5,7 @@ namespace CIT.API.Models.Dto.CrewTaskDetails
     public class CrewTaskParcelDTO
     {
         [Required(ErrorMessage = "UserId is required.")]
-        public int UserId { get; set; }
+        public Guid UUID { get; set; }
         [Required(ErrorMessage = "ScreenId is required.")]
         public string ScreenId { get; set; }
     

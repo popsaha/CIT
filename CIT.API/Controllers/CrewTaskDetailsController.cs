@@ -2,10 +2,12 @@
 using Azure.Core;
 using CIT.API.Models;
 using CIT.API.Models.Dto.CrewTaskDetails;
+using CIT.API.Repository;
 using CIT.API.Repository.IRepository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
+using System;
 using System.Linq;
 using System.Net;
 using System.Security.Claims;
@@ -34,10 +36,23 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<APIResponse>> GetCrewTasks(int userId, DateTime? orderDate = null)
+        public async Task<ActionResult<APIResponse>> GetCrewTasks(Guid uuid, DateTime? orderDate = null)
         {
             try
             {
+
+                // Retrieve the userId associated with the provided uuid using the repository method
+                int userId = await _crewTaskDetailsRepository.GetUserIdByUuidAsync(uuid);
+
+                //if (!userId)
+                //{
+                //    _response.StatusCode = HttpStatusCode.NotFound;
+                //    _response.IsSuccess = false;
+                //    _response.ErrorMessages.Add("User ID not found for the provided UUID.");
+                //    return NotFound(_response);
+                //}
+
+
                 // Retrieve the authenticated user's ID from the claims
                 var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
 
@@ -94,10 +109,12 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<APIResponse>> GetTaskDetails(int taskId, int userId)
+        public async Task<ActionResult<APIResponse>> GetTaskDetails(int taskId, Guid uuid)
         {
             try
             {
+                int userId = await _crewTaskDetailsRepository.GetUserIdByUuidAsync(uuid);
+
                 // Retrieve the claim for the crew commander ID from the token
                 var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name); // or another claim type, based on your token
 
@@ -168,7 +185,8 @@ namespace CIT.API.Controllers
 
             try
             {
-               
+
+                int userId = await _crewTaskDetailsRepository.GetUserIdByUuidAsync(updateDTO.UUID);
 
                 if (taskId <= 0)
                 {
@@ -179,7 +197,7 @@ namespace CIT.API.Controllers
                 }
 
                 var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
-                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int authenticatedUserId) || authenticatedUserId != updateDTO.UserId)
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int authenticatedUserId) || authenticatedUserId != userId)
                 {
                     _response.StatusCode = HttpStatusCode.Unauthorized;
                     _response.IsSuccess = false;
@@ -224,7 +242,7 @@ namespace CIT.API.Controllers
 
                 string status = "Started";
                 string activityType = "Start";
-                bool updateResult = await _crewTaskDetailsRepository.UpdateTaskStatusAsync(authenticatedUserId, taskId, status, updateDTO, activityType);
+                bool updateResult = await _crewTaskDetailsRepository.UpdateTaskStatusAsync(authenticatedUserId, taskId, status, updateDTO, activityType, userId);
 
                 if (!updateResult)
                 {
@@ -274,7 +292,8 @@ namespace CIT.API.Controllers
 
             try
             {
-               
+
+                int userId = await _crewTaskDetailsRepository.GetUserIdByUuidAsync(updateDTO.UUID);
 
                 if (taskId <= 0)
                 {
@@ -286,7 +305,7 @@ namespace CIT.API.Controllers
 
                 var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
 
-                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int authenticatedUserId) || authenticatedUserId != updateDTO.UserId)
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int authenticatedUserId) || authenticatedUserId != userId)
                 {
                     _response.StatusCode = HttpStatusCode.Unauthorized;
                     _response.IsSuccess = false;
@@ -340,7 +359,7 @@ namespace CIT.API.Controllers
 
                 string status = "Arrived";
                 string activityType = "Arrived";
-                bool updateResult = await _crewTaskDetailsRepository.UpdateTaskStatusAsync(authenticatedUserId, taskId, status, updateDTO, activityType);
+                bool updateResult = await _crewTaskDetailsRepository.UpdateTaskStatusAsync(authenticatedUserId, taskId, status, updateDTO, activityType, userId);
 
                 if (!updateResult)
                 {
@@ -389,6 +408,7 @@ namespace CIT.API.Controllers
 
             try
             {
+                int userId = await _crewTaskDetailsRepository.GetUserIdByUuidAsync(failedDTO.UUID);
 
                 if (taskId <= 0)
                 {
@@ -400,7 +420,7 @@ namespace CIT.API.Controllers
 
                 var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
 
-                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int authenticatedUserId) || authenticatedUserId != failedDTO.UserId)
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int authenticatedUserId) || authenticatedUserId != userId)
                 {
                     _response.StatusCode = HttpStatusCode.Unauthorized;
                     _response.IsSuccess = false;
@@ -432,6 +452,12 @@ namespace CIT.API.Controllers
                     return BadRequest(new { message = "Task screen ID could not be retrieved." });
                 }
 
+                // Prevent further modification if ScreenId is already "CIT-6"
+                if (currentScreenId == "CIT-6")
+                {
+                    return BadRequest(new { message = "Task is already marked as completed and cannot be modified further." });
+                }
+
                 // Prevent further modification if the task is already marked as failed with ScreenId "CIT-7"
                 if (currentScreenId == "CIT-7")
                 {
@@ -450,7 +476,7 @@ namespace CIT.API.Controllers
                 string status = "Failed";
                 string activityType = "Failed";
                 failedDTO.ScreenId = "CIT-7";
-                bool updateResult = await _crewTaskDetailsRepository.crewTaskFailedAsync(authenticatedUserId, taskId, status, failedDTO, activityType);
+                bool updateResult = await _crewTaskDetailsRepository.crewTaskFailedAsync(authenticatedUserId, taskId, status, failedDTO, activityType, userId);
 
                 if (!updateResult)
                 {
@@ -499,7 +525,8 @@ namespace CIT.API.Controllers
 
             try
             {
-               
+                int userId = await _crewTaskDetailsRepository.GetUserIdByUuidAsync(parcelDTO.UUID);
+
                 // Validate for duplicate ParcelQR values
                 var parcelQRs = parcelDTO.Parcels.Select(p => p.ParcelQR).ToList();
                 if (parcelQRs.Count != parcelQRs.Distinct().Count())
@@ -508,6 +535,11 @@ namespace CIT.API.Controllers
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("Duplicate Parcel QR codes detected.");
                     return BadRequest(_response);
+                }
+                // Check if any ParcelQR has the value "string"
+                if (parcelDTO.Parcels.Any(p => p.ParcelQR == "string"))
+                {
+                    return BadRequest(new { message = "ParcelQR cannot have the value 'string'." });
                 }
 
                 if (taskId <= 0)
@@ -520,7 +552,7 @@ namespace CIT.API.Controllers
 
                 var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
 
-                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int authenticatedUserId) || authenticatedUserId != parcelDTO.UserId)
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int authenticatedUserId) || authenticatedUserId != userId)
                 {
                     _response.StatusCode = HttpStatusCode.Unauthorized;
                     _response.IsSuccess = false;
@@ -564,7 +596,7 @@ namespace CIT.API.Controllers
 
                 string status = "Loaded";
                 string activityType = "Loaded";
-                bool updateResult = await _crewTaskDetailsRepository.parcelLoadStatusAsync(authenticatedUserId, taskId, status, parcelDTO, activityType);
+                bool updateResult = await _crewTaskDetailsRepository.parcelLoadStatusAsync(authenticatedUserId, taskId, status, parcelDTO, activityType, userId);
 
                 if (!updateResult)
                 {
@@ -613,7 +645,8 @@ namespace CIT.API.Controllers
 
             try
             {
-               
+                int userId = await _crewTaskDetailsRepository.GetUserIdByUuidAsync(arrivedDTO.UUID);
+
 
                 if (taskId <= 0)
                 {
@@ -625,7 +658,7 @@ namespace CIT.API.Controllers
 
                 var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
 
-                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int authenticatedUserId) || authenticatedUserId != arrivedDTO.UserId)
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int authenticatedUserId) || authenticatedUserId != userId)
                 {
                     _response.StatusCode = HttpStatusCode.Unauthorized;
                     _response.IsSuccess = false;
@@ -669,7 +702,7 @@ namespace CIT.API.Controllers
 
                 string status = "ArrivedAtDelivery";
                 string activityType = "ArrivedDelivery";
-                bool updateResult = await _crewTaskDetailsRepository.arrivedDeliveryAsync(authenticatedUserId, taskId, status, arrivedDTO, activityType);
+                bool updateResult = await _crewTaskDetailsRepository.arrivedDeliveryAsync(authenticatedUserId, taskId, status, arrivedDTO, activityType, userId);
 
                 if (!updateResult)
                 {
@@ -729,7 +762,8 @@ namespace CIT.API.Controllers
 
             try
             {
-                
+                int userId = await _crewTaskDetailsRepository.GetUserIdByUuidAsync(parcelDTO.UUID);
+
                 // Validate for duplicate ParcelQR values
                 var parcelQRs = parcelDTO.Parcels.Select(p => p.ParcelQR).ToList();
                 if (parcelQRs.Count != parcelQRs.Distinct().Count())
@@ -738,6 +772,11 @@ namespace CIT.API.Controllers
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("Duplicate Parcel QR codes detected.");
                     return BadRequest(_response);
+                }
+                // Check if any ParcelQR has the value "string"
+                if (parcelDTO.Parcels.Any(p => p.ParcelQR == "string"))
+                {
+                    return BadRequest(new { message = "ParcelQR cannot have the value 'string'." });
                 }
 
                 if (taskId <= 0)
@@ -750,7 +789,7 @@ namespace CIT.API.Controllers
 
                 var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
 
-                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int authenticatedUserId) || authenticatedUserId != parcelDTO.UserId)
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int authenticatedUserId) || authenticatedUserId != userId)
                 {
                     _response.StatusCode = HttpStatusCode.Unauthorized;
                     _response.IsSuccess = false;
@@ -793,7 +832,7 @@ namespace CIT.API.Controllers
 
                 string status = "Unloaded";
                 string activityType = "Unloaded";
-                bool updateResult = await _crewTaskDetailsRepository.parcelLoadStatusAsync(authenticatedUserId, taskId, status, parcelDTO, activityType);
+                bool updateResult = await _crewTaskDetailsRepository.parcelLoadStatusAsync(authenticatedUserId, taskId, status, parcelDTO, activityType, userId);
 
                 if (!updateResult)
                 {
@@ -843,7 +882,8 @@ namespace CIT.API.Controllers
 
             try
             {
-                
+                int userId = await _crewTaskDetailsRepository.GetUserIdByUuidAsync(updateDTO.UUID);
+
 
                 if (taskId <= 0)
                 {
@@ -855,7 +895,7 @@ namespace CIT.API.Controllers
 
                 var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name); //code tries to find the user's ID from their claims (data associated with their login session).
 
-                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int authenticatedUserId) || authenticatedUserId != updateDTO.UserId) // If the claim with the user ID is missing, then the user isn’t authorized., If the user ID claim is there but can’t be converted to a valid integer (which the code expects), it’s also unauthorized.
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int authenticatedUserId) || authenticatedUserId != userId) // If the claim with the user ID is missing, then the user isn’t authorized., If the user ID claim is there but can’t be converted to a valid integer (which the code expects), it’s also unauthorized.
                                                                                                                                                      //If the user’s ID from the claim doesn’t match the ID in the update request, the user isn’t authorized to update this                        particular task.
                 {
                     _response.StatusCode = HttpStatusCode.Unauthorized;
@@ -900,7 +940,7 @@ namespace CIT.API.Controllers
 
                 string status = "Completed";
                 string activityType = "Completed";
-                bool updateResult = await _crewTaskDetailsRepository.UpdateTaskStatusAsync(authenticatedUserId, taskId, status, updateDTO, activityType);
+                bool updateResult = await _crewTaskDetailsRepository.UpdateTaskStatusAsync(authenticatedUserId, taskId, status, updateDTO, activityType, userId);
 
                 if (!updateResult)
                 {

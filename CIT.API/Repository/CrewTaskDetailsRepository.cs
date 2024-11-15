@@ -22,6 +22,24 @@ namespace CIT.API.Repository
             _db = db;
             _mapper = mapper;
         }
+
+        // Static method to retrieve userId from uuid
+        public static async Task<int> GetUserIdFromUuidAsync(Guid uuid, DapperContext db)
+        {
+            using (var con = db.CreateConnection())
+            {
+                var query = "SELECT UserId FROM UserMaster WHERE Uuid = @Uuid";
+                return await con.QueryFirstOrDefaultAsync<int>(query, new { Uuid = uuid });
+            }
+        }
+
+        // New method to call the static method
+        public async Task<int> GetUserIdByUuidAsync(Guid uuid)
+        {
+            return await GetUserIdFromUuidAsync(uuid, _db);
+        }
+
+
         // New method to get tasks for a specific Crew Commander
         public async Task<IEnumerable<CrewTaskDetailsDTO>> GetCrewTasksByCommanderIdAsync(int crewCommanderId, int userId, DateTime? orderDate = null)
         {
@@ -112,7 +130,7 @@ namespace CIT.API.Repository
             }
         }
 
-        public async Task<bool> UpdateTaskStatusAsync(int crewCommanderId, int taskId, string status, CrewTaskStatusUpdateDTO updateDTO, string activityType)
+        public async Task<bool> UpdateTaskStatusAsync(int crewCommanderId, int taskId, string status, CrewTaskStatusUpdateDTO updateDTO, string activityType, int userId)
         {
 
             using (var con = _db.CreateConnection())
@@ -129,7 +147,7 @@ namespace CIT.API.Repository
                 parameters.Add("CrewCommanderId", crewCommanderId);
                 parameters.Add("TaskId", taskId);
                 parameters.Add("Status", status);
-                parameters.Add("UserId", updateDTO.UserId);
+                parameters.Add("UserId", userId);
                 // Set ScreenId based on specific activity types
                 //int screenId = activityType switch
                 //{
@@ -151,7 +169,7 @@ namespace CIT.API.Repository
         }
 
 
-        public async Task<bool> parcelLoadStatusAsync(int crewCommanderId, int taskId, string status, CrewTaskParcelDTO parcelDTO, string activityType)
+        public async Task<bool> parcelLoadStatusAsync(int crewCommanderId, int taskId, string status, CrewTaskParcelDTO parcelDTO, string activityType, int userId)
         {
             using (var con = _db.CreateConnection())
             {
@@ -175,7 +193,7 @@ namespace CIT.API.Repository
                 parameters.Add("CrewCommanderId", crewCommanderId);
                 parameters.Add("TaskId", taskId);
                 parameters.Add("Status", status);
-                parameters.Add("UserId", parcelDTO.UserId);
+                parameters.Add("UserId", userId);
                 parameters.Add("ScreenId", parcelDTO.ScreenId);
                 parameters.Add("Time", parcelDTO.Time);
                 parameters.Add("Lat", parcelDTO.Location?.Lat);
@@ -197,7 +215,7 @@ namespace CIT.API.Repository
         }
 
 
-        public async Task<bool> crewTaskFailedAsync(int crewCommanderId, int taskId, string status, CrewTaskFailedStatusDTO failedDTO, string activityType)
+        public async Task<bool> crewTaskFailedAsync(int crewCommanderId, int taskId, string status, CrewTaskFailedStatusDTO failedDTO, string activityType, int userId)
         {
             using (var con = _db.CreateConnection())
             {
@@ -212,7 +230,7 @@ namespace CIT.API.Repository
                 parameters.Add("CrewCommanderId", crewCommanderId);
                 parameters.Add("TaskId", taskId);
                 parameters.Add("Status", status);
-                parameters.Add("UserId", failedDTO.UserId);
+                parameters.Add("UserId", userId);
                 parameters.Add("ScreenId", failedDTO.ScreenId);
                 parameters.Add("Time", failedDTO.Time);
                 parameters.Add("Lat", failedDTO.Location?.Lat);
@@ -226,7 +244,7 @@ namespace CIT.API.Repository
             }
         }
 
-        public async Task<bool> arrivedDeliveryAsync(int crewCommanderId, int taskId, string status, CrewTaskStatusUpdateDTO arrivedDTO, string activityType)
+        public async Task<bool> arrivedDeliveryAsync(int crewCommanderId, int taskId, string status, CrewTaskStatusUpdateDTO arrivedDTO, string activityType, int userId)
         {
             using (var con = _db.CreateConnection())
             {
@@ -242,7 +260,7 @@ namespace CIT.API.Repository
                 parameters.Add("CrewCommanderId", crewCommanderId);
                 parameters.Add("TaskId", taskId);
                 parameters.Add("Status", status);
-                parameters.Add("UserId", arrivedDTO.UserId);
+                parameters.Add("UserId", userId);
 
                 //int screenId = activityType == "ArrivedDelivery" ? 5 : 4;
                 parameters.Add("ScreenId", arrivedDTO.ScreenId);
