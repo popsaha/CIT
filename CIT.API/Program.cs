@@ -1,5 +1,7 @@
 using CIT.API;
 using CIT.API.Middlewares;
+using CIT.API.Repository.IRepository;
+using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -17,7 +19,14 @@ var logger = new LoggerConfiguration()
 builder.Logging.ClearProviders();
 builder.Logging.AddSerilog(logger);
 
-
+//Hangfire
+builder.Services.AddHangfire(config =>
+{
+    config.UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UseSqlServerStorage(builder.Configuration.GetConnectionString("SqlConnection"));
+});
+builder.Services.AddHangfireServer();
 
 // Add services to the container.
 builder.Services.AddRepositoryServices();
@@ -113,6 +122,22 @@ app.UseHttpsRedirection();
 app.UseCors("AllowAllOrigins"); // Use the CORS policy
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseHangfireDashboard();
+
+// Schedule recurring Hangfire job
+using (var scope = app.Services.CreateScope())
+{
+    var jobRepository = scope.ServiceProvider.GetRequiredService<IJobRepository>();
+    var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+
+    // Schedule the recurring job to run daily at 12:00 AM
+    recurringJobManager.AddOrUpdate(
+        "GenerateRecurringOrders",
+        () => jobRepository.GenerateRecurringOrdersAsync(),
+        Cron.Daily(0) // 12:00 AM
+    );
+}
 
 app.MapControllers();
 
