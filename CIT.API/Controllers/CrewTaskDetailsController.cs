@@ -36,13 +36,13 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<APIResponse>> GetCrewTasks(Guid uuid, DateTime? orderDate = null)
+        public async Task<ActionResult<APIResponse>> GetCrewTasks( DateTime? orderDate = null)
         {
             try
             {
 
                 // Retrieve the userId associated with the provided uuid using the repository method
-                int userId = await _crewTaskDetailsRepository.GetUserIdByUuidAsync(uuid);
+                int userId = await _crewTaskDetailsRepository.GetUserIdByUuidAsync();
 
                 //if (!userId)
                 //{
@@ -109,11 +109,12 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<APIResponse>> GetTaskDetails(int taskId, Guid uuid)
+        public async Task<ActionResult<APIResponse>> GetTaskDetails(int taskId)
         {
             try
             {
-                int userId = await _crewTaskDetailsRepository.GetUserIdByUuidAsync(uuid);
+                // Retrieve the userId associated with the provided uuid using the repository method
+                int userId = await _crewTaskDetailsRepository.GetUserIdByUuidAsync();
 
                 // Retrieve the claim for the crew commander ID from the token
                 var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name); // or another claim type, based on your token
@@ -186,7 +187,8 @@ namespace CIT.API.Controllers
             try
             {
 
-                int userId = await _crewTaskDetailsRepository.GetUserIdByUuidAsync(updateDTO.UUID);
+                // Retrieve the userId associated with the provided uuid using the repository method
+                int userId = await _crewTaskDetailsRepository.GetUserIdByUuidAsync();
 
                 if (taskId <= 0)
                 {
@@ -293,7 +295,8 @@ namespace CIT.API.Controllers
             try
             {
 
-                int userId = await _crewTaskDetailsRepository.GetUserIdByUuidAsync(updateDTO.UUID);
+                // Retrieve the userId associated with the provided uuid using the repository method
+                int userId = await _crewTaskDetailsRepository.GetUserIdByUuidAsync();
 
                 if (taskId <= 0)
                 {
@@ -408,7 +411,8 @@ namespace CIT.API.Controllers
 
             try
             {
-                int userId = await _crewTaskDetailsRepository.GetUserIdByUuidAsync(failedDTO.UUID);
+                // Retrieve the userId associated with the provided uuid using the repository method
+                int userId = await _crewTaskDetailsRepository.GetUserIdByUuidAsync();
 
                 if (taskId <= 0)
                 {
@@ -525,7 +529,8 @@ namespace CIT.API.Controllers
 
             try
             {
-                int userId = await _crewTaskDetailsRepository.GetUserIdByUuidAsync(parcelDTO.UUID);
+                // Retrieve the userId associated with the provided uuid using the repository method
+                int userId = await _crewTaskDetailsRepository.GetUserIdByUuidAsync();
 
                 // Validate for duplicate ParcelQR values
                 var parcelQRs = parcelDTO.Parcels.Select(p => p.ParcelQR).ToList();
@@ -645,7 +650,8 @@ namespace CIT.API.Controllers
 
             try
             {
-                int userId = await _crewTaskDetailsRepository.GetUserIdByUuidAsync(arrivedDTO.UUID);
+                // Retrieve the userId associated with the provided uuid using the repository method
+                int userId = await _crewTaskDetailsRepository.GetUserIdByUuidAsync();
 
 
                 if (taskId <= 0)
@@ -762,7 +768,8 @@ namespace CIT.API.Controllers
 
             try
             {
-                int userId = await _crewTaskDetailsRepository.GetUserIdByUuidAsync(parcelDTO.UUID);
+                // Retrieve the userId associated with the provided uuid using the repository method
+                int userId = await _crewTaskDetailsRepository.GetUserIdByUuidAsync();
 
                 // Validate for duplicate ParcelQR values
                 var parcelQRs = parcelDTO.Parcels.Select(p => p.ParcelQR).ToList();
@@ -882,8 +889,8 @@ namespace CIT.API.Controllers
 
             try
             {
-                int userId = await _crewTaskDetailsRepository.GetUserIdByUuidAsync(updateDTO.UUID);
-
+                // Retrieve the userId associated with the provided uuid using the repository method
+                int userId = await _crewTaskDetailsRepository.GetUserIdByUuidAsync();
 
                 if (taskId <= 0)
                 {

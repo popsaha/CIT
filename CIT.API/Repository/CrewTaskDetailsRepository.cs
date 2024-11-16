@@ -16,11 +16,13 @@ namespace CIT.API.Repository
     {
         private readonly DapperContext _db;
         private readonly IMapper _mapper;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public CrewTaskDetailsRepository(DapperContext db, IMapper mapper)
+        public CrewTaskDetailsRepository(DapperContext db, IMapper mapper, IHttpContextAccessor httpContextAccessor)
         {
             _db = db;
             _mapper = mapper;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         // Static method to retrieve userId from uuid
@@ -34,8 +36,18 @@ namespace CIT.API.Repository
         }
 
         // New method to call the static method
-        public async Task<int> GetUserIdByUuidAsync(Guid uuid)
+        public async Task<int> GetUserIdByUuidAsync()
         {
+            // Extract UUID from JWT claims
+            var uuidClaim = _httpContextAccessor.HttpContext?.User?.Claims
+                .FirstOrDefault(c => c.Type == "uuid")?.Value;
+
+            if (string.IsNullOrEmpty(uuidClaim) || !Guid.TryParse(uuidClaim, out var uuid))
+            {
+                throw new UnauthorizedAccessException("Invalid or missing UUID in token.");
+            }
+
+            // Use the static method to get the UserId
             return await GetUserIdFromUuidAsync(uuid, _db);
         }
 
