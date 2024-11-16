@@ -19,6 +19,6 @@ namespace CIT.API.Repository.IRepository
         Task<string> GetCurrentScreenIdByTaskId(int taskId);
         Task<string> GetNextScreenIdByTaskId(int taskId);
 
-        Task<int> GetUserIdByUuidAsync (Guid uuid);
+        Task<int> GetUserIdByUuidAsync ();
     }
 }

@@ -19,14 +19,16 @@ namespace CIT.API.Repository
             _secretKey = configuration.GetValue<string>("ApiSettings:Secret");
         }
 
-        public async Task<IEnumerable<LocalUser>> GetAllCrewCommanderList()
+        public async Task<IEnumerable<UserMaster>> GetAllCrewCommanderList()
         {
             using (var con = _db.CreateConnection())
             {
-                var query = @"SELECT Id, UserName, Name, Role 
-                            FROM LocalUser 
-                            WHERE Role = 'crew'";
-                var crewCommanderList = await con.QueryAsync<LocalUser>(query);
+                var query = @"SELECT UM.UserID, UM.UserName
+                              FROM UserMaster UM
+                              INNER JOIN UserRoleMapping URM ON UM.UserID = URM.UserId
+                              INNER JOIN RoleMaster RM ON RM.RoleID = URM.RoleId
+                              WHERE RM.RoleID = 4";
+                var crewCommanderList = await con.QueryAsync<UserMaster>(query);
 
                 return crewCommanderList.ToList();
             }

@@ -30,7 +30,7 @@ namespace CIT.API.Controllers
         {
             try
             {
-                IEnumerable<LocalUser> crewCommanders = await _crewCommander.GetAllCrewCommanderList();
+                IEnumerable<UserMaster> crewCommanders = await _crewCommander.GetAllCrewCommanderList();
 
                 if (crewCommanders == null || !crewCommanders.Any())
                 {

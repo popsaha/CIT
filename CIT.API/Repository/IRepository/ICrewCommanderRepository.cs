@@ -4,6 +4,6 @@ namespace CIT.API.Repository.IRepository
 {
     public interface ICrewCommanderRepository
     {
-        public Task<IEnumerable<LocalUser>> GetAllCrewCommanderList();
+        public Task<IEnumerable<UserMaster>> GetAllCrewCommanderList();
     }
 }
