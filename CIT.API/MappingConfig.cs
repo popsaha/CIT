@@ -9,6 +9,7 @@ using CIT.API.Models.Dto.Order;
 using CIT.API.Models.Dto.OrderType;
 using CIT.API.Models.Dto.PickupType;
 using CIT.API.Models.Dto.Region;
+using CIT.API.Models.Dto.Role;
 using CIT.API.Models.Dto.Task;
 using CIT.API.Models.Dto.TaskGroupList;
 using CIT.API.Models.Dto.Vehicle;
@@ -76,7 +77,7 @@ namespace CIT.API
             CreateMap<CrewTaskDetails, CrewTaskParcelDTO>().ReverseMap();
             CreateMap<CrewTaskDetails, CrewTaskFailedStatusDTO>().ReverseMap();
 
-
+            CreateMap<RoleMaster, RoleListDTO>().ReverseMap();
 
         }
     }
