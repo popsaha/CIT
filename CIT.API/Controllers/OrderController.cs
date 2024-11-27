@@ -2,7 +2,6 @@
 using CIT.API.Models.Dto.Order;
 using CIT.API.Repository.IRepository;
 using Microsoft.AspNetCore.Mvc;
-using System.Globalization;
 using System.Net;
 
 namespace CIT.API.Controllers
@@ -71,25 +70,20 @@ namespace CIT.API.Controllers
         /// <summary>
         /// Get order list by a specific date in "yyyy-MM-dd" format to show in the web interface.
         /// </summary>
-        /// <param name="selectedDate">The date in "yyyy-MM-dd" format.</param>
+        /// <param name="date">The date in "yyyy-MM-dd" format.</param>
+        /// <param name="regionId">The ID of the region.</param>
         /// <returns>A list of orders for the specified date.</returns>
         [HttpGet("getOrdersList")]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetOrders([FromQuery] OrderDateDTO selectedDate)
+        public async Task<IActionResult> GetOrders([FromQuery] DateTime date, [FromQuery] int regionId)
         {
             try
             {
-                if (!DateTime.TryParseExact(selectedDate.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime validDate))
-                {
-                    _response.StatusCode = HttpStatusCode.BadRequest;
-                    _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("Invalid date format.");
-                    return BadRequest(_response);
-                }
 
-                var orders = await _orderRepository.GetOrdersWithTaskListAsync(validDate, selectedDate.regionId);
+                var orders = await _orderRepository.GetOrdersWithTaskListAsync(date, regionId);
+                // var orders = await _orderRepository.GetOrdersWithTaskListAsync(validDate, selectedDate.regionId);
 
                 if (orders == null || !orders.Any())
                 {

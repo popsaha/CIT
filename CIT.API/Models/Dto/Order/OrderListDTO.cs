@@ -17,6 +17,7 @@ namespace CIT.API.Models.Dto.Order
         public string? DeliveryCustomerName { get; set; }
         public string? DeliveryLocation { get; set; }
         public string? PickupType { get; set; }
+        public string? TaskStatus { get; set; }
 
         public string? CrewCommander { get; set; }
         public string? LeadVehicle { get; set; }
@@ -36,6 +37,8 @@ namespace CIT.API.Models.Dto.Order
         [Required(ErrorMessage = "Date is required.")]
         [RegularExpression(@"\d{4}-\d{2}-\d{2}", ErrorMessage = "The date format must be yyyy-MM-dd.")]
         public string? Date { get; set; }
-        public string regionId { get; set; }
+
+        [Required(ErrorMessage = "Region ID is required.")]
+        public string RegionId { get; set; }
     }
 }
