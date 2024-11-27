@@ -12,7 +12,7 @@ using System.Security.Claims;
 
 namespace CIT.API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/Police")]
     [ApiController]
     public class PoliceController : ControllerBase
     {
@@ -158,7 +158,7 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<APIResponse>> DeleteCustomer(int policeId, int userId)
+        public async Task<ActionResult<APIResponse>> DeletePolice(int policeId, int userId)
         {
             try
             {
