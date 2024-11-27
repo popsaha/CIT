@@ -1,6 +1,6 @@
 ﻿namespace CIT.API.Models.Dto.Vehicle
 {
-    public class VehicleDTO
+    public class VehicleUpdateDTO
     {
         public int VehicleID { get; set; }
         public string RegistrationNo { get; set; }

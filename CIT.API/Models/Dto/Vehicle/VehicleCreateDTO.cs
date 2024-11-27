@@ -1,8 +1,8 @@
 ﻿namespace CIT.API.Models.Dto.Vehicle
 {
-    public class VehicleDTO
+    public class VehicleCreateDTO
     {
-        public int VehicleID { get; set; }
+        //public int VehicleID { get; set; }
         public string RegistrationNo { get; set; }
         public decimal Capacity { get; set; }
         public DateTime? MaintenanceDate { get; set; }
