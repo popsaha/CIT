@@ -1,12 +1,15 @@
 ﻿using AutoMapper;
 using CIT.API.Context;
 using CIT.API.Models;
+using CIT.API.Models.Dto.UserMasterApi;
 using CIT.API.Models.Dto.Login;
 using CIT.API.Models.Dto.Registration;
+using CIT.API.Models.Dto.UserMasterApi;
 using CIT.API.Repository.IRepository;
 using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.IdentityModel.Tokens;
+using System.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -19,6 +22,7 @@ namespace CIT.API.Repository
         private readonly ILogger<UserRepository> _logger;
         private string _secretKey;
         private readonly IMapper _mapper;
+   
         public UserRepository(DapperContext db, IMapper mapper, IConfiguration configuration, ILogger<UserRepository> logger)
         {
             _db = db;
@@ -181,6 +185,97 @@ namespace CIT.API.Repository
             }
         }
 
+        public async Task<UserCreateDTO> CrewUserCreate(UserCreateDTO crewUserDTO)
+        {
+            try
+            {
+                using (var connection = _db.CreateConnection())
+                {
+                    var parameters = new DynamicParameters();
+                    parameters.Add("@Flag", "C");
+                    parameters.Add("@UserName", crewUserDTO.UserName);
+                    parameters.Add("@Password", crewUserDTO.Password); // Store plain password
+                    parameters.Add("@RoleName", crewUserDTO.RoleName); // Pass role name to fetch RoleID
+                    parameters.Add("@CreatedBy", 1); // Replace with actual CreatedBy user ID
 
+                    // Execute the stored procedure
+                    await connection.ExecuteAsync("cit.spUserMaster", parameters, commandType: CommandType.StoredProcedure);
+
+                    return crewUserDTO; // Return the input DTO as confirmation
+                }
+            }
+            catch (SqlException sqlEx)
+            {
+                _logger.LogError(sqlEx, "SQL Error occurred while creating CrewUser {UserName}", crewUserDTO.UserName);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while creating CrewUser {UserName}", crewUserDTO.UserName);
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<UserMasterModel>> GetAllUsers()
+        {
+            //IEnumerable<UserMaster> userList;
+
+            using (var con = _db.CreateConnection())
+            {
+                DynamicParameters parameters = new DynamicParameters();
+                parameters.Add("Flag", "A");
+                var userList = await con.QueryAsync<UserMasterModel>("spUserMaster", parameters, commandType: CommandType.StoredProcedure);
+                return userList.ToList();
+            }
+        }
+
+        public async Task<UserMasterModel> UpdateUser(UserMasterModel usermaster)
+        {
+            int Res = 0;
+            try
+            {
+                using (var connection = _db.CreateConnection())
+                {
+                    DynamicParameters parameters = new DynamicParameters();
+                    parameters.Add("Flag", "U");
+                    parameters.Add("UserName", usermaster.UserName);
+                    //parameters.Add("RoleName", usermaster.RoleName);
+                    parameters.Add("Password", usermaster.Password);
+
+                    Res = await connection.ExecuteScalarAsync<int>("spUserMaster", parameters, commandType: CommandType.StoredProcedure);
+                }
+            }
+            catch(Exception ex)
+            {
+                throw ex;
+            }
+            return usermaster;
+        }
+
+        public async Task<UserMasterModel> GetUserById(int userId)
+        {
+            UserMasterModel customer = new UserMasterModel();
+            using (var connection = _db.CreateConnection())
+            {
+                DynamicParameters parameters = new DynamicParameters();
+                parameters.Add("Flag", "R");
+                parameters.Add("UserID", userId);
+                customer = await connection.QuerySingleOrDefaultAsync<UserMasterModel>("spUserMaster", parameters, commandType: CommandType.StoredProcedure);
+            }
+            return customer;
+        }
+        public async Task<int> DeleteUser(int userId)
+        {
+            int Res = 0;
+            using (var connection = _db.CreateConnection())
+            {
+                DynamicParameters parameters = new DynamicParameters();
+                parameters.Add("Flag", "D");
+                parameters.Add("UserId", userId);
+                Res = await connection.ExecuteScalarAsync<int>("spUserMaster", parameters, commandType: CommandType.StoredProcedure);
+            };
+            return Res;
+        }
     }
+
 }
