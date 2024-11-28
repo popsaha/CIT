@@ -124,6 +124,13 @@ namespace CIT.API.Repository
                                 VALUES (@OrderId, @CrewId, @LeadVehicleId, @ChaseVehicleId)";
                     var rowsAffected = await connection.ExecuteAsync(insertQuery, assignments, transaction);
 
+                    // Update Task table TaskStatusId to 2 for the related OrderIds
+                    var updateTaskStatusQuery = @"UPDATE Task
+                                          SET TaskStatusId = 2
+                                          WHERE OrderId IN @OrderIds";
+                    var orderIds = assignments.Select(a => a.OrderId).Distinct().ToList();
+                    await connection.ExecuteAsync(updateTaskStatusQuery, new { OrderIds = orderIds }, transaction);
+
                     transaction.Commit();
                     return rowsAffected;
                 }
