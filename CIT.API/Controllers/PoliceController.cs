@@ -2,53 +2,52 @@
 using CIT.API.Models;
 using CIT.API.Models.Dto.Customer;
 using CIT.API.Models.Dto.Police;
-using CIT.API.Models.Dto.Vehicle;
 using CIT.API.Repository;
 using CIT.API.Repository.IRepository;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using System.Security.Claims;
 
 namespace CIT.API.Controllers
 {
-    [Route("api/Vehicle")]
+    [Route("api/Police")]
     [ApiController]
-    public class VehicleController : Controller
+    public class PoliceController : ControllerBase
     {
-        private readonly IVehicleRepository _vehicleRepository;
         protected APIResponse _response;
         private readonly IMapper _mapper;
+        private readonly IPoliceRepository _policeRepository;
 
-        public VehicleController( IVehicleRepository vehicleRepository ,IMapper mapper)
+        public PoliceController(IPoliceRepository policeRepository, IMapper mapper)
         {
-            _vehicleRepository = vehicleRepository;
+            _policeRepository = policeRepository;
             _mapper = mapper;
-            _response = new();
+            _response = new ();
         }
-
-
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult<APIResponse>> GetAllVehicleList()
+        public async Task<ActionResult<APIResponse>> GetPolicelist()
         {
             try
             {
-                IEnumerable<Vehicle> vehicles = await _vehicleRepository.GetAllVehicle();
+                IEnumerable<PoliceMaster> policeList = await _policeRepository.GetPolice();
 
-                if (vehicles == null || !vehicles.Any())
+                if (policeList == null || !policeList.Any())
                 {
                     _response.StatusCode = HttpStatusCode.NotFound;
                     _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("No Task List found.");
+                    _response.ErrorMessages.Add("No customers found.");
                     return NotFound(_response);
                 }
+
                 _response.StatusCode = HttpStatusCode.OK;
                 _response.IsSuccess = true;
-                _response.Result = _mapper.Map<List<VehicleDTO>>(vehicles);
+                _response.Result = _mapper.Map<List<PoliceDTO>>(policeList);
 
                 return Ok(_response);
             }
@@ -62,44 +61,6 @@ namespace CIT.API.Controllers
             }
         }
 
-        [HttpGet("{id:int}", Name = "GetVehicle")]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<APIResponse>> GetVehicleById(int id)
-        {
-            try
-            {
-                if (id == 0)
-                {
-                    _response.StatusCode = HttpStatusCode.BadRequest;
-                    return BadRequest(_response);
-                }
-
-                var vehicle = await _vehicleRepository.GetVehicleById(id);
-
-                if (vehicle == null)
-                {
-                    _response.StatusCode = HttpStatusCode.NotFound;
-                    _response.IsSuccess = false;
-                    return NotFound(_response);
-                }
-
-                //_response.Result = customer;
-                _response.Result = _mapper.Map<VehicleDTO>(vehicle);
-                _response.StatusCode = HttpStatusCode.OK;
-                return Ok(_response);
-
-            }
-            catch (Exception ex)
-            {
-                _response.IsSuccess = false;
-                _response.ErrorMessages = new List<string>() { ex.ToString() };
-            }
-            return _response;
-        }
 
         [HttpPost]
         //[Authorize(Roles = "admin")]
@@ -107,7 +68,7 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<APIResponse>> CreateVehicle([FromBody] VehicleCreateDTO createDTO)
+        public async Task<ActionResult<APIResponse>> CreatePolice([FromBody] PoliceCreateDTO createDTO)
         {
             int Res = 0;
             try
@@ -117,29 +78,29 @@ namespace CIT.API.Controllers
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("Invalid Vehicle data.");
+                    _response.ErrorMessages.Add("Invalid Police data.");
                     return BadRequest(_response);
                 }
 
                 // Get the userId from the claims (JWT token)
                 var userId = Convert.ToInt32(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
-                var vehicleData = _mapper.Map<Vehicle>(createDTO);
+                var police = _mapper.Map<PoliceMaster>(createDTO);
 
-                Res = await _vehicleRepository.AddVehicle(createDTO, userId);
+                Res = await _policeRepository.AddPolice(createDTO, userId);
 
                 if (Res == 0)
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("Vehicle already exists.");
+                    _response.ErrorMessages.Add("Police already exists.");
                     return BadRequest(_response);
                 }
                 if (Res > 0)
                 {
                     _response.StatusCode = HttpStatusCode.Created;
                     _response.IsSuccess = true;
-                    _response.Result = vehicleData;
+                    _response.Result = police;
                     //return CreatedAtRoute("GetPolice", new { policeId = police.PoliceId }, _response);
                 }
                 // Return the created police with the location of the new resource              
@@ -154,26 +115,26 @@ namespace CIT.API.Controllers
         }
 
 
-        [HttpPut("{id:int}", Name = "UpdateVehicle")]
+        [HttpPut("{id:int}", Name = "UpdatePolice")]
         //[Authorize(Roles = "admin")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<APIResponse>> UpdateVehicle(int id, [FromBody] VehicleUpdateDTO updateDTO)
+        public async Task<ActionResult<APIResponse>> UpdatePolice(int id, [FromBody] PoliceUpdateDTO updateDTO)
         {
 
             try
             {
-                if (updateDTO == null || id != updateDTO.VehicleID)
+                if (updateDTO == null || id != updateDTO.PoliceId)
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("Invalid Vehicle Id.");
+                    _response.ErrorMessages.Add("Invalid Police Id.");
 
                     return BadRequest(_response);
                 }
 
-                Vehicle vehicleUpdate = _mapper.Map<Vehicle>(updateDTO);
-                var updatedVehicle = await _vehicleRepository.UpdateVehicle(vehicleUpdate);
+                PoliceUpdateDTO policeUpdate = _mapper.Map<PoliceUpdateDTO>(updateDTO);
+                var updatedpolice = await _policeRepository.UpdatePolice(policeUpdate);
 
                 _response.StatusCode = HttpStatusCode.NoContent;
                 _response.IsSuccess = true;
@@ -190,38 +151,38 @@ namespace CIT.API.Controllers
             return _response;
         }
 
-
-        [HttpDelete("{id:int}", Name = "DeleteVehicle")]
+        [HttpDelete("{id:int}", Name = "DeletePolice")]
+        //[Authorize(Roles = "CUSTOM")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<APIResponse>> DeleteVehicle(int vehicleId, int userId)
+        public async Task<ActionResult<APIResponse>> DeletePolice(int policeId, int userId)
         {
             try
             {
-                if (vehicleId == 0)
+                if (policeId == 0)
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("Invalid Vehicle Id.");
+                    _response.ErrorMessages.Add("Invalid Police Id.");
 
                     return BadRequest(_response);
                 }
 
-                var police = await _vehicleRepository.GetVehicleById(vehicleId);
+                var police = await _policeRepository.GetPoliceById(policeId);
 
                 if (police == null)
                 {
                     _response.StatusCode = HttpStatusCode.NotFound;
                     _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("Vehicle not found.");
+                    _response.ErrorMessages.Add("Police not found.");
 
                     return NotFound(_response);
                 }
 
-                var deletedVehicle = await _vehicleRepository.DeleteVehicle(vehicleId, userId);
+                var deletedpolice = await _policeRepository.DeletePolice(policeId, userId);
 
                 _response.StatusCode = HttpStatusCode.NoContent;
                 _response.IsSuccess = true;
@@ -237,6 +198,5 @@ namespace CIT.API.Controllers
 
             return _response;
         }
-
     }
 }
