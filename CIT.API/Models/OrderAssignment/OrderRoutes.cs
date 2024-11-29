@@ -4,7 +4,7 @@
     {
         public int OrderId { get; set; }
         public int OrderRouteId { get; set; }
-        public bool IsFullDayAssignment { get; set; }
+        public int IsFullDayAssignment { get; set; } // 1 for full-day, 0 otherwise
         public string? PickupTypeName { get; set; }
 
     }

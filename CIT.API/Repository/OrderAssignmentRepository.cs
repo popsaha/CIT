@@ -20,54 +20,81 @@ namespace CIT.API.Repository
             _secretKey = configuration.GetValue<string>("ApiSettings:Secret");
         }
 
-        public async Task<int> AssignTeamsRandomly(DateTime assignDate, List<int> crewIds, List<int> leadVehicleIds, List<int> chaseVehicleIds)
+        public async Task<List<TeamAssignment>> AssignTeamsToOrdersAsync(
+            DateTime assignDate,
+            List<int> crewIds,
+            List<int> leadVehicleIds,
+            List<int> chaseVehicleIds)
         {
-            if (!crewIds.Any() || !leadVehicleIds.Any() || !chaseVehicleIds.Any())
-            {
-                throw new InvalidOperationException("Crew IDs, Lead Vehicle IDs, and Chase Vehicle IDs cannot be empty");
-            }
-            using (var connection = _db.CreateConnection())
-            {
+            using var connection = _db.CreateConnection();
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
 
-                connection.Open();
-                using var transaction = connection.BeginTransaction();
+            try
+            {
+                var nextDay = assignDate.AddDays(1).ToString("yyyy-MM-dd");
 
-                try
+                // Fetch orders not in TeamAssignment
+                var ordersQuery = @"
+                    SELECT o.OrderId, o.OrderRouteId, o.IsFullDayAssignment
+                    FROM Orders o
+                    LEFT JOIN TeamAssignments ta ON o.OrderId = ta.OrderId
+                    WHERE o.OrderDate = @AssignDate AND ta.OrderId IS NULL;";
+                var orders = (await connection.QueryAsync<OrderRoutes>(ordersQuery, new { AssignDate = nextDay }, transaction)).ToList();
+
+                if (!orders.Any())
+                    return new List<TeamAssignment>(); // No orders to assign
+
+                var teamAssignments = new List<TeamAssignment>();
+                var routeAssignments = new Dictionary<int, (int CrewId, int LeadVehicleId, int ChaseVehicleId)>();
+                var random = new Random();
+
+                foreach (var order in orders)
                 {
-                    var nextDay = assignDate.AddDays(1).ToString("yyyy-MM-dd");
-
-                    // Query to get the orders with FullDayOccupancy info
-                    var ordersQuery = @"SELECT OrderId, OrderRouteId, IsFullDayAssignment
-                                FROM Orders
-                                WHERE OrderDate = @NextDay;";
-                    var orders = await connection.QueryAsync<OrderRoutes>(ordersQuery, new { NextDay = nextDay }, transaction);
-
-                    // Get ATM team combinations
-                    //var atmCombinationsQuery = @"SELECT CrewId, LeadVehicleId 
-                    //                         FROM ATMTeamCombinations 
-                    //                         WHERE @Date BETWEEN StartDate AND EndDate";
-                    //var atmCombinations = await connection.QueryAsync<ATMTeamCombination>(atmCombinationsQuery, new { Date = nextDay }, transaction);
-
-                    // Track which routes already have team assignments
-                    var assignedRoutes = new Dictionary<int, int>(); // Dictionary to store OrderRouteId and TeamAssignmentId
-                    var assignments = new List<TeamAssignment>();
-                    int teamAssignmentId = 1; // Start assigning team IDs from 1
-
-                    foreach (var order in orders)
+                    if (order.IsFullDayAssignment == 1)
                     {
-                        int crewId, leadVehicleId, chaseVehicleId;
+                        // Full-day assignment: Assign unique random IDs
+                        if (!crewIds.Any() || !leadVehicleIds.Any() || !chaseVehicleIds.Any())
+                            throw new Exception("Insufficient IDs available for full-day assignment.");
 
-                        if (order.IsFullDayAssignment)
+                        var crewId = crewIds[random.Next(crewIds.Count)];
+                        var leadVehicleId = leadVehicleIds[random.Next(leadVehicleIds.Count)];
+                        var chaseVehicleId = chaseVehicleIds[random.Next(chaseVehicleIds.Count)];
+
+                        crewIds.Remove(crewId);
+                        leadVehicleIds.Remove(leadVehicleId);
+                        chaseVehicleIds.Remove(chaseVehicleId);
+
+                        teamAssignments.Add(new TeamAssignment
                         {
-                            // Full day orders get unique teams
-                            crewId = GetRandomId(crewIds);
-                            leadVehicleId = GetRandomId(leadVehicleIds);
-                            chaseVehicleId = GetRandomId(chaseVehicleIds);
+                            OrderId = order.OrderId,
+                            CrewId = crewId,
+                            LeadVehicleId = leadVehicleId,
+                            ChaseVehicleId = chaseVehicleId
+                        });
+                    }
+                    else
+                    {
+                        // Non-full-day assignment: Check OrderRouteId
+                        if (!routeAssignments.TryGetValue(order.OrderRouteId, out var existingAssignment))
+                        {
+                            // New route, assign unique random IDs
+                            if (!crewIds.Any() || !leadVehicleIds.Any() || !chaseVehicleIds.Any())
+                                throw new Exception("Insufficient IDs available for non-full-day assignment.");
 
-                            assignments.Add(new TeamAssignment
+                            var crewId = crewIds[random.Next(crewIds.Count)];
+                            var leadVehicleId = leadVehicleIds[random.Next(leadVehicleIds.Count)];
+                            var chaseVehicleId = chaseVehicleIds[random.Next(chaseVehicleIds.Count)];
+
+                            crewIds.Remove(crewId);
+                            leadVehicleIds.Remove(leadVehicleId);
+                            chaseVehicleIds.Remove(chaseVehicleId);
+
+                            routeAssignments[order.OrderRouteId] = (crewId, leadVehicleId, chaseVehicleId);
+
+                            teamAssignments.Add(new TeamAssignment
                             {
                                 OrderId = order.OrderId,
-                                TeamAssignmentId = teamAssignmentId++,
                                 CrewId = crewId,
                                 LeadVehicleId = leadVehicleId,
                                 ChaseVehicleId = chaseVehicleId
@@ -75,81 +102,51 @@ namespace CIT.API.Repository
                         }
                         else
                         {
-                            // For non-full-day orders, check if a team is already assigned to this route
-                            if (!assignedRoutes.TryGetValue(order.OrderRouteId, out var existingTeamId))
+                            // Reuse existing assignment for this OrderRouteId
+                            teamAssignments.Add(new TeamAssignment
                             {
-                                // Assign a new team for this route
-                                crewId = GetRandomId(crewIds);
-                                leadVehicleId = GetRandomId(leadVehicleIds);
-                                chaseVehicleId = GetRandomId(chaseVehicleIds);
-
-                                existingTeamId = teamAssignmentId++;
-                                assignedRoutes[order.OrderRouteId] = existingTeamId;
-
-                                // Store the new assignment
-                                assignments.Add(new TeamAssignment
-                                {
-                                    OrderId = order.OrderId,
-                                    TeamAssignmentId = existingTeamId,
-                                    CrewId = crewId,
-                                    LeadVehicleId = leadVehicleId,
-                                    ChaseVehicleId = chaseVehicleId
-                                });
-                            }
-                            else
-                            {
-                                // Get the team already assigned for this route
-                                var existingTeamAssignment = assignments.First(a => a.TeamAssignmentId == existingTeamId);
-
-                                crewId = existingTeamAssignment.CrewId;
-                                leadVehicleId = existingTeamAssignment.LeadVehicleId;
-                                chaseVehicleId = existingTeamAssignment.ChaseVehicleId;
-
-                                // Assign the existing team for this route
-                                assignments.Add(new TeamAssignment
-                                {
-                                    OrderId = order.OrderId,
-                                    TeamAssignmentId = existingTeamId,
-                                    CrewId = crewId,
-                                    LeadVehicleId = leadVehicleId,
-                                    ChaseVehicleId = chaseVehicleId
-                                });
-                            }
+                                OrderId = order.OrderId,
+                                CrewId = existingAssignment.CrewId,
+                                LeadVehicleId = existingAssignment.LeadVehicleId,
+                                ChaseVehicleId = existingAssignment.ChaseVehicleId
+                            });
                         }
-
                     }
-
-                    // Insert assignments into database
-                    var insertQuery = @"INSERT INTO TeamAssignments (OrderId, CrewId, LeadVehicleId, ChaseVehicleId) 
-                                VALUES (@OrderId, @CrewId, @LeadVehicleId, @ChaseVehicleId)";
-                    var rowsAffected = await connection.ExecuteAsync(insertQuery, assignments, transaction);
-
-                    // Update Task table TaskStatusId to 2 for the related OrderIds
-                    var updateTaskStatusQuery = @"UPDATE Task
-                                          SET TaskStatusId = 2
-                                          WHERE OrderId IN @OrderIds";
-                    var orderIds = assignments.Select(a => a.OrderId).Distinct().ToList();
-                    await connection.ExecuteAsync(updateTaskStatusQuery, new { OrderIds = orderIds }, transaction);
-
-                    transaction.Commit();
-                    return rowsAffected;
-                }
-                catch (Exception ex)
-                {
-                    transaction.Rollback();
-                    throw new Exception("An error occurred during team assignment.", ex);
                 }
 
+                // Insert the team assignments
+                var insertQuery = @"
+                    INSERT INTO TeamAssignments (OrderId, CrewId, LeadVehicleId, ChaseVehicleId)
+                    VALUES (@OrderId, @CrewId, @LeadVehicleId, @ChaseVehicleId);";
+                await connection.ExecuteAsync(insertQuery, teamAssignments, transaction);
+
+                // Update Task table TaskStatusId to 2 for related OrderIds
+                var orderIds = teamAssignments.Select(a => a.OrderId).ToList();
+                var updateQuery = @"
+                    UPDATE Task
+                    SET TaskStatusId = 2
+                    WHERE OrderId IN @OrderIds AND TaskDate = @TaskDate;";
+                await connection.ExecuteAsync(updateQuery, new { OrderIds = orderIds, TaskDate = nextDay }, transaction);
+
+                transaction.Commit();
+                return teamAssignments;
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
             }
         }
 
+
+
+
         private int GetRandomId(List<int> ids)
         {
-            if (!ids.Any()) throw new InvalidOperationException("No IDs available for assignment");
             return ids[_random.Next(ids.Count)];
         }
 
-        private ATMTeamCombination GetRandomATMCombination(IEnumerable<ATMTeamCombination> combinations)
+        private TeamCombination GetRandomATMCombination(IEnumerable<TeamCombination> combinations)
         {
             var combinationList = combinations.ToList();
             if (!combinationList.Any())
