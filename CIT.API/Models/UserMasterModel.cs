@@ -7,7 +7,7 @@
         public string? Password { get; set; }
         //public string RoleName { get; set; }
         public string? DataSource { get; set; }
-        public int? IsActive { get; set; }
+        public bool? IsActive { get; set; }
         public int? CreatedBy { get; set; }
         public DateTime? CreatedOn { get; set; }
         public int? ModifiedBy { get; set; }

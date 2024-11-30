@@ -241,6 +241,7 @@ namespace CIT.API.Repository
                     parameters.Add("UserName", usermaster.UserName);
                     //parameters.Add("RoleName", usermaster.RoleName);
                     parameters.Add("Password", usermaster.Password);
+                    parameters.Add("IsActive", usermaster.IsActive);
 
                     Res = await connection.ExecuteScalarAsync<int>("spUserMaster", parameters, commandType: CommandType.StoredProcedure);
                 }
