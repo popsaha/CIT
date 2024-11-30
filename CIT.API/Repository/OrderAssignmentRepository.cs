@@ -125,7 +125,7 @@ namespace CIT.API.Repository
                 var updateQuery = @"
                     UPDATE Task
                     SET TaskStatusId = 2
-                    WHERE OrderId IN @OrderIds AND TaskDate = @TaskDate;";
+                    WHERE OrderId IN @OrderIds;";
                 await connection.ExecuteAsync(updateQuery, new { OrderIds = orderIds, TaskDate = nextDay }, transaction);
 
                 transaction.Commit();
