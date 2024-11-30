@@ -93,6 +93,7 @@ namespace CIT.API.Repository
                     parameters.Add("MaintenanceDate", vehicle.MaintenanceDate);
                     parameters.Add("Capacity", vehicle.Capacity);
                     parameters.Add("VehicleType", vehicle.VehicleType);
+                    parameters.Add("IsActive", vehicle.IsActive);
                     //parameters.Add("ModifiedBy", police.ModifiedBy);
 
                     Res = await connection.ExecuteScalarAsync<int>("spVehicle", parameters, commandType: CommandType.StoredProcedure);

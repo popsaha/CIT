@@ -10,7 +10,7 @@
         public string? RestrictionValue { get; set; }
         public string VehicleType { get; set; }
         public string? DataSource { get; set; }
-        public int? IsActive { get; set; }
+        public bool? IsActive { get; set; }
         public int? CreatedBy { get; set; }
         public DateTime? CreatedOn { get; set; }
         public int? ModifiedBy { get; set; }
