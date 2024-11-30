@@ -30,8 +30,8 @@ namespace CIT.API.Repository
             {
                 DynamicParameters parameters = new DynamicParameters();
                 parameters.Add("Flag", "A");
-                var customers = await con.QueryAsync<PoliceMaster>("spPolice", parameters, commandType: CommandType.StoredProcedure);
-                return customers.ToList();
+                var polices = await con.QueryAsync<PoliceMaster>("spPolice", parameters, commandType: CommandType.StoredProcedure);
+                return polices.ToList();
             }
         }
         public async Task<int> AddPolice(PoliceCreateDTO policeDTO, int userId)
