@@ -8,7 +8,7 @@
         public string Address { get; set; }
         public string ContactNumber { get; set; }
         public string DataSource { get; set; }
-        public bool IsActive { get; set; }
+        public bool? IsActive { get; set; }
         public int CreatedBy { get; set; }
         public DateTime? CreatedOn { get; set; }
         public int? ModifiedBy { get; set; }

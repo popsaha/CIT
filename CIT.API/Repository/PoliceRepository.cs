@@ -88,6 +88,7 @@ namespace CIT.API.Repository
                     parameters.Add("Name", police.Name);
                     parameters.Add("Address", police.Address);
                     parameters.Add("ContactNumber", police.ContactNumber);
+                    parameters.Add("IsActive", police.IsActive);
                     //parameters.Add("ModifiedBy", police.ModifiedBy);
 
                     Res = await connection.ExecuteScalarAsync<int>("spPolice", parameters, commandType: CommandType.StoredProcedure);
