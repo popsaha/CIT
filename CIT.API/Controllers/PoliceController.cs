@@ -151,7 +151,7 @@ namespace CIT.API.Controllers
             return _response;
         }
 
-        [HttpDelete("{id:int}", Name = "DeletePolice")]
+        [HttpDelete("{policeId:int}", Name = "DeletePolice")]
         //[Authorize(Roles = "CUSTOM")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
