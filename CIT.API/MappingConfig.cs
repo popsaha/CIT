@@ -15,6 +15,7 @@ using CIT.API.Models.Dto.Task;
 using CIT.API.Models.Dto.TaskGroupList;
 using CIT.API.Models.Dto.Vehicle;
 using CIT.API.Models.Dto.Police;
+using CIT.API.Models.Dto.User;
 
 
 namespace CIT.API
@@ -92,6 +93,11 @@ namespace CIT.API
             CreateMap<PoliceMaster, PoliceDTO>().ReverseMap();
             CreateMap<PoliceMaster, PoliceCreateDTO>().ReverseMap();
             CreateMap<PoliceMaster, PoliceUpdateDTO>().ReverseMap();
+
+            CreateMap<User, LocalUserDTO>().ReverseMap();
+            CreateMap<User, LocalUserCreateDTO>().ReverseMap();
+            CreateMap<User, LocalUserUpdateDTO>().ReverseMap();
+
         }
     }
 }

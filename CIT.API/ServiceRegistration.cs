@@ -35,6 +35,7 @@ namespace CIT.API
             services.AddScoped<IJobRepository, JobRepository>();
             services.AddScoped<IRoleRepository, RoleRepository>();
             services.AddScoped<IPoliceRepository, PoliceRepository>();
+            services.AddScoped<ILocalUserRepository, LocalUserRepository>();
         }
     }
 }

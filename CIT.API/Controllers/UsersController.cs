@@ -145,7 +145,7 @@ namespace CIT.API.Controllers
         //[Authorize(Roles = "admin")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<APIResponse>> UpdateCustomer(int userId, [FromBody] UserUpdateDTO updateDTO)
+        public async Task<ActionResult<APIResponse>> UpdateUser(int userId, [FromBody] UserUpdateDTO updateDTO)
         {
 
             try
