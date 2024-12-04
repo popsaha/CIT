@@ -147,7 +147,7 @@ namespace CIT.API.Controllers
             return _response;
         }
 
-        [HttpPut]
+        [HttpPut("{userId:int}", Name = "UpdateLocalUser")]
         //[Authorize(Roles = "admin")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -183,14 +183,14 @@ namespace CIT.API.Controllers
             return _response;
         }
 
-        [HttpDelete()]
+        [HttpDelete("{userId:int}", Name = "DeleteLocalUser")]
         //[Authorize(Roles = "CUSTOM")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<APIResponse>> DeleteCustomer(int userId, int deletedBy)
+        public async Task<ActionResult<APIResponse>> DeleteCustomer(int userId,int deletedBy)
         {
             try
             {
