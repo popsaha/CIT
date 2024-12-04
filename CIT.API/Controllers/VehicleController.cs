@@ -191,7 +191,7 @@ namespace CIT.API.Controllers
         }
 
 
-        [HttpDelete("{id:int}", Name = "DeleteVehicle")]
+        [HttpDelete("{vehicleId:int}", Name = "DeleteVehicle")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
