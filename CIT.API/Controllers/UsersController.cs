@@ -12,6 +12,7 @@ using System.Net;
 using System.Security.Claims;
 using CIT.API.Models.Dto.Customer;
 using Microsoft.AspNetCore.Authorization;
+using CIT.API.Models.Dto.User;
 
 namespace CIT.API.Controllers
 {
@@ -22,10 +23,10 @@ namespace CIT.API.Controllers
         private readonly IUserRepository _userRepo;
         protected APIResponse _response;
         private readonly IMapper _mapper;
-        public UsersController(IUserRepository userRepo, IMapper _mapper)
+        public UsersController(IUserRepository userRepo, IMapper mapper)
         {
             _userRepo = userRepo;
-            _mapper = _mapper;
+            _mapper = mapper;
             _response = new();
         }
 
@@ -138,6 +139,45 @@ namespace CIT.API.Controllers
             }
         }
 
+        [HttpGet("{id:int}", Name = "GetSingleUser")]
+        //[Authorize(Roles = "admin")]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<APIResponse>> GetSingleUser(int id)
+        {
+            try
+            {
+                if (id == 0)
+                {
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    return BadRequest(_response);
+                }
+
+                var user = await _userRepo.GetUserById(id);
+
+                if (user == null)
+                {
+                    _response.StatusCode = HttpStatusCode.NotFound;
+                    _response.IsSuccess = false;
+                    return NotFound(_response);
+                }
+
+                //_response.Result = user;
+                _response.Result = _mapper.Map<UserListDTO>(user);
+                _response.StatusCode = HttpStatusCode.OK;
+                return Ok(_response);
+
+            }
+            catch (Exception ex)
+            {
+                _response.IsSuccess = false;
+                _response.ErrorMessages = new List<string>() { ex.ToString() };
+            }
+            return _response;
+        }
 
 
 
@@ -154,13 +194,18 @@ namespace CIT.API.Controllers
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("Invalid customer userId.");
+                    _response.ErrorMessages.Add("Invalid  userId.");
 
                     return BadRequest(_response);
                 }
 
-                UserMasterModel user = _mapper.Map<UserMasterModel>(updateDTO);
+                // Null check for _mapper
+                if (_mapper == null)
+                {
+                    throw new NullReferenceException("_mapper is not initialized.");
+                }
 
+                UserMasterModel user = _mapper.Map<UserMasterModel>(updateDTO);
                 var updatedUser = await _userRepo.UpdateUser(user);
 
                 _response.StatusCode = HttpStatusCode.NoContent;
@@ -179,7 +224,7 @@ namespace CIT.API.Controllers
         }
 
 
-        [HttpDelete("{id:int}", Name = "DeleteUser")]
+        [HttpDelete("{userId:int}", Name = "DeleteUser")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]

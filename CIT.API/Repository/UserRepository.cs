@@ -231,39 +231,42 @@ namespace CIT.API.Repository
 
         public async Task<UserMasterModel> UpdateUser(UserMasterModel usermaster)
         {
-            int Res = 0;
+            int res = 0;
             try
             {
                 using (var connection = _db.CreateConnection())
                 {
                     DynamicParameters parameters = new DynamicParameters();
                     parameters.Add("Flag", "U");
+                    parameters.Add("UserID", usermaster.UserId); // Add UserID for update
                     parameters.Add("UserName", usermaster.UserName);
-                    //parameters.Add("RoleName", usermaster.RoleName);
                     parameters.Add("Password", usermaster.Password);
+                    parameters.Add("RoleName", usermaster.RoleName);
                     parameters.Add("IsActive", usermaster.IsActive);
+                    parameters.Add("ModifiedBy", usermaster.ModifiedBy); // Add ModifiedBy
 
-                    Res = await connection.ExecuteScalarAsync<int>("spUserMaster", parameters, commandType: CommandType.StoredProcedure);
+                    res = await connection.ExecuteScalarAsync<int>("spUserMaster", parameters, commandType: CommandType.StoredProcedure);
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw ex;
             }
             return usermaster;
         }
 
+
         public async Task<UserMasterModel> GetUserById(int userId)
         {
-            UserMasterModel customer = new UserMasterModel();
+            UserMasterModel user = new UserMasterModel();
             using (var connection = _db.CreateConnection())
             {
                 DynamicParameters parameters = new DynamicParameters();
                 parameters.Add("Flag", "R");
                 parameters.Add("UserID", userId);
-                customer = await connection.QuerySingleOrDefaultAsync<UserMasterModel>("spUserMaster", parameters, commandType: CommandType.StoredProcedure);
+                user = await connection.QuerySingleOrDefaultAsync<UserMasterModel>("spUserMaster", parameters, commandType: CommandType.StoredProcedure);
             }
-            return customer;
+            return user;
         }
         public async Task<int> DeleteUser(int userId)
         {
