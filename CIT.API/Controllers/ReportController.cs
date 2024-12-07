@@ -9,6 +9,8 @@ using CIT.API.Repository.IRepository;
 
 namespace CIT.API.Controllers
 {
+    [Route("api/Report")]
+    [ApiController]
     public class ReportController : ControllerBase
     {
         public readonly IReport _IReport;
@@ -26,7 +28,6 @@ namespace CIT.API.Controllers
 
 
         [HttpGet("GetReportsData")]
-
         public async Task<ActionResult<ReportDetails>> GetReportsData()
         {
             _logger.LogInformation("GetReportsData method called at {time}.", DateTime.UtcNow);
