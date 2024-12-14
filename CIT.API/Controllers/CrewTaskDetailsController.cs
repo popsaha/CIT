@@ -155,6 +155,7 @@ namespace CIT.API.Controllers
                     _response.StatusCode = HttpStatusCode.NotFound;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("Task not found or unauthorized access.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
                     return NotFound(_response);
                 }
 
@@ -195,41 +196,69 @@ namespace CIT.API.Controllers
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("Invalid task ID.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
                     return BadRequest(_response);
                 }
 
                 var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
-                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int authenticatedUserId) || authenticatedUserId != userId)
+
+                int authenticatedUserId;
+                if (!int.TryParse(userIdClaim.Value, out authenticatedUserId) || authenticatedUserId != userId)
                 {
                     _response.StatusCode = HttpStatusCode.Unauthorized;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("Unauthorized access to tasks.");
                     return Unauthorized(_response);
                 }
+                // Check if the user is authenticated and has the correct claim
+                if (userIdClaim == null)
+                {
+                    _response.StatusCode = HttpStatusCode.Unauthorized;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("User is not authorized.");
+                    return Unauthorized(_response);
+                }
 
                 if (updateDTO.Location.Long == "string" || updateDTO.Location.Lat == "string")
                 {
-                    return BadRequest(new { message = "In location Lat and Log is Required." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("In location Lat and Log is Required.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);              
                 }
 
                 // Step 1: Retrieve the current screen ID for this task
                 var currentScreenId = await _crewTaskDetailsRepository.GetCurrentScreenIdByTaskId(taskId);               
                 if (currentScreenId == null)
                 {
-                    return BadRequest(new { message = "Task screen ID could not be retrieved." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Task screen ID could not be retrieved.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
+                   
                 }
 
 
                 // Prevent further modification if ScreenId is already "CIT-6"
                 if (currentScreenId == "CIT-6")
                 {
-                    return BadRequest(new { message = "Task is already marked as completed and cannot be modified further." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Task is already marked as completed and cannot be modified further.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);                 
                 }
 
                 // Prevent further modification if the task is already marked as failed with ScreenId "CIT-7"
                 if (currentScreenId == "CIT-7")
                 {
-                    return BadRequest(new { message = "Task has already been marked as failed and cannot be modified further." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Task has already been marked as failed and cannot be modified further.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);                 
                 }
 
                 // Step 2: Calculate the next expected screen ID
@@ -238,7 +267,12 @@ namespace CIT.API.Controllers
                 // Step 3: Check if the request ScreenId matches the expected next ScreenId
                 if (updateDTO.ScreenId != expectedNextScreenId)
                 {
-                    return BadRequest(new { message = "Invalid screen transition. The task has already passed this stage." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Invalid screen transition. The task has already passed this stage.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
+
                 }
 
 
@@ -251,6 +285,7 @@ namespace CIT.API.Controllers
                     _response.StatusCode = HttpStatusCode.Forbidden;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("You are not allowed to update this task.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
                     return StatusCode((int)HttpStatusCode.Forbidden, _response);
                 }
 
@@ -303,22 +338,36 @@ namespace CIT.API.Controllers
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("Invalid task ID.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
                     return BadRequest(_response);
                 }
 
                 var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
 
-                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int authenticatedUserId) || authenticatedUserId != userId)
+                int authenticatedUserId;
+                if (!int.TryParse(userIdClaim.Value, out authenticatedUserId) || authenticatedUserId != userId)
                 {
                     _response.StatusCode = HttpStatusCode.Unauthorized;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("Unauthorized access to tasks.");
                     return Unauthorized(_response);
                 }
+                // Check if the user is authenticated and has the correct claim
+                if (userIdClaim == null)
+                {
+                    _response.StatusCode = HttpStatusCode.Unauthorized;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("User is not authorized.");
+                    return Unauthorized(_response);
+                }
 
                 if (updateDTO.Location.Long == "string" || updateDTO.Location.Lat == "string")
                 {
-                    return BadRequest(new { message = "In location Lat and Log is Required." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("In location Lat and Log is Required.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
              
 
@@ -336,19 +385,31 @@ namespace CIT.API.Controllers
                 var currentScreenId = await _crewTaskDetailsRepository.GetCurrentScreenIdByTaskId(taskId);
                 if (currentScreenId == null)
                 {
-                    return BadRequest(new { message = "Task screen ID could not be retrieved." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Task screen ID could not be retrieved.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
                 // Prevent further modification if ScreenId is already "CIT-6"
                 if (currentScreenId == "CIT-6")
                 {
-                    return BadRequest(new { message = "Task is already marked as completed and cannot be modified further." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Task is already marked as completed and cannot be modified further.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
                 // Prevent further modification if the task is already marked as failed with ScreenId "CIT-7"
                 if (currentScreenId == "CIT-7")
                 {
-                    return BadRequest(new { message = "Task has already been marked as failed and cannot be modified further." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Task has already been marked as failed and cannot be modified further.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
                 // Step 2: Calculate the next expected screen ID
@@ -357,7 +418,11 @@ namespace CIT.API.Controllers
                 // Step 3: Check if the request ScreenId matches the expected next ScreenId
                 if (updateDTO.ScreenId != expectedNextScreenId)
                 {
-                    return BadRequest(new { message = "Invalid screen transition. The task has already passed this stage." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Invalid screen transition. The task has already passed this stage.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
                 string status = "Arrived";
@@ -369,6 +434,7 @@ namespace CIT.API.Controllers
                     _response.StatusCode = HttpStatusCode.Forbidden;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("You are not allowed to update this task.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
                     return StatusCode((int)HttpStatusCode.Forbidden, _response);
                 }
 
@@ -385,6 +451,7 @@ namespace CIT.API.Controllers
             {
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 _response.IsSuccess = false;
+                _response.Result = new object[0]; // Set Result to an empty array.
                 _response.ErrorMessages.Add(ex.Message); // Display the custom message from the procedure
                 return BadRequest(_response);
             }
@@ -394,6 +461,7 @@ namespace CIT.API.Controllers
                 _response.StatusCode = HttpStatusCode.InternalServerError;
                 _response.IsSuccess = false;
                 _response.ErrorMessages.Add(ex.Message);
+                _response.Result = new object[0]; // Set Result to an empty array.
                 return StatusCode((int)HttpStatusCode.InternalServerError, _response);
             }
         }
@@ -419,30 +487,53 @@ namespace CIT.API.Controllers
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("Invalid task ID.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
                     return BadRequest(_response);
                 }
 
                 var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
 
-                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int authenticatedUserId) || authenticatedUserId != userId)
+                int authenticatedUserId;
+                if (!int.TryParse(userIdClaim.Value, out authenticatedUserId) || authenticatedUserId != userId)
                 {
                     _response.StatusCode = HttpStatusCode.Unauthorized;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("Unauthorized access to tasks.");
                     return Unauthorized(_response);
                 }
+                // Check if the user is authenticated and has the correct claim
+                if (userIdClaim == null)
+                {
+                    _response.StatusCode = HttpStatusCode.Unauthorized;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("User is not authorized.");
+                    return Unauthorized(_response);
+                }
 
                 if (failedDTO.Location.Long == "string" || failedDTO.Location.Lat == "string")
                 {
-                    return BadRequest(new { message = "In location Lat and Log is Required." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("In location Lat and Log is Required.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
                 else if (failedDTO.FailureReason == "string")
                 {
-                    return BadRequest(new { message = "FailureReason is Required." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("FailureReason is Required.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
+
                 }
                 else if (failedDTO.ScreenId == "string")
                 {
-                    return BadRequest(new { message = "ScreenId is Required." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("ScreenId is Required.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
               
 
@@ -453,19 +544,31 @@ namespace CIT.API.Controllers
                 // Prevent further modification if ScreenId is already "CIT-7"
                 if (currentScreenId == null)
                 {
-                    return BadRequest(new { message = "Task screen ID could not be retrieved." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Task screen ID could not be retrieved.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
                 // Prevent further modification if ScreenId is already "CIT-6"
                 if (currentScreenId == "CIT-6")
                 {
-                    return BadRequest(new { message = "Task is already marked as completed and cannot be modified further." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Task is already marked as completed and cannot be modified further.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
                 // Prevent further modification if the task is already marked as failed with ScreenId "CIT-7"
                 if (currentScreenId == "CIT-7")
                 {
-                    return BadRequest(new { message = "Task has already been marked as failed and cannot be modified further." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Task has already been marked as failed and cannot be modified further.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
                 // Step 2: Calculate the next expected screen ID
@@ -487,6 +590,7 @@ namespace CIT.API.Controllers
                     _response.StatusCode = HttpStatusCode.Forbidden;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("You are not allowed to update this task.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
                     return StatusCode((int)HttpStatusCode.Forbidden, _response);
                 }
 
@@ -512,6 +616,7 @@ namespace CIT.API.Controllers
                 _response.StatusCode = HttpStatusCode.InternalServerError;
                 _response.IsSuccess = false;
                 _response.ErrorMessages.Add(ex.Message);
+                _response.Result = new object[0]; // Set Result to an empty array.
                 return StatusCode((int)HttpStatusCode.InternalServerError, _response);
             }
         }
@@ -539,12 +644,17 @@ namespace CIT.API.Controllers
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("Duplicate Parcel QR codes detected.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
                     return BadRequest(_response);
                 }
                 // Check if any ParcelQR has the value "string"
                 if (parcelDTO.Parcels.Any(p => p.ParcelQR == "string"))
                 {
-                    return BadRequest(new { message = "ParcelQR cannot have the value 'string'." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("ParcelQR cannot have the value 'string'");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
                 if (taskId <= 0)
@@ -552,22 +662,36 @@ namespace CIT.API.Controllers
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("Invalid task ID.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
                     return BadRequest(_response);
                 }
 
                 var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
 
-                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int authenticatedUserId) || authenticatedUserId != userId)
+                int authenticatedUserId;
+                if (!int.TryParse(userIdClaim.Value, out authenticatedUserId) || authenticatedUserId != userId)
                 {
                     _response.StatusCode = HttpStatusCode.Unauthorized;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("Unauthorized access to tasks.");
                     return Unauthorized(_response);
                 }
+                // Check if the user is authenticated and has the correct claim
+                if (userIdClaim == null)
+                {
+                    _response.StatusCode = HttpStatusCode.Unauthorized;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("User is not authorized.");
+                    return Unauthorized(_response);
+                }
 
                 if (parcelDTO.Location.Long == "string" || parcelDTO.Location.Lat == "string")
                 {
-                    return BadRequest(new { message = "In location Lat and Log is Required." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("In location Lat and Log is Required.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
 
@@ -575,19 +699,31 @@ namespace CIT.API.Controllers
                 var currentScreenId = await _crewTaskDetailsRepository.GetCurrentScreenIdByTaskId(taskId);
                 if (currentScreenId == null)
                 {
-                    return BadRequest(new { message = "Task screen ID could not be retrieved." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Task screen ID could not be retrieved.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
                 // Prevent further modification if ScreenId is already "CIT-6"
                 if (currentScreenId == "CIT-6")
                 {
-                    return BadRequest(new { message = "Task is already marked as completed and cannot be modified further." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Task is already marked as completed and cannot be modified further.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
                 // Prevent further modification if the task is already marked as failed with ScreenId "CIT-7"
                 if (currentScreenId == "CIT-7")
                 {
-                    return BadRequest(new { message = "Task has already been marked as failed and cannot be modified further." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Task has already been marked as failed and cannot be modified further.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
                 // Step 2: Calculate the next expected screen ID
@@ -596,7 +732,11 @@ namespace CIT.API.Controllers
                 // Step 3: Check if the request ScreenId matches the expected next ScreenId
                 if (parcelDTO.ScreenId != expectedNextScreenId)
                 {
-                    return BadRequest(new { message = "Invalid screen transition. The task has already passed this stage." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Invalid screen transition. The task has already passed this stage.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
                 string status = "Loaded";
@@ -608,6 +748,7 @@ namespace CIT.API.Controllers
                     _response.StatusCode = HttpStatusCode.Forbidden;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("You are not allowed to update this task.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
                     return StatusCode((int)HttpStatusCode.Forbidden, _response);
                 }
 
@@ -626,6 +767,7 @@ namespace CIT.API.Controllers
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 _response.IsSuccess = false;
                 _response.ErrorMessages.Add(ex.Message); // Display the custom message from the procedure
+                _response.Result = new object[0]; // Set Result to an empty array.
                 return BadRequest(_response);
             }
 
@@ -634,6 +776,7 @@ namespace CIT.API.Controllers
                 _response.StatusCode = HttpStatusCode.InternalServerError;
                 _response.IsSuccess = false;
                 _response.ErrorMessages.Add(ex.Message);
+                _response.Result = new object[0]; // Set Result to an empty array.
                 return StatusCode((int)HttpStatusCode.InternalServerError, _response);
             }
         }
@@ -659,41 +802,67 @@ namespace CIT.API.Controllers
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("Invalid task ID.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
                     return BadRequest(_response);
                 }
 
                 var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
 
-                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int authenticatedUserId) || authenticatedUserId != userId)
+                int authenticatedUserId;
+                if (!int.TryParse(userIdClaim.Value, out authenticatedUserId) || authenticatedUserId != userId)
                 {
                     _response.StatusCode = HttpStatusCode.Unauthorized;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("Unauthorized access to tasks.");
                     return Unauthorized(_response);
                 }
+                // Check if the user is authenticated and has the correct claim
+                if (userIdClaim == null)
+                {
+                    _response.StatusCode = HttpStatusCode.Unauthorized;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("User is not authorized.");
+                    return Unauthorized(_response);
+                }
 
                 if (arrivedDTO.Location.Long == "string" || arrivedDTO.Location.Lat == "string")
                 {
-                    return BadRequest(new { message = "In location Lat and Log is Required." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("In location Lat and Log is Required.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
                 // Step 1: Retrieve the current screen ID for this task
                 var currentScreenId = await _crewTaskDetailsRepository.GetCurrentScreenIdByTaskId(taskId);
                 if (currentScreenId == null)
                 {
-                    return BadRequest(new { message = "Task screen ID could not be retrieved." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Task screen ID could not be retrieved.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
                 // Prevent further modification if ScreenId is already "CIT-6"
                 if (currentScreenId == "CIT-6")
                 {
-                    return BadRequest(new { message = "Task is already marked as completed and cannot be modified further." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Task is already marked as completed and cannot be modified further.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
                 // Prevent further modification if the task is already marked as failed with ScreenId "CIT-7"
                 if (currentScreenId == "CIT-7")
                 {
-                    return BadRequest(new { message = "Task has already been marked as failed and cannot be modified further." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Task has already been marked as failed and cannot be modified further.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
                 // Step 2: Calculate the next expected screen ID
@@ -702,7 +871,11 @@ namespace CIT.API.Controllers
                 // Step 3: Check if the request ScreenId matches the expected next ScreenId
                 if (arrivedDTO.ScreenId != expectedNextScreenId)
                 {
-                    return BadRequest(new { message = "Invalid screen transition. The task has already passed this stage." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Invalid screen transition. The task has already passed this stage.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
 
@@ -715,6 +888,7 @@ namespace CIT.API.Controllers
                     _response.StatusCode = HttpStatusCode.Forbidden;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("You are not allowed to update this task.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
                     return StatusCode((int)HttpStatusCode.Forbidden, _response);
                 }
 
@@ -743,6 +917,7 @@ namespace CIT.API.Controllers
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 _response.IsSuccess = false;
                 _response.ErrorMessages.Add(ex.Message); // Display the custom message from the procedure
+                _response.Result = new object[0]; // Set Result to an empty array.
                 return BadRequest(_response);
             }
 
@@ -751,6 +926,7 @@ namespace CIT.API.Controllers
                 _response.StatusCode = HttpStatusCode.InternalServerError;
                 _response.IsSuccess = false;
                 _response.ErrorMessages.Add(ex.Message);
+                _response.Result = new object[0]; // Set Result to an empty array.
                 return StatusCode((int)HttpStatusCode.InternalServerError, _response);
             }
         }
@@ -778,12 +954,17 @@ namespace CIT.API.Controllers
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("Duplicate Parcel QR codes detected.");
+                    _response.Result = new object[0];
                     return BadRequest(_response);
                 }
                 // Check if any ParcelQR has the value "string"
                 if (parcelDTO.Parcels.Any(p => p.ParcelQR == "string"))
                 {
-                    return BadRequest(new { message = "ParcelQR cannot have the value 'string'." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("ParcelQR cannot have the value 'string'");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
                 if (taskId <= 0)
@@ -791,41 +972,67 @@ namespace CIT.API.Controllers
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("Invalid task ID.");
+                    _response.Result = new object[0];
                     return BadRequest(_response);
                 }
 
                 var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
 
-                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int authenticatedUserId) || authenticatedUserId != userId)
+                int authenticatedUserId;
+                if (!int.TryParse(userIdClaim.Value, out authenticatedUserId) || authenticatedUserId != userId)
                 {
                     _response.StatusCode = HttpStatusCode.Unauthorized;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("Unauthorized access to tasks.");
                     return Unauthorized(_response);
                 }
+                // Check if the user is authenticated and has the correct claim
+                if (userIdClaim == null)
+                {
+                    _response.StatusCode = HttpStatusCode.Unauthorized;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("User is not authorized.");
+                    return Unauthorized(_response);
+                }
 
                 if (parcelDTO.Location.Long == "string" || parcelDTO.Location.Lat == "string")
                 {
-                    return BadRequest(new { message = "In location Lat and Log is Required." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("In location Lat and Log is Required.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
                 // Step 1: Retrieve the current screen ID for this task
                 var currentScreenId = await _crewTaskDetailsRepository.GetCurrentScreenIdByTaskId(taskId);
                 if (currentScreenId == null)
                 {
-                    return BadRequest(new { message = "Task screen ID could not be retrieved." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Task screen ID could not be retrieved.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
                 // Prevent further modification if ScreenId is already "CIT-6"
                 if (currentScreenId == "CIT-6")
                 {
-                    return BadRequest(new { message = "Task is already marked as completed and cannot be modified further." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Task is already marked as completed and cannot be modified further.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
                 // Prevent further modification if the task is already marked as failed with ScreenId "CIT-7"
                 if (currentScreenId == "CIT-7")
                 {
-                    return BadRequest(new { message = "Task has already been marked as failed and cannot be modified further." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Task has already been marked as failed and cannot be modified further.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
                 // Step 2: Calculate the next expected screen ID
@@ -834,7 +1041,11 @@ namespace CIT.API.Controllers
                 // Step 3: Check if the request ScreenId matches the expected next ScreenId
                 if (parcelDTO.ScreenId != expectedNextScreenId)
                 {
-                    return BadRequest(new { message = "Invalid screen transition. The task has already passed this stage." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Invalid screen transition. The task has already passed this stage.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
                 string status = "Unloaded";
@@ -846,6 +1057,7 @@ namespace CIT.API.Controllers
                     _response.StatusCode = HttpStatusCode.Forbidden;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("You are not allowed to update this task.");
+                    _response.Result = new object[0];
                     return StatusCode((int)HttpStatusCode.Forbidden, _response);
                 }
 
@@ -864,6 +1076,7 @@ namespace CIT.API.Controllers
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 _response.IsSuccess = false;
                 _response.ErrorMessages.Add(ex.Message); // Display the custom message from the procedure
+                _response.Result = new object[0];
                 return BadRequest(_response);
             }
 
@@ -872,6 +1085,7 @@ namespace CIT.API.Controllers
                 _response.StatusCode = HttpStatusCode.InternalServerError;
                 _response.IsSuccess = false;
                 _response.ErrorMessages.Add(ex.Message);
+                _response.Result = new object[0];
                 return StatusCode((int)HttpStatusCode.InternalServerError, _response);
             }
         }
@@ -897,13 +1111,14 @@ namespace CIT.API.Controllers
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("Invalid task ID.");
+                    _response.Result = new object[0];
                     return BadRequest(_response);
                 }
 
                 var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name); //code tries to find the user's ID from their claims (data associated with their login session).
 
-                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int authenticatedUserId) || authenticatedUserId != userId) // If the claim with the user ID is missing, then the user isn’t authorized., If the user ID claim is there but can’t be converted to a valid integer (which the code expects), it’s also unauthorized.
-                                                                                                                                                     //If the user’s ID from the claim doesn’t match the ID in the update request, the user isn’t authorized to update this                        particular task.
+                int authenticatedUserId;
+                if (!int.TryParse(userIdClaim.Value, out authenticatedUserId) || authenticatedUserId != userId)
                 {
                     _response.StatusCode = HttpStatusCode.Unauthorized;
                     _response.IsSuccess = false;
@@ -911,28 +1126,53 @@ namespace CIT.API.Controllers
                     return Unauthorized(_response);
                 }
 
+                // Check if the user is authenticated and has the correct claim
+                if (userIdClaim == null)
+                {
+                    _response.StatusCode = HttpStatusCode.Unauthorized;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("User is not authorized.");
+                    return Unauthorized(_response);
+                }
+
                 if (updateDTO.Location.Long == "string" || updateDTO.Location.Lat == "string")
                 {
-                    return BadRequest(new { message = "In location Lat and Log is Required." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("In location Lat and Log is Required.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
                 // Step 1: Retrieve the current screen ID for this task
                 var currentScreenId = await _crewTaskDetailsRepository.GetCurrentScreenIdByTaskId(taskId);
                 if (currentScreenId == null)
                 {
-                    return BadRequest(new { message = "Task screen ID could not be retrieved." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Task screen ID could not be retrieved.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
                 // Prevent further modification if ScreenId is already "CIT-6"
                 if (currentScreenId == "CIT-6")
                 {
-                    return BadRequest(new { message = "Task is already marked as completed and cannot be modified further." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Task is already marked as completed and cannot be modified further.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
                 // Prevent further modification if the task is already marked as failed with ScreenId "CIT-7"
                 if (currentScreenId == "CIT-7")
                 {
-                    return BadRequest(new { message = "Task has already been marked as failed and cannot be modified further." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Task has already been marked as failed and cannot be modified further.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
                 // Step 2: Calculate the next expected screen ID
@@ -941,7 +1181,11 @@ namespace CIT.API.Controllers
                 // Step 3: Check if the request ScreenId matches the expected next ScreenId
                 if (updateDTO.ScreenId != expectedNextScreenId)
                 {
-                    return BadRequest(new { message = "Invalid screen transition. The task has already passed this stage." });
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Invalid screen transition. The task has already passed this stage.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
 
@@ -954,6 +1198,7 @@ namespace CIT.API.Controllers
                     _response.StatusCode = HttpStatusCode.Forbidden;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("You are not allowed to update this task.");
+                    _response.Result = new object[0];
                     return StatusCode((int)HttpStatusCode.Forbidden, _response);
                 }
 
@@ -972,6 +1217,7 @@ namespace CIT.API.Controllers
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 _response.IsSuccess = false;
                 _response.ErrorMessages.Add(ex.Message); // Display the custom message from the procedure
+                _response.Result = new object[0];
                 return BadRequest(_response);
             }
 
@@ -980,6 +1226,7 @@ namespace CIT.API.Controllers
                 _response.StatusCode = HttpStatusCode.InternalServerError;
                 _response.IsSuccess = false;
                 _response.ErrorMessages.Add(ex.Message);
+                _response.Result = new object[0];
                 return StatusCode((int)HttpStatusCode.InternalServerError, _response);
             }
         }
