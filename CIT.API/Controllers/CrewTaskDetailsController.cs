@@ -61,6 +61,7 @@ namespace CIT.API.Controllers
                     _response.StatusCode = HttpStatusCode.Unauthorized;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("User is not authorized.");
+                    _response.Result = new object[0];
                     return Unauthorized(_response);
                 }
 
@@ -71,6 +72,7 @@ namespace CIT.API.Controllers
                     _response.StatusCode = HttpStatusCode.Unauthorized;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("Unauthorized access to tasks.");
+                    _response.Result = new object[0];
                     return Unauthorized(_response);
                 }
 
@@ -82,6 +84,7 @@ namespace CIT.API.Controllers
                     _response.StatusCode = HttpStatusCode.NotFound;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("No tasks found for this user.");
+                    _response.Result = new object[0];
                     return NotFound(_response);
                 }
 
@@ -97,7 +100,7 @@ namespace CIT.API.Controllers
                 _response.StatusCode = HttpStatusCode.InternalServerError;
                 _response.IsSuccess = false;
                 _response.ErrorMessages.Add(ex.Message);
-
+                _response.Result = new object[0];
                 return StatusCode((int)HttpStatusCode.InternalServerError, _response);
             }
         }
@@ -126,6 +129,7 @@ namespace CIT.API.Controllers
                     _response.StatusCode = HttpStatusCode.Unauthorized;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("Unauthorized access to tasks.");
+                    _response.Result = new object[0];
                     return Unauthorized(_response);
                 }
                 // Check if the user is authenticated and has the correct claim
@@ -134,6 +138,7 @@ namespace CIT.API.Controllers
                     _response.StatusCode = HttpStatusCode.Unauthorized;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("User is not authorized.");
+                    _response.Result = new object[0];
                     return Unauthorized(_response);
                 }
 
@@ -143,6 +148,7 @@ namespace CIT.API.Controllers
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("Invalid user ID.");
+                    _response.Result = new object[0];
                     return BadRequest(_response);
                 }
 
@@ -172,6 +178,7 @@ namespace CIT.API.Controllers
                 _response.StatusCode = HttpStatusCode.InternalServerError;
                 _response.IsSuccess = false;
                 _response.ErrorMessages.Add(ex.Message);
+                _response.Result = new object[0];
                 return StatusCode((int)HttpStatusCode.InternalServerError, _response);
             }
         }
@@ -893,12 +900,12 @@ namespace CIT.API.Controllers
                 }
 
                 // Fetch parcel data from repository (stored as comma-separated values in CITTASKDETAIL)
-                var parcelData = await _crewTaskDetailsRepository.GetParcelData(taskId);
+                var parcelData = await _crewTaskDetailsRepository.GetParcelAsync(taskId, authenticatedUserId, userId);
 
                 // Format parcel data for response
-                List<object> parcels = parcelData != null
-                    ? parcelData.Split(',').Select(qrCode => new { parcelQR = qrCode }).Cast<object>().ToList()
-                    : new List<object>();
+                //List<object> parcels = parcelData != null
+                //    ? parcelData.Split(',').Select(qrCode => new { parcelQR = qrCode }).Cast<object>().ToList()
+                //    : new List<object>();
 
                 _response.StatusCode = HttpStatusCode.OK;
                 _response.IsSuccess = true;
@@ -906,7 +913,7 @@ namespace CIT.API.Controllers
                 {
                     status = status,
                     time = arrivedDTO.Time.ToString("MM/dd/yyyy HH:mm:ss"),
-                    parcels = parcels
+                    parcels = parcelData
                 };
 
                 return Ok(_response);
@@ -1221,6 +1228,93 @@ namespace CIT.API.Controllers
                 return BadRequest(_response);
             }
 
+            catch (Exception ex)
+            {
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add(ex.Message);
+                _response.Result = new object[0];
+                return StatusCode((int)HttpStatusCode.InternalServerError, _response);
+            }
+        }
+
+        [HttpGet("GetParcels/{taskId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetParcels(int taskId)
+        {
+            try
+            {
+                // Check if the user is authenticated
+                if (!User.Identity.IsAuthenticated)
+                {
+                    _response.StatusCode = HttpStatusCode.Unauthorized;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("User is not authenticated.");
+                    _response.Result = new object[0];
+                    return Unauthorized(_response);
+                }
+
+                // Retrieve user ID from claims
+                var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int authenticatedUserId))
+                {
+                    _response.StatusCode = HttpStatusCode.Unauthorized;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Invalid or missing user claim.");
+                    _response.Result = new object[0];
+                    return Unauthorized(_response);
+                }
+
+                // Get user ID from the database
+                int userIdFromDb = await _crewTaskDetailsRepository.GetUserIdByUuidAsync();
+
+                // Check if the authenticated user matches the database user
+                if (authenticatedUserId != userIdFromDb)
+                {
+                    _response.StatusCode = HttpStatusCode.Unauthorized;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("User does not have access to this task.");
+                    _response.Result = new object[0];
+                    return Unauthorized(_response);
+                }
+
+                // Validate task ID
+                if (taskId <= 0)
+                {
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Invalid task ID.");
+                    _response.Result = new object[0];
+                    return BadRequest(_response);
+                }
+
+                // Fetch parcels from the repository
+                var parcels = await _crewTaskDetailsRepository.GetParcelAsync(taskId, authenticatedUserId, userIdFromDb);
+
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.IsSuccess = true;
+                _response.Result = new { parcels };
+                return Ok(_response);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _response.StatusCode = HttpStatusCode.Unauthorized;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add(ex.Message);
+                _response.Result = new object[0];
+                return Unauthorized(_response);
+            }
+            catch (SqlException ex) when (ex.Number == 50000)
+            {
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add(ex.Message);
+                _response.Result = new object[0];
+                return BadRequest(_response);
+            }
             catch (Exception ex)
             {
                 _response.StatusCode = HttpStatusCode.InternalServerError;

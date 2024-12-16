@@ -84,7 +84,7 @@ namespace CIT.API.Repository
                 parameters.Add("CrewCommanderId", crewCommanderId); // Ensure this crew commander is authorized for this task
                 parameters.Add("TaskId", taskId); // Pass TaskId to get specific task details
                 parameters.Add("UserId", userId);
-              
+
 
                 // Use QueryFirstOrDefaultAsync to ensure that the query returns null if no record is found
                 var taskDetails = await con.QueryFirstOrDefaultAsync<CrewTaskDetailsByTaskIdDTO>(
@@ -287,12 +287,42 @@ namespace CIT.API.Repository
         }
 
         // Method to fetch parcel data as comma-separated values
-        public async Task<string> GetParcelData(int taskId)
+
+        public async Task<IEnumerable<Parcel>> GetParcelAsync(int taskId, int authenticatedUserId, int userIdFromDb)
         {
-            using (var con = _db.CreateConnection())
+            const string query = @"
+    SELECT ctd.ParcelsLoaded
+    FROM CitTaskDetail ctd
+    INNER JOIN Task t ON ctd.TaskID = t.TaskID
+    INNER JOIN TeamAssignments ta ON t.OrderID = ta.OrderID
+    INNER JOIN UserMaster u ON ta.CrewID = u.UserID
+    WHERE ctd.TaskID = @TaskId
+      AND ta.CrewID = @CrewCommanderId
+      AND ta.IsActive = 1
+      AND u.UserID = @CrewCommanderId";
+
+            using (var connection = _db.CreateConnection())
             {
-                var query = "SELECT ParcelsLoaded  FROM CITTASKDETAIL WHERE TaskId = @TaskId";
-                return await con.QueryFirstOrDefaultAsync<string>(query, new { TaskId = taskId });
+                // Validate the crew commander is authorized to access the task
+                var parcelsLoadedStrings = await connection.QueryAsync<string>(
+                    query,
+                    new
+                    {
+                        TaskId = taskId,
+                        CrewCommanderId = authenticatedUserId
+                    });
+
+                // If no rows are returned, the user isn't authorized or the task doesn't exist
+                if (!parcelsLoadedStrings.Any())
+                {
+                    throw new UnauthorizedAccessException("User is not authorized to access this task or task ID is invalid.");
+                }
+
+                // Process the parcel data
+                return parcelsLoadedStrings
+                    .Where(row => !string.IsNullOrWhiteSpace(row)) // Exclude NULL or empty rows
+                    .SelectMany(row => row.Split(',', StringSplitOptions.RemoveEmptyEntries)) // Split by comma
+                    .Select(parcelQr => new Parcel { ParcelQR = parcelQr.Trim() }); // Map to Parcel objects
             }
         }
 

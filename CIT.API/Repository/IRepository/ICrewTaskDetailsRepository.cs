@@ -1,4 +1,5 @@
 ﻿using CIT.API.Models.Dto.CrewTaskDetails;
+using System.Threading.Tasks;
 
 namespace CIT.API.Repository.IRepository
 {
@@ -14,11 +15,11 @@ namespace CIT.API.Repository.IRepository
 
         Task<bool> arrivedDeliveryAsync(int crewCommanderId, int taskId, string status, CrewTaskStatusUpdateDTO arrivedDTO,  string activityType, int userId);
 
-        Task<string> GetParcelData(int taskId);
-
         Task<string> GetCurrentScreenIdByTaskId(int taskId);
         Task<string> GetNextScreenIdByTaskId(int taskId);
 
         Task<int> GetUserIdByUuidAsync ();
+
+        public Task<IEnumerable<Parcel>> GetParcelAsync(int taskId, int authenticatedUserId, int userIdFromDb);
     }
 }
