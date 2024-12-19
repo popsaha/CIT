@@ -31,6 +31,19 @@ namespace CIT.API.Repository
                 parameters.Add("Address", Branchdto.Address);
                 parameters.Add("ContactNumber", Branchdto.ContactNumber);
                 parameters.Add("DataSource", Branchdto.DataSource);
+
+                parameters.Add("CustomerID", Branchdto.CustomerID);
+                parameters.Add("BranchCode", Branchdto.BranchCode);
+                parameters.Add("ReferenceNo1", Branchdto.ReferenceNo1);
+                parameters.Add("ReferenceNo2", Branchdto.ReferenceNo2);
+
+                parameters.Add("Email", Branchdto.Email);
+                parameters.Add("Country", Branchdto.Country);
+                parameters.Add("City", Branchdto.City);
+                parameters.Add("PostalCode", Branchdto.PostalCode);
+
+                parameters.Add("Latitude", Branchdto.Latitude);
+                parameters.Add("Longitude", Branchdto.Longitude);
                 parameters.Add("CreatedBy", 1);
                 Res = await connection.ExecuteScalarAsync<int>("spBranch", parameters, commandType: CommandType.StoredProcedure);
             };
@@ -91,6 +104,19 @@ namespace CIT.API.Repository
                     parameters.Add("Address", branchDTO.Address);
                     parameters.Add("ContactNumber", branchDTO.ContactNumber);
                     parameters.Add("ModifiedBy", branchDTO.CreatedBy);
+
+                    parameters.Add("CustomerID", branchDTO.CustomerID);
+                    parameters.Add("BranchCode", branchDTO.BranchCode);
+                    parameters.Add("ReferenceNo1", branchDTO.ReferenceNo1);
+                    parameters.Add("ReferenceNo2", branchDTO.ReferenceNo2);
+
+                    parameters.Add("Email", branchDTO.Email);
+                    parameters.Add("Country", branchDTO.Country);
+                    parameters.Add("City", branchDTO.City);
+                    parameters.Add("PostalCode", branchDTO.PostalCode);
+
+                    parameters.Add("Latitude", branchDTO.Latitude);
+                    parameters.Add("Longitude", branchDTO.Longitude);
                     Res = await connection.ExecuteScalarAsync<int>("spBranch", parameters, commandType: CommandType.StoredProcedure);
                 }
             }
