@@ -60,6 +60,13 @@ namespace CIT.API.Repository
                     parameters.Add("ContactNumber", customerDTO.ContactNumber);
                     parameters.Add("Email", customerDTO.Email);
                     parameters.Add("CreatedBy", userId);
+                    parameters.Add("CustomerCode", customerDTO.CustomerCode);
+                    parameters.Add("ReferenceNo1", customerDTO.ReferenceNo1);
+                    parameters.Add("Country", customerDTO.Country);
+                    parameters.Add("ReferenceNo2", customerDTO.ReferenceNo2);
+                    parameters.Add("PostalCode", customerDTO.PostalCode);
+                    parameters.Add("TaxNumber", customerDTO.TaxNumber);
+                    parameters.Add("City", customerDTO.City);
 
                     var customerId = await connection.ExecuteScalarAsync<int>("spCustomer", parameters, commandType: CommandType.StoredProcedure);
 
@@ -101,6 +108,13 @@ namespace CIT.API.Repository
                     parameters.Add("Address", customer.Address);
                     parameters.Add("ContactNumber", customer.ContactNumber);
                     parameters.Add("Email", customer.Email);
+                    parameters.Add("CustomerCode", customer.CustomerCode);
+                    parameters.Add("ReferenceNo1", customer.ReferenceNo1);
+                    parameters.Add("Country", customer.Country);
+                    parameters.Add("ReferenceNo2", customer.ReferenceNo2);
+                    parameters.Add("PostalCode", customer.PostalCode);
+                    parameters.Add("TaxNumber", customer.TaxNumber);
+                    parameters.Add("City", customer.City);
                     //parameters.Add("ModifiedBy", customerDTO.ModifiedBy);
 
                     Res = await connection.ExecuteScalarAsync<int>("spCustomer", parameters, commandType: CommandType.StoredProcedure);
