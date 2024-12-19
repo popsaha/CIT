@@ -52,6 +52,7 @@ namespace CIT.API.Repository
                     parameters.Add("IsFullDayAssignment", taskmaster.fullDayCheck);
                     parameters.Add("TaskId", taskmaster.TaskId);
                     parameters.Add("CreatedBy", taskmaster.CreatedBy);
+                    parameters.Add("PickupTime", taskmaster.PickupTime);
                     Res = await connection.ExecuteScalarAsync<int>("usp_Order", parameters, commandType: CommandType.StoredProcedure);
                 };
             }

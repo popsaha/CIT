@@ -31,6 +31,7 @@
         public List<TaskBranch> taskbranchlist { get; set; }
         public List<VaultLocationMaster> vaultLocationMasters { get; set; }
         public List<OrderRoutes> Orderrouteslst { get; set; }
+        public string PickupTime { get; set; }
     }
     public class TaskBranch
     {
