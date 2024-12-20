@@ -24,31 +24,45 @@ namespace CIT.API.Repository
             int Res = 0;
             using (var connection = _db.CreateConnection())
             {
-                DynamicParameters parameters = new DynamicParameters();
+                try
+                {
+                    DynamicParameters parameters = new DynamicParameters();
 
-                parameters.Add("Flag", "C");
-                parameters.Add("BranchName", Branchdto.BranchName);
-                parameters.Add("Address", Branchdto.Address);
-                parameters.Add("ContactNumber", Branchdto.ContactNumber);
-                parameters.Add("DataSource", Branchdto.DataSource);
+                    parameters.Add("Flag", "C");
+                    parameters.Add("BranchName", Branchdto.BranchName);
+                    parameters.Add("Address", Branchdto.Address);
+                    parameters.Add("ContactNumber", Branchdto.ContactNumber);
+                    parameters.Add("CustomerID", Branchdto.CustomerID);
+                    parameters.Add("BranchCode", Branchdto.BranchCode);
+                    parameters.Add("ReferenceNo1", Branchdto.ReferenceNo1);
+                    parameters.Add("ReferenceNo2", Branchdto.ReferenceNo2);
+                    parameters.Add("Email", Branchdto.Email);
+                    parameters.Add("Country", Branchdto.Country);
+                    parameters.Add("City", Branchdto.City);
+                    parameters.Add("PostalCode", Branchdto.PostalCode);
+                    parameters.Add("Latitude", Branchdto.Latitude);
+                    parameters.Add("Longitude", Branchdto.Longitude);
 
-                parameters.Add("CustomerID", Branchdto.CustomerID);
-                parameters.Add("BranchCode", Branchdto.BranchCode);
-                parameters.Add("ReferenceNo1", Branchdto.ReferenceNo1);
-                parameters.Add("ReferenceNo2", Branchdto.ReferenceNo2);
+                    // Log Parameters
+                    Console.WriteLine("Executing spBranch with parameters:");
+                    foreach (var param in parameters.ParameterNames)
+                    {
+                        Console.WriteLine($"{param}: {parameters.Get<object>(param)}");
+                    }
 
-                parameters.Add("Email", Branchdto.Email);
-                parameters.Add("Country", Branchdto.Country);
-                parameters.Add("City", Branchdto.City);
-                parameters.Add("PostalCode", Branchdto.PostalCode);
+                    Res = await connection.ExecuteScalarAsync<int>("spBranch", parameters, commandType: CommandType.StoredProcedure);
 
-                parameters.Add("Latitude", Branchdto.Latitude);
-                parameters.Add("Longitude", Branchdto.Longitude);
-                parameters.Add("CreatedBy", 1);
-                Res = await connection.ExecuteScalarAsync<int>("spBranch", parameters, commandType: CommandType.StoredProcedure);
-            };
+                    Console.WriteLine($"Stored procedure executed successfully. Result: {Res}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error: {ex.Message}");
+                    throw;
+                }
+            }
             return Res;
         }
+
 
         public async Task<int> DeleteBranch(int branchId, int deletedBy)
         {
@@ -103,7 +117,7 @@ namespace CIT.API.Repository
                     parameters.Add("BranchName", branchDTO.BranchName);
                     parameters.Add("Address", branchDTO.Address);
                     parameters.Add("ContactNumber", branchDTO.ContactNumber);
-                    parameters.Add("ModifiedBy", branchDTO.CreatedBy);
+                    //parameters.Add("ModifiedBy", branchDTO.CreatedBy);
 
                     parameters.Add("CustomerID", branchDTO.CustomerID);
                     parameters.Add("BranchCode", branchDTO.BranchCode);

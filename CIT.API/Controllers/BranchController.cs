@@ -116,7 +116,7 @@ namespace CIT.API.Controllers
                     _response.ErrorMessages.Add("Invalid Branch data");
                     return BadRequest(_response);
                 }
-                var branch = _mapper.Map<BranchMaster>(branchDTO);
+                var branch = _mapper.Map<BranchCreateDTO>(branchDTO);
 
                 Res = await _Ibranchrepositoty.AddBranch(branchDTO);
                 if (Res == 0)
@@ -177,9 +177,9 @@ namespace CIT.API.Controllers
             return _response;
         }
 
-        [HttpDelete("DeleteBranch")]
-        // [HttpDelete("{branchId:int}", Name = "DeleteBranch")]     
-        [Authorize]
+        //[HttpDelete("DeleteBranch")]
+        [HttpDelete("{branchId:int}", Name = "DeleteBranch")]     
+        //[Authorize]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]

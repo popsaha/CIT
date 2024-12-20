@@ -12,8 +12,8 @@ namespace CIT.API.Models.Dto.Branch
         [Required]
         public string? Address { get; set; }
         public string? ContactNumber { get; set; }
-        public string? DataSource { get; set; }
-        public int CreatedBy { get; set; }
+        //public string? DataSource { get; set; }
+        //public int CreatedBy { get; set; }
         public int CustomerID { get; set; }
         public int BranchCode { get; set; }
         public string? ReferenceNo1 { get; set; }
