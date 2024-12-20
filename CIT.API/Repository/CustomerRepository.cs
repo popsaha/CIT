@@ -95,7 +95,7 @@ namespace CIT.API.Repository
             return Res;
         }
 
-        public async Task<Customer> UpdateCustomer(Customer customer)
+        public async Task<CustomerUpdateDTO> UpdateCustomer(CustomerUpdateDTO customer)
         {
             int Res = 0;
             try
@@ -104,6 +104,7 @@ namespace CIT.API.Repository
                 {
                     DynamicParameters parameters = new DynamicParameters();
                     parameters.Add("Flag", "U");
+                    parameters.Add("CustomerID", customer.CustomerId);
                     parameters.Add("CustomerName", customer.CustomerName);
                     parameters.Add("Address", customer.Address);
                     parameters.Add("ContactNumber", customer.ContactNumber);

@@ -103,7 +103,7 @@ namespace CIT.API.Controllers
 
 
         [HttpPost]
-        [Authorize(Roles = "admin")]
+        //[Authorize(Roles = "admin")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -156,7 +156,7 @@ namespace CIT.API.Controllers
 
 
         [HttpPut("{id:int}", Name = "UpdateCustomer")]
-        [Authorize(Roles = "admin")]
+        //[Authorize(Roles = "admin")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<APIResponse>> UpdateCustomer(int id, [FromBody] CustomerUpdateDTO updateDTO)
@@ -173,7 +173,7 @@ namespace CIT.API.Controllers
                     return BadRequest(_response);
                 }
 
-                Customer customer = _mapper.Map<Customer>(updateDTO);
+                CustomerUpdateDTO customer = _mapper.Map<CustomerUpdateDTO>(updateDTO);
                 var updatedCustomer = await _customerRepo.UpdateCustomer(customer);
 
                 _response.StatusCode = HttpStatusCode.NoContent;
@@ -192,8 +192,8 @@ namespace CIT.API.Controllers
         }
 
 
-        [HttpDelete("{id:int}", Name = "DeleteCustomer")]
-        [Authorize(Roles = "CUSTOM")]
+        [HttpDelete("{customerId:int}", Name = "DeleteCustomer")]
+        //[Authorize(Roles = "CUSTOM")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
