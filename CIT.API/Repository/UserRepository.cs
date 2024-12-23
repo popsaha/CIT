@@ -196,6 +196,7 @@ namespace CIT.API.Repository
                     parameters.Add("@UserName", crewUserDTO.UserName);
                     parameters.Add("@Password", crewUserDTO.Password); // Store plain password
                     parameters.Add("@RoleName", crewUserDTO.RoleName); // Pass role name to fetch RoleID
+                    parameters.Add("@RegionName", crewUserDTO.RegionName);
                     parameters.Add("@CreatedBy", 1); // Replace with actual CreatedBy user ID
 
                     // Execute the stored procedure
@@ -244,7 +245,7 @@ namespace CIT.API.Repository
                     parameters.Add("RoleName", usermaster.RoleName);
                     parameters.Add("IsActive", usermaster.IsActive);
                     parameters.Add("ModifiedBy", usermaster.ModifiedBy); // Add ModifiedBy
-
+                     parameters.Add("RegionName", usermaster.RegionName);
                     res = await connection.ExecuteScalarAsync<int>("spUserMaster", parameters, commandType: CommandType.StoredProcedure);
                 }
             }
