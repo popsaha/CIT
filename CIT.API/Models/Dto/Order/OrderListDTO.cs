@@ -22,6 +22,7 @@ namespace CIT.API.Models.Dto.Order
         public string? CrewCommander { get; set; }
         public string? LeadVehicle { get; set; }
         public string? ChaseVehicle { get; set; }
+        public string? PickupTime { get; set; }
     }
     public class TaskListDTO
     {
