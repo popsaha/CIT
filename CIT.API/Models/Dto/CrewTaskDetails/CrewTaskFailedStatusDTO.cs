@@ -7,7 +7,7 @@ namespace CIT.API.Models.Dto.CrewTaskDetails
         //[Required(ErrorMessage = "UserId is required.")]
         //public Guid UUID { get; set; }
         [Required(ErrorMessage = "ScreenId is required.")]
-        public string ScreenId { get; set; }
+        public string NextScreenId { get; set; }
         [Required]
         public DateTime Time { get; set; } = DateTime.UtcNow;
         

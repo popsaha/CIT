@@ -272,7 +272,7 @@ namespace CIT.API.Controllers
                 var expectedNextScreenId = await _crewTaskDetailsRepository.GetNextScreenIdByTaskId(taskId);
 
                 // Step 3: Check if the request ScreenId matches the expected next ScreenId
-                if (updateDTO.ScreenId != expectedNextScreenId)
+                if (updateDTO.NextScreenId != expectedNextScreenId)
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
@@ -423,7 +423,7 @@ namespace CIT.API.Controllers
                 var expectedNextScreenId = await _crewTaskDetailsRepository.GetNextScreenIdByTaskId(taskId);
 
                 // Step 3: Check if the request ScreenId matches the expected next ScreenId
-                if (updateDTO.ScreenId != expectedNextScreenId)
+                if (updateDTO.NextScreenId != expectedNextScreenId)
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
@@ -534,7 +534,7 @@ namespace CIT.API.Controllers
                     return BadRequest(_response);
 
                 }
-                else if (failedDTO.ScreenId == "string")
+                else if (failedDTO.NextScreenId == "string")
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
@@ -590,7 +590,7 @@ namespace CIT.API.Controllers
                 string status = "Failed";
                 string activityType = "Failed";
 
-                failedDTO.ScreenId = "-1";
+                failedDTO.NextScreenId = "-1";
                 bool updateResult = await _crewTaskDetailsRepository.crewTaskFailedAsync(authenticatedUserId, taskId, status, failedDTO, activityType, userId);
 
                 if (!updateResult)
@@ -738,7 +738,7 @@ namespace CIT.API.Controllers
                 var expectedNextScreenId = await _crewTaskDetailsRepository.GetNextScreenIdByTaskId(taskId);
 
                 // Step 3: Check if the request ScreenId matches the expected next ScreenId
-                if (parcelDTO.ScreenId != expectedNextScreenId)
+                if (parcelDTO.NextScreenId != expectedNextScreenId)
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
@@ -877,7 +877,7 @@ namespace CIT.API.Controllers
                 var expectedNextScreenId = await _crewTaskDetailsRepository.GetNextScreenIdByTaskId(taskId);
 
                 // Step 3: Check if the request ScreenId matches the expected next ScreenId
-                if (arrivedDTO.ScreenId != expectedNextScreenId)
+                if (arrivedDTO.NextScreenId != expectedNextScreenId)
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
@@ -1047,7 +1047,7 @@ namespace CIT.API.Controllers
                 var expectedNextScreenId = await _crewTaskDetailsRepository.GetNextScreenIdByTaskId(taskId);
 
                 // Step 3: Check if the request ScreenId matches the expected next ScreenId
-                if (parcelDTO.ScreenId != expectedNextScreenId)
+                if (parcelDTO.NextScreenId != expectedNextScreenId)
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
@@ -1199,7 +1199,7 @@ namespace CIT.API.Controllers
 
                 string status = "Completed";
                 string activityType = "Completed";
-                updateDTO.ScreenId = "1";
+                updateDTO.NextScreenId = "1";
                 bool updateResult = await _crewTaskDetailsRepository.UpdateTaskStatusAsync(authenticatedUserId, taskId, status, updateDTO, activityType, userId);
 
                 if (!updateResult)

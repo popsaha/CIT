@@ -2,7 +2,7 @@
 {
     public class CrewTaskDetailsByTaskIdDTO
     {
-        public string ScreenId { get; set; }
+        public string NextScreenId { get; set; }
         public int CrewCommanderId { get; set; }
         public int TaskId { get; set; }
         public int OrderId { get; set; }

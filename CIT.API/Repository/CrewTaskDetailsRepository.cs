@@ -175,7 +175,7 @@ namespace CIT.API.Repository
                 //    _ => 1 // Default screenId for other activity types
                 //};
 
-                parameters.Add("NextScreenId", updateDTO.ScreenId); // Set ScreenId based on activityType  // Set ScreenId to 1 as required by the update
+                parameters.Add("NextScreenId", updateDTO.NextScreenId); // Set ScreenId based on activityType  // Set ScreenId to 1 as required by the update
                 parameters.Add("Time", updateDTO.Time);  // Pass the start time from DTO
                 parameters.Add("Lat", updateDTO.Location?.Lat);  // Pass Latitude if available
                 parameters.Add("Long", updateDTO.Location?.Long);  // Pass Longitude if available
@@ -213,7 +213,7 @@ namespace CIT.API.Repository
                 parameters.Add("TaskId", taskId);
                 parameters.Add("Status", status);
                 parameters.Add("UserId", userId);
-                parameters.Add("NextScreenId", parcelDTO.ScreenId);
+                parameters.Add("NextScreenId", parcelDTO.NextScreenId);
                 parameters.Add("Time", parcelDTO.Time);
                 parameters.Add("Lat", parcelDTO.Location?.Lat);
                 parameters.Add("Long", parcelDTO.Location?.Long);
@@ -250,7 +250,7 @@ namespace CIT.API.Repository
                 parameters.Add("TaskId", taskId);
                 parameters.Add("Status", status);
                 parameters.Add("UserId", userId);
-                parameters.Add("NextScreenId", failedDTO.ScreenId);
+                parameters.Add("NextScreenId", failedDTO.NextScreenId);
                 parameters.Add("Time", failedDTO.Time);
                 parameters.Add("Lat", failedDTO.Location?.Lat);
                 parameters.Add("Long", failedDTO.Location?.Long);
@@ -282,7 +282,7 @@ namespace CIT.API.Repository
                 parameters.Add("UserId", userId);
 
                 //int screenId = activityType == "ArrivedDelivery" ? 5 : 4;
-                parameters.Add("NextScreenId", arrivedDTO.ScreenId);
+                parameters.Add("NextScreenId", arrivedDTO.NextScreenId);
                 parameters.Add("Time", arrivedDTO.Time);
                 parameters.Add("Lat", arrivedDTO.Location?.Lat);
                 parameters.Add("Long", arrivedDTO.Location?.Long);
