@@ -106,7 +106,7 @@ namespace CIT.API.Repository
             // If current ScreenId is null, initialize to default
             if (string.IsNullOrEmpty(currentScreenId))
             {
-                return "CIT-1";
+                return "CIT-2";
             }
 
             // Check if the ScreenId follows the format "CIT-<number>"
@@ -124,7 +124,7 @@ namespace CIT.API.Repository
             }
 
             // Default value if ScreenId is in an unexpected format
-            return "CIT-1";
+            return "CIT-2";
         }
 
 
@@ -132,11 +132,11 @@ namespace CIT.API.Repository
         {
             using (var con = _db.CreateConnection())
             {
-                var query = "SELECT ScreenId FROM Task WHERE TaskID = @TaskId";
+                var query = "SELECT NextScreenId FROM Task WHERE TaskID = @TaskId";
                 var screenId = await con.QueryFirstOrDefaultAsync<string>(query, new { TaskId = taskId });
                 if (screenId == null)
                 {
-                    Console.WriteLine($"ScreenId could not be found for TaskID: {taskId}");
+                    Console.WriteLine($"NextScreenId could not be found for TaskID: {taskId}");
                 }
                 return screenId;
             }
@@ -144,6 +144,13 @@ namespace CIT.API.Repository
 
         public async Task<bool> UpdateTaskStatusAsync(int crewCommanderId, int taskId, string status, CrewTaskStatusUpdateDTO updateDTO, string activityType, int userId)
         {
+
+            //var currentScreenId = await GetCurrentScreenIdByTaskId(taskId);
+            //if (currentScreenId == "1")
+            //{
+            //    return false; // Prevent update if task is already marked as failed
+            //}
+
 
             using (var con = _db.CreateConnection())
             {
@@ -168,7 +175,7 @@ namespace CIT.API.Repository
                 //    _ => 1 // Default screenId for other activity types
                 //};
 
-                parameters.Add("ScreenId", updateDTO.ScreenId); // Set ScreenId based on activityType  // Set ScreenId to 1 as required by the update
+                parameters.Add("NextScreenId", updateDTO.ScreenId); // Set ScreenId based on activityType  // Set ScreenId to 1 as required by the update
                 parameters.Add("Time", updateDTO.Time);  // Pass the start time from DTO
                 parameters.Add("Lat", updateDTO.Location?.Lat);  // Pass Latitude if available
                 parameters.Add("Long", updateDTO.Location?.Long);  // Pass Longitude if available
@@ -206,7 +213,7 @@ namespace CIT.API.Repository
                 parameters.Add("TaskId", taskId);
                 parameters.Add("Status", status);
                 parameters.Add("UserId", userId);
-                parameters.Add("ScreenId", parcelDTO.ScreenId);
+                parameters.Add("NextScreenId", parcelDTO.ScreenId);
                 parameters.Add("Time", parcelDTO.Time);
                 parameters.Add("Lat", parcelDTO.Location?.Lat);
                 parameters.Add("Long", parcelDTO.Location?.Long);
@@ -232,7 +239,7 @@ namespace CIT.API.Repository
             using (var con = _db.CreateConnection())
             {
                 var currentScreenId = await GetCurrentScreenIdByTaskId(taskId);
-                if (currentScreenId == "CIT-7")
+                if (currentScreenId == "-1")
                 {
                     return false; // Prevent update if task is already marked as failed
                 }
@@ -243,7 +250,7 @@ namespace CIT.API.Repository
                 parameters.Add("TaskId", taskId);
                 parameters.Add("Status", status);
                 parameters.Add("UserId", userId);
-                parameters.Add("ScreenId", failedDTO.ScreenId);
+                parameters.Add("NextScreenId", failedDTO.ScreenId);
                 parameters.Add("Time", failedDTO.Time);
                 parameters.Add("Lat", failedDTO.Location?.Lat);
                 parameters.Add("Long", failedDTO.Location?.Long);
@@ -275,7 +282,7 @@ namespace CIT.API.Repository
                 parameters.Add("UserId", userId);
 
                 //int screenId = activityType == "ArrivedDelivery" ? 5 : 4;
-                parameters.Add("ScreenId", arrivedDTO.ScreenId);
+                parameters.Add("NextScreenId", arrivedDTO.ScreenId);
                 parameters.Add("Time", arrivedDTO.Time);
                 parameters.Add("Lat", arrivedDTO.Location?.Lat);
                 parameters.Add("Long", arrivedDTO.Location?.Long);

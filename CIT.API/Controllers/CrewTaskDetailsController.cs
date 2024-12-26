@@ -193,7 +193,7 @@ namespace CIT.API.Controllers
         {
 
             try
-            {
+            {   
 
                 // Retrieve the userId associated with the provided uuid using the repository method
                 int userId = await _crewTaskDetailsRepository.GetUserIdByUuidAsync();
@@ -249,7 +249,7 @@ namespace CIT.API.Controllers
 
 
                 // Prevent further modification if ScreenId is already "CIT-6"
-                if (currentScreenId == "CIT-6")
+                if (currentScreenId == "1")
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
@@ -259,7 +259,7 @@ namespace CIT.API.Controllers
                 }
 
                 // Prevent further modification if the task is already marked as failed with ScreenId "CIT-7"
-                if (currentScreenId == "CIT-7")
+                if (currentScreenId == "-1")
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
@@ -276,7 +276,7 @@ namespace CIT.API.Controllers
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("Invalid screen transition. The task has already passed this stage.");
+                    _response.ErrorMessages.Add("Invalid screen transition or The task has already passed this stage.");
                     _response.Result = new object[0]; // Set Result to an empty array.
                     return BadRequest(_response);
 
@@ -400,7 +400,7 @@ namespace CIT.API.Controllers
                 }
 
                 // Prevent further modification if ScreenId is already "CIT-6"
-                if (currentScreenId == "CIT-6")
+                if (currentScreenId == "1")
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
@@ -410,7 +410,7 @@ namespace CIT.API.Controllers
                 }
 
                 // Prevent further modification if the task is already marked as failed with ScreenId "CIT-7"
-                if (currentScreenId == "CIT-7")
+                if (currentScreenId == "-1")
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
@@ -427,7 +427,7 @@ namespace CIT.API.Controllers
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("Invalid screen transition. The task has already passed this stage.");
+                    _response.ErrorMessages.Add("Invalid screen transition or The task has already passed this stage.");
                     _response.Result = new object[0]; // Set Result to an empty array.
                     return BadRequest(_response);
                 }
@@ -559,7 +559,7 @@ namespace CIT.API.Controllers
                 }
 
                 // Prevent further modification if ScreenId is already "CIT-6"
-                if (currentScreenId == "CIT-6")
+                if (currentScreenId == "1")
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
@@ -569,7 +569,7 @@ namespace CIT.API.Controllers
                 }
 
                 // Prevent further modification if the task is already marked as failed with ScreenId "CIT-7"
-                if (currentScreenId == "CIT-7")
+                if (currentScreenId == "-1")
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
@@ -589,7 +589,8 @@ namespace CIT.API.Controllers
 
                 string status = "Failed";
                 string activityType = "Failed";
-                failedDTO.ScreenId = "CIT-7";
+
+                failedDTO.ScreenId = "-1";
                 bool updateResult = await _crewTaskDetailsRepository.crewTaskFailedAsync(authenticatedUserId, taskId, status, failedDTO, activityType, userId);
 
                 if (!updateResult)
@@ -714,7 +715,7 @@ namespace CIT.API.Controllers
                 }
 
                 // Prevent further modification if ScreenId is already "CIT-6"
-                if (currentScreenId == "CIT-6")
+                if (currentScreenId == "1")
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
@@ -724,7 +725,7 @@ namespace CIT.API.Controllers
                 }
 
                 // Prevent further modification if the task is already marked as failed with ScreenId "CIT-7"
-                if (currentScreenId == "CIT-7")
+                if (currentScreenId == "-1")
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
@@ -853,7 +854,7 @@ namespace CIT.API.Controllers
                 }
 
                 // Prevent further modification if ScreenId is already "CIT-6"
-                if (currentScreenId == "CIT-6")
+                if (currentScreenId == "1")
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
@@ -863,7 +864,7 @@ namespace CIT.API.Controllers
                 }
 
                 // Prevent further modification if the task is already marked as failed with ScreenId "CIT-7"
-                if (currentScreenId == "CIT-7")
+                if (currentScreenId == "-1")
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
@@ -1023,7 +1024,7 @@ namespace CIT.API.Controllers
                 }
 
                 // Prevent further modification if ScreenId is already "CIT-6"
-                if (currentScreenId == "CIT-6")
+                if (currentScreenId == "1")
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
@@ -1033,7 +1034,7 @@ namespace CIT.API.Controllers
                 }
 
                 // Prevent further modification if the task is already marked as failed with ScreenId "CIT-7"
-                if (currentScreenId == "CIT-7")
+                if (currentScreenId == "-1")
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
@@ -1163,7 +1164,7 @@ namespace CIT.API.Controllers
                 }
 
                 // Prevent further modification if ScreenId is already "CIT-6"
-                if (currentScreenId == "CIT-6")
+                if (currentScreenId == "1")
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
@@ -1173,7 +1174,7 @@ namespace CIT.API.Controllers
                 }
 
                 // Prevent further modification if the task is already marked as failed with ScreenId "CIT-7"
-                if (currentScreenId == "CIT-7")
+                if (currentScreenId == "-1")
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
@@ -1183,21 +1184,22 @@ namespace CIT.API.Controllers
                 }
 
                 // Step 2: Calculate the next expected screen ID
-                var expectedNextScreenId = await _crewTaskDetailsRepository.GetNextScreenIdByTaskId(taskId);
+                //var expectedNextScreenId = await _crewTaskDetailsRepository.GetNextScreenIdByTaskId(taskId);
 
                 // Step 3: Check if the request ScreenId matches the expected next ScreenId
-                if (updateDTO.ScreenId != expectedNextScreenId)
-                {
-                    _response.StatusCode = HttpStatusCode.BadRequest;
-                    _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("Invalid screen transition. The task has already passed this stage.");
-                    _response.Result = new object[0]; // Set Result to an empty array.
-                    return BadRequest(_response);
-                }
+                //if (updateDTO.ScreenId != expectedNextScreenId)
+                //{
+                //    _response.StatusCode = HttpStatusCode.BadRequest;
+                //    _response.IsSuccess = false;
+                //    _response.ErrorMessages.Add("Invalid screen transition. The task has already passed this stage.");
+                //    _response.Result = new object[0]; // Set Result to an empty array.
+                //    return BadRequest(_response);
+                //}
 
 
                 string status = "Completed";
                 string activityType = "Completed";
+                updateDTO.ScreenId = "1";
                 bool updateResult = await _crewTaskDetailsRepository.UpdateTaskStatusAsync(authenticatedUserId, taskId, status, updateDTO, activityType, userId);
 
                 if (!updateResult)

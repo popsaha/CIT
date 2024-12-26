@@ -124,7 +124,8 @@ namespace CIT.API.Repository
                 var orderIds = teamAssignments.Select(a => a.OrderId).ToList();
                 var updateQuery = @"
                     UPDATE Task
-                    SET TaskStatusId = 2
+                    SET NextScreenId = CASE WHEN NextScreenId = 0 THEN 'CIT-1' ELSE NextScreenId END,
+                    TaskStatusId = 2 
                     WHERE OrderId IN @OrderIds;";
                 await connection.ExecuteAsync(updateQuery, new { OrderIds = orderIds, TaskDate = nextDay }, transaction);
 
