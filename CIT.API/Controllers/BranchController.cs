@@ -133,7 +133,7 @@ namespace CIT.API.Controllers
                     _response.Result = branch;
 
                     // Return the created customer with the location of the new resource
-                    return CreatedAtRoute("GetBranch", new { branchId = Res }, _response);
+                    return Ok(_response);
                 }
             }
             catch (Exception ex)

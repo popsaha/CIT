@@ -123,7 +123,7 @@ namespace CIT.API.Controllers
                 }
 
                 // Get the userId from the claims (JWT token)
-                var userId = Convert.ToInt32(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                var userId = Convert.ToInt32(User.FindFirstValue(ClaimTypes.Name));
 
                 var customer = _mapper.Map<Customer>(createDTO);
 
@@ -141,7 +141,7 @@ namespace CIT.API.Controllers
                     _response.StatusCode = HttpStatusCode.Created;
                     _response.IsSuccess = true;
                     _response.Result = customer;
-                    return CreatedAtRoute("GetCustomer", new { customerId = customer.CustomerId }, _response);
+                    return Ok(_response);
                 }
                 // Return the created customer with the location of the new resource              
             }
