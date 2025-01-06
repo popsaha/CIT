@@ -26,13 +26,13 @@ namespace CIT.API.Repository
         public async Task<IEnumerable<ReportDetails>> GetAllReportData()
         {
             IEnumerable<ReportDetails> _Report;
-          
-            using (var connection =  _db.CreateConnection())
+
+            using (var connection = _db.CreateConnection())
             {
                 string storedProcedureName = "Proc_GetAllReportData";
-                
+
                 _Report = await connection.QueryAsync<ReportDetails>(storedProcedureName, commandType: CommandType.StoredProcedure);
-               
+
             }
             return _Report;
         }
@@ -51,6 +51,29 @@ namespace CIT.API.Repository
                 parametrs.Add("Service", _reportDetails.PickupTypeid == "" ? null : _reportDetails.PickupTypeid, DbType.String, ParameterDirection.Input);
                 parametrs.Add("fromdate", _reportDetails.fromDate == "" ? null : _reportDetails.fromDate, DbType.Date, ParameterDirection.Input);
                 parametrs.Add("todate", _reportDetails.ToDate == "" ? null : _reportDetails.ToDate, DbType.Date, ParameterDirection.Input);
+
+                _Report = await connection.QueryAsync<ReportDetails>(storedProcedureName, parametrs, commandType: CommandType.StoredProcedure);
+
+            }
+            return _Report;
+        }
+
+        public async Task<IEnumerable<ReportDetails>> SaveReportData(ReportDetailsParam _reportDetails)
+        {
+            IEnumerable<ReportDetails> _Report;
+
+            using (var connection = _db.CreateConnection())
+            {
+                string storedProcedureName = "Proc_SaveReportData";
+
+                var parametrs = new DynamicParameters();
+
+                parametrs.Add("Branch", _reportDetails.Branchid == "" ? null : _reportDetails.Branchid, DbType.String, ParameterDirection.Input);
+                parametrs.Add("CustID", _reportDetails.Customerid == "" ? null : _reportDetails.Customerid, DbType.String, ParameterDirection.Input);
+                parametrs.Add("Service", _reportDetails.PickupTypeid == "" ? null : _reportDetails.PickupTypeid, DbType.String, ParameterDirection.Input);
+                parametrs.Add("fromdate", _reportDetails.fromDate == "" ? null : _reportDetails.fromDate, DbType.Date, ParameterDirection.Input);
+                parametrs.Add("todate", _reportDetails.ToDate == "" ? null : _reportDetails.ToDate, DbType.Date, ParameterDirection.Input);
+                parametrs.Add("SaveReportData", _reportDetails.SaveTaskData == "" ? null : _reportDetails.SaveTaskData, DbType.String, ParameterDirection.Input);
 
                 _Report = await connection.QueryAsync<ReportDetails>(storedProcedureName, parametrs, commandType: CommandType.StoredProcedure);
 
