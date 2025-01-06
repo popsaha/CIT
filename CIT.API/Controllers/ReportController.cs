@@ -35,7 +35,7 @@ namespace CIT.API.Controllers
 
             try
             {
-                 ReportModels = await _IReport.GetAllReportData();
+                ReportModels = await _IReport.GetAllReportData();
 
 
                 //if (ReportModels == null || !ReportModels.Any())
@@ -61,7 +61,7 @@ namespace CIT.API.Controllers
                 return StatusCode((int)HttpStatusCode.InternalServerError, _response);
             }
 
-           // return ReportModels;
+            // return ReportModels;
         }
 
         [HttpPost("GetFilterReportsData")]
@@ -97,7 +97,44 @@ namespace CIT.API.Controllers
                 return StatusCode((int)HttpStatusCode.InternalServerError, _response);
             }
 
-           //return ReportModels;
+            //return ReportModels;
+        }
+
+
+        [HttpPost("SaveReportsData")]
+        public async Task<ActionResult<ReportDetails>> SaveReportsData([FromBody] ReportDetailsParam _ReportDetailsParam)
+        {
+            _logger.LogInformation("GetFilterReportsData method called at {time}.", DateTime.UtcNow);
+            IEnumerable<ReportDetails> ReportModels;
+
+            try
+            {
+                ReportModels = await _IReport.SaveReportData(_ReportDetailsParam);
+                //if (ReportModels == null || !ReportModels.Any())
+                //{
+                //    _response.StatusCode = HttpStatusCode.NotFound;
+                //    _response.IsSuccess = false;
+                //    _response.ErrorMessages.Add("No Data found.");
+                //    return NotFound(_response);
+                //}
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.IsSuccess = true;
+                _response.Result = _mapper.Map<List<ReportDetails>>(ReportModels);
+
+                return Ok(_response);
+
+            }
+
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving GetFilterReportsData() at {time}.", DateTime.UtcNow);
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add(ex.Message);
+                return StatusCode((int)HttpStatusCode.InternalServerError, _response);
+            }
+
+            //return ReportModels;
         }
     }
 }

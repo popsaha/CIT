@@ -8,6 +8,7 @@
         public string DistanceKM { get; set; }
         public string Trip { get; set; }
         public string Bill { get; set; }
+        public string TaskID { get; set; }
     }
 
     public class ReportDetailsParam
@@ -17,5 +18,6 @@
         public string PickupTypeid { get; set; }
         public string fromDate { get; set; }
         public string ToDate { get; set; }
+        public string SaveTaskData { get; set; }
     }
 }
