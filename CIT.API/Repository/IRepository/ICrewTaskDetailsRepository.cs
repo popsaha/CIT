@@ -11,6 +11,8 @@ namespace CIT.API.Repository.IRepository
         Task<bool> UpdateTaskStatusAsync(int crewCommanderId, int taskId, string status, CrewTaskStatusUpdateDTO updateDTO, string activityType, int userId);
         Task<bool> parcelLoadStatusAsync(int crewCommanderId, int taskId, string status, CrewTaskParcelDTO parcelDTO, string activityType, int userId);
 
+        Task<bool> parcelUnLoadStatusAsync(int crewCommanderId, int taskId, string status, CrewTaskUnloadParcelDTO parcelDTO, string activityType, int userId);
+
         Task<bool> crewTaskFailedAsync(int crewCommanderId, int taskId, string status, CrewTaskFailedStatusDTO failedDTO, string activityType, int userId);
 
         Task<bool> arrivedDeliveryAsync(int crewCommanderId, int taskId, string status, CrewTaskStatusUpdateDTO arrivedDTO,  string activityType, int userId);

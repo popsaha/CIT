@@ -218,10 +218,57 @@ namespace CIT.API.Repository
                 parameters.Add("Lat", parcelDTO.Location?.Lat);
                 parameters.Add("Long", parcelDTO.Location?.Long);
                 parameters.Add("ActivityType", activityType);
+                parameters.Add("PickupReceiptNumber", parcelDTO.PickupReceiptNumber);
 
                 // Create a comma-separated string from unique ParcelQR values
                 var parcelsCsv = string.Join(",", parcelQRs);
                 parameters.Add("ParcelsLoaded", parcelsCsv);
+                //parameters.Add("ParcelsUnloaded", parcelsCsv);
+
+                var parcelsCsv2 = string.Join(",", parcelDTO.Parcels.Select(p => p.ParcelQR));
+                //parameters.Add("ParcelsUnloaded", parcelsCsv2);
+
+                var result = await con.ExecuteAsync("spCrewTaskDetails", parameters, commandType: CommandType.StoredProcedure);
+
+                return result > 0;
+            }
+        }
+
+        public async Task<bool> parcelUnLoadStatusAsync(int crewCommanderId, int taskId, string status, CrewTaskUnloadParcelDTO parcelDTO, string activityType, int userId)
+        {
+            using (var con = _db.CreateConnection())
+            {
+                // Check if current ScreenId is already CIT-6 before proceeding
+                //var currentScreenId = await GetCurrentScreenIdByTaskId(taskId);
+                //if (currentScreenId == "CIT-6")
+                //{
+                //    return false; // Prevent update if task is marked as completed
+                //}
+
+                // Check for duplicate ParcelQR values
+                var parcelQRs = parcelDTO.Parcels.Select(p => p.ParcelQR).ToList();
+                if (parcelQRs.Count != parcelQRs.Distinct().Count())
+                {
+                    Console.WriteLine("Duplicate Parcel QR codes detected.");
+                    return false; // Duplicate ParcelQR codes detected
+                }
+
+                DynamicParameters parameters = new DynamicParameters();
+                parameters.Add("Flag", 'G');
+                parameters.Add("CrewCommanderId", crewCommanderId);
+                parameters.Add("TaskId", taskId);
+                parameters.Add("Status", status);
+                parameters.Add("UserId", userId);
+                parameters.Add("NextScreenId", parcelDTO.NextScreenId);
+                parameters.Add("Time", parcelDTO.Time);
+                parameters.Add("Lat", parcelDTO.Location?.Lat);
+                parameters.Add("Long", parcelDTO.Location?.Long);
+                parameters.Add("ActivityType", activityType);
+                parameters.Add("DeliveryReceiptNumber", parcelDTO.DeliveryReceiptNumber);
+
+                // Create a comma-separated string from unique ParcelQR values
+                var parcelsCsv = string.Join(",", parcelQRs);
+                //parameters.Add("ParcelsLoaded", parcelsCsv);
                 parameters.Add("ParcelsUnloaded", parcelsCsv);
 
                 var parcelsCsv2 = string.Join(",", parcelDTO.Parcels.Select(p => p.ParcelQR));

@@ -946,7 +946,7 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<APIResponse>> UnloadParcel(int taskId, [FromBody] CrewTaskParcelDTO parcelDTO)
+        public async Task<ActionResult<APIResponse>> UnloadParcel(int taskId, [FromBody] CrewTaskUnloadParcelDTO parcelDTO)
         {
 
 
@@ -1058,7 +1058,7 @@ namespace CIT.API.Controllers
 
                 string status = "Unloaded";
                 string activityType = "Unloaded";
-                bool updateResult = await _crewTaskDetailsRepository.parcelLoadStatusAsync(authenticatedUserId, taskId, status, parcelDTO, activityType, userId);
+                bool updateResult = await _crewTaskDetailsRepository.parcelUnLoadStatusAsync(authenticatedUserId, taskId, status, parcelDTO, activityType, userId);
 
                 if (!updateResult)
                 {
