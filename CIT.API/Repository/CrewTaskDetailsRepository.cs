@@ -234,7 +234,7 @@ namespace CIT.API.Repository
             }
         }
 
-        public async Task<bool> parcelUnLoadStatusAsync(int crewCommanderId, int taskId, string status, CrewTaskUnloadParcelDTO parcelDTO, string activityType, int userId)
+        public async Task<bool> parcelUnLoadStatusAsync(int crewCommanderId, int taskId, string status, CrewTaskUnloadedParcelDTOs parcelDTO, string activityType, int userId)
         {
             using (var con = _db.CreateConnection())
             {
@@ -268,7 +268,7 @@ namespace CIT.API.Repository
 
                 // Create a comma-separated string from unique ParcelQR values
                 var parcelsCsv = string.Join(",", parcelQRs);
-                //parameters.Add("ParcelsLoaded", parcelsCsv);
+                parameters.Add("ParcelsLoaded", parcelsCsv);
                 parameters.Add("ParcelsUnloaded", parcelsCsv);
 
                 var parcelsCsv2 = string.Join(",", parcelDTO.Parcels.Select(p => p.ParcelQR));
@@ -342,23 +342,24 @@ namespace CIT.API.Repository
 
         // Method to fetch parcel data as comma-separated values
 
-        public async Task<IEnumerable<Parcel>> GetParcelAsync(int taskId, int authenticatedUserId, int userIdFromDb)
+
+        public async Task<IEnumerable<ParcelReceiptNo>> GetParcelAsync(int taskId, int authenticatedUserId, int userIdFromDb)
         {
             const string query = @"
-    SELECT ctd.ParcelsLoaded
-    FROM CitTaskDetail ctd
-    INNER JOIN Task t ON ctd.TaskID = t.TaskID
-    INNER JOIN TeamAssignments ta ON t.OrderID = ta.OrderID
-    INNER JOIN UserMaster u ON ta.CrewID = u.UserID
-    WHERE ctd.TaskID = @TaskId
-      AND ta.CrewID = @CrewCommanderId
-      AND ta.IsActive = 1
-      AND u.UserID = @CrewCommanderId";
+        SELECT ctd.ParcelsLoaded, ctd.PickupReceiptNumber
+        FROM CitTaskDetail ctd
+        INNER JOIN Task t ON ctd.TaskID = t.TaskID
+        INNER JOIN TeamAssignments ta ON t.OrderID = ta.OrderID
+        INNER JOIN UserMaster u ON ta.CrewID = u.UserID
+        WHERE ctd.TaskID = @TaskId
+          AND ta.CrewID = @CrewCommanderId
+          AND ta.IsActive = 1
+          AND u.UserID = @CrewCommanderId";
 
             using (var connection = _db.CreateConnection())
             {
-                // Validate the crew commander is authorized to access the task
-                var parcelsLoadedStrings = await connection.QueryAsync<string>(
+                // Fetch rows from the database
+                var results = await connection.QueryAsync<(string ParcelsLoaded, string PickupReceiptNumber)>(
                     query,
                     new
                     {
@@ -367,16 +368,20 @@ namespace CIT.API.Repository
                     });
 
                 // If no rows are returned, the user isn't authorized or the task doesn't exist
-                if (!parcelsLoadedStrings.Any())
+                if (!results.Any())
                 {
                     throw new UnauthorizedAccessException("User is not authorized to access this task or task ID is invalid.");
                 }
 
                 // Process the parcel data
-                return parcelsLoadedStrings
-                    .Where(row => !string.IsNullOrWhiteSpace(row)) // Exclude NULL or empty rows
-                    .SelectMany(row => row.Split(',', StringSplitOptions.RemoveEmptyEntries)) // Split by comma
-                    .Select(parcelQr => new Parcel { ParcelQR = parcelQr.Trim() }); // Map to Parcel objects
+                return results
+                    .Where(row => !string.IsNullOrWhiteSpace(row.ParcelsLoaded)) // Exclude NULL or empty rows
+                    .SelectMany(row => row.ParcelsLoaded.Split(',', StringSplitOptions.RemoveEmptyEntries) // Split by comma
+                        .Select(parcelQr => new ParcelReceiptNo
+                        {
+                            ParcelQR = parcelQr.Trim(),
+                            PickupReceiptNumber = row.PickupReceiptNumber
+                        })); // Map to ParcelReceiptNo objects
             }
         }
 

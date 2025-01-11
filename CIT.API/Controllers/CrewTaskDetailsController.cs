@@ -665,6 +665,15 @@ namespace CIT.API.Controllers
                     return BadRequest(_response);
                 }
 
+                if (parcelDTO.PickupReceiptNumber== "string" || parcelDTO.PickupReceiptNumber =="")
+                {
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("PickupReceiptNumber Required");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
+                }
+
                 if (taskId <= 0)
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
@@ -945,8 +954,8 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<APIResponse>> UnloadParcel(int taskId, [FromBody] CrewTaskUnloadParcelDTO parcelDTO)
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)] 
+        public async Task<ActionResult<APIResponse>> UnloadParcel(int taskId, CrewTaskUnloadedParcelDTOs parcelDTO)
         {
 
 
@@ -974,6 +983,16 @@ namespace CIT.API.Controllers
                     _response.Result = new object[0]; // Set Result to an empty array.
                     return BadRequest(_response);
                 }
+
+                if (parcelDTO.DeliveryReceiptNumber == "string" || parcelDTO.DeliveryReceiptNumber == "")
+                {
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("DeliveryReceiptNumber Required");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
+                }
+
 
                 if (taskId <= 0)
                 {
@@ -1055,6 +1074,34 @@ namespace CIT.API.Controllers
                     _response.Result = new object[0]; // Set Result to an empty array.
                     return BadRequest(_response);
                 }
+
+                // Fetch loaded parcels for the task
+                var loadedParcels = await _crewTaskDetailsRepository.GetParcelAsync(taskId, authenticatedUserId, userId);
+                var loadedParcelQRs = loadedParcels.Select(p => p.ParcelQR).ToHashSet();
+
+                // Compare unloaded parcels with loaded parcels
+                var unloadedParcelQRs = parcelDTO.Parcels.Select(p => p.ParcelQR).ToHashSet();
+                var unmatchedParcels = unloadedParcelQRs.Except(loadedParcelQRs).ToList();
+
+                if (unmatchedParcels.Any())
+                {
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add($"The following ParcelQRs are not loaded: {string.Join(", ", unmatchedParcels)}");
+                    return BadRequest(_response);
+                }
+
+                // Ensure the DeliveryReceiptNumber matches the PickupReceiptNumber
+                //var pickupReceiptNumbers = loadedParcels.Select(p => p.PickupReceiptNumber).Distinct();
+                //if (pickupReceiptNumbers.Count() > 1 || !pickupReceiptNumbers.Contains(parcelDTO.DeliveryReceiptNumber))
+                //{
+                //    return BadRequest(new APIResponse
+                //    {
+                //        StatusCode = HttpStatusCode.BadRequest,
+                //        IsSuccess = false,
+                //        ErrorMessages = new List<string> { "Invalid DeliveryReceiptNumber. It must match the PickupReceiptNumber." }
+                //    });
+                //}
 
                 string status = "Unloaded";
                 string activityType = "Unloaded";
@@ -1252,7 +1299,7 @@ namespace CIT.API.Controllers
                 // Check if the user is authenticated
                 if (!User.Identity.IsAuthenticated)
                 {
-                    _response.StatusCode = HttpStatusCode.Unauthorized;
+                    _response.StatusCode = HttpStatusCode.Unauthorized; 
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("User is not authenticated.");
                     _response.Result = new object[0];
@@ -1296,9 +1343,12 @@ namespace CIT.API.Controllers
                 // Fetch parcels from the repository
                 var parcels = await _crewTaskDetailsRepository.GetParcelAsync(taskId, authenticatedUserId, userIdFromDb);
 
+                // Group by PickupReceiptNumber
+              
+
                 _response.StatusCode = HttpStatusCode.OK;
                 _response.IsSuccess = true;
-                _response.Result = new { parcels };
+                _response.Result = parcels;
                 return Ok(_response);
             }
             catch (UnauthorizedAccessException ex)
@@ -1323,6 +1373,101 @@ namespace CIT.API.Controllers
                 _response.IsSuccess = false;
                 _response.ErrorMessages.Add(ex.Message);
                 _response.Result = new object[0];
+                return StatusCode((int)HttpStatusCode.InternalServerError, _response);
+            }
+        }
+
+
+        [HttpGet("GetPickupDetailByTaskId/{taskId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetParcelsById(int taskId)
+        {
+            try
+            {
+                if (!User.Identity.IsAuthenticated)
+                {
+                    _response.StatusCode = HttpStatusCode.Unauthorized;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("User is not authenticated.");
+                    return Unauthorized(_response);
+                }
+
+                var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int authenticatedUserId))
+                {
+                    _response.StatusCode = HttpStatusCode.Unauthorized;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Invalid or missing user claim.");
+                    return Unauthorized(_response);
+                }
+
+                int userIdFromDb = await _crewTaskDetailsRepository.GetUserIdByUuidAsync();
+
+                if (authenticatedUserId != userIdFromDb)
+                {
+                    _response.StatusCode = HttpStatusCode.Unauthorized;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("User does not have access to this task.");
+                    return Unauthorized(_response);
+                }
+
+                if (taskId <= 0)
+                {
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Invalid task ID.");
+                    return BadRequest(_response);
+                }
+
+                // Fetch parcels from the repository
+                var parcelData = await _crewTaskDetailsRepository.GetParcelAsync(taskId, authenticatedUserId, userIdFromDb);
+
+                // Group by PickupReceiptNumber and select the first one (if multiple exist)
+                var groupedParcels = parcelData
+                    .GroupBy(p => p.PickupReceiptNumber)
+                    .Select(group => new
+                    {
+                        PickupReceiptNumber = group.Key,
+                        ParcelQRs = group.Select(p => p.ParcelQR).ToArray()
+                    })
+                    .FirstOrDefault(); // Select the first group (or null if no data)
+
+                if (groupedParcels == null)
+                {
+                    _response.StatusCode = HttpStatusCode.NotFound;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("No data found for the provided task ID.");
+                    return NotFound(_response);
+                }
+
+                // Set response
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.IsSuccess = true;
+                _response.Result = groupedParcels;
+                return Ok(_response);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _response.StatusCode = HttpStatusCode.Unauthorized;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add(ex.Message);
+                return Unauthorized(_response);
+            }
+            catch (SqlException ex) when (ex.Number == 50000)
+            {
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add(ex.Message);
+                return BadRequest(_response);
+            }
+            catch (Exception ex)
+            {
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add(ex.Message);
                 return StatusCode((int)HttpStatusCode.InternalServerError, _response);
             }
         }

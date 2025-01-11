@@ -11,7 +11,7 @@ namespace CIT.API.Repository.IRepository
         Task<bool> UpdateTaskStatusAsync(int crewCommanderId, int taskId, string status, CrewTaskStatusUpdateDTO updateDTO, string activityType, int userId);
         Task<bool> parcelLoadStatusAsync(int crewCommanderId, int taskId, string status, CrewTaskParcelDTO parcelDTO, string activityType, int userId);
 
-        Task<bool> parcelUnLoadStatusAsync(int crewCommanderId, int taskId, string status, CrewTaskUnloadParcelDTO parcelDTO, string activityType, int userId);
+        Task<bool> parcelUnLoadStatusAsync(int crewCommanderId, int taskId, string status, CrewTaskUnloadedParcelDTOs parcelDTO, string activityType, int userId);
 
         Task<bool> crewTaskFailedAsync(int crewCommanderId, int taskId, string status, CrewTaskFailedStatusDTO failedDTO, string activityType, int userId);
 
@@ -22,6 +22,6 @@ namespace CIT.API.Repository.IRepository
 
         Task<int> GetUserIdByUuidAsync ();
 
-        public Task<IEnumerable<Parcel>> GetParcelAsync(int taskId, int authenticatedUserId, int userIdFromDb);
+        public Task<IEnumerable<ParcelReceiptNo>> GetParcelAsync(int taskId, int authenticatedUserId, int userIdFromDb);
     }
 }
