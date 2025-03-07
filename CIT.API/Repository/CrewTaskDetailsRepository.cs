@@ -103,28 +103,28 @@ namespace CIT.API.Repository
             // Get the current ScreenId
             var currentScreenId = await GetCurrentScreenIdByTaskId(taskId);
 
-            // If current ScreenId is null, initialize to default
-            if (string.IsNullOrEmpty(currentScreenId))
-            {
-                return "CIT-2";
-            }
+            // If current ScreenId is null, initialize to a default value
+            //if (string.IsNullOrEmpty(currentScreenId))
+            //{
+            //    return "CIT-2"; // Default value if no previous ScreenId exists
+            //}
 
-            // Check if the ScreenId follows the format "CIT-<number>"
-            if (currentScreenId.StartsWith("CIT-"))
+            // Extract the prefix (everything before the last hyphen)
+            var lastHyphenIndex = currentScreenId.LastIndexOf('-');
+            if (lastHyphenIndex > 0)  // Ensure there's a valid prefix
             {
-                // Extract the numeric part of the ScreenId
-                var screenNumberPart = currentScreenId.Substring(4);
+                string prefix = currentScreenId.Substring(0, lastHyphenIndex); // Extract prefix
+                string numberPart = currentScreenId.Substring(lastHyphenIndex + 1); // Extract number
 
-                if (int.TryParse(screenNumberPart, out int currentNumber))
+                if (int.TryParse(numberPart, out int currentNumber))
                 {
-                    // Increment the numeric part to get the next screen ID
                     int nextNumber = currentNumber + 1;
-                    return $"CIT-{nextNumber}";
+                    return $"{prefix}-{nextNumber}";
                 }
             }
 
             // Default value if ScreenId is in an unexpected format
-            return "CIT-2";
+            return $"{currentScreenId}-2";
         }
 
 
@@ -345,19 +345,46 @@ namespace CIT.API.Repository
 
         public async Task<IEnumerable<ParcelReceiptNo>> GetParcelAsync(int taskId, int authenticatedUserId, int userIdFromDb)
         {
-            const string query = @"
-        SELECT ctd.ParcelsLoaded, ctd.PickupReceiptNumber
-        FROM CitTaskDetail ctd
-        INNER JOIN Task t ON ctd.TaskID = t.TaskID
-        INNER JOIN TeamAssignments ta ON t.OrderID = ta.OrderID
-        INNER JOIN UserMaster u ON ta.CrewID = u.UserID
-        WHERE ctd.TaskID = @TaskId
-          AND ta.CrewID = @CrewCommanderId
-          AND ta.IsActive = 1
-          AND u.UserID = @CrewCommanderId";
+            // First, get the PickupType for the given TaskID
+            const string pickupTypeQuery = @"SELECT PickupType FROM Task WHERE TaskID = @TaskId";
 
             using (var connection = _db.CreateConnection())
             {
+                int pickupType = await connection.ExecuteScalarAsync<int>(pickupTypeQuery, new { TaskId = taskId });
+
+                // Determine which table to query based on PickupType
+                string query;
+                if (pickupType == 1)
+                {
+                    query = @"
+                SELECT ctd.ParcelsLoaded, ctd.PickupReceiptNumber
+                FROM CitTaskDetail ctd
+                INNER JOIN Task t ON ctd.TaskID = t.TaskID
+                INNER JOIN TeamAssignments ta ON t.OrderID = ta.OrderID
+                INNER JOIN UserMaster u ON ta.CrewID = u.UserID
+                WHERE ctd.TaskID = @TaskId
+                AND ta.CrewID = @CrewCommanderId
+                AND ta.IsActive = 1
+                AND u.UserID = @CrewCommanderId";
+                }
+                else if (pickupType == 2)
+                {
+                    query = @"
+                SELECT btd.ParcelLoaded, btd.PickupReceiptNumber
+                FROM BssTaskDetail btd
+                INNER JOIN Task t ON btd.TaskID = t.TaskID
+                INNER JOIN TeamAssignments ta ON t.OrderID = ta.OrderID
+                INNER JOIN UserMaster u ON ta.CrewID = u.UserID
+                WHERE btd.TaskID = @TaskId
+                AND ta.CrewID = @CrewCommanderId
+                AND ta.IsActive = 1
+                AND u.UserID = @CrewCommanderId";
+                }
+                else
+                {
+                    throw new Exception("Invalid PickupType.");
+                }
+
                 // Fetch rows from the database
                 var results = await connection.QueryAsync<(string ParcelsLoaded, string PickupReceiptNumber)>(
                     query,
@@ -385,5 +412,28 @@ namespace CIT.API.Repository
             }
         }
 
+
+        public async Task<bool> SaveAmountAsync(int crewCommanderId, int taskId, string status, CrewTaskBssCountStatusDTO bssCountStatusDTO, string activityType, int userId)
+        {
+            using (var con = _db.CreateConnection())
+            {            
+                DynamicParameters parameters = new DynamicParameters();
+                parameters.Add("Flag", 'H');
+                parameters.Add("CrewCommanderId", crewCommanderId);
+                parameters.Add("TaskId", taskId);
+                parameters.Add("Status", status);
+                parameters.Add("UserId", userId);
+
+                parameters.Add("NextScreenId", bssCountStatusDTO.NextScreenId);
+                parameters.Add("Time", bssCountStatusDTO.Time);
+                parameters.Add("Lat", bssCountStatusDTO.Location?.Lat);
+                parameters.Add("Long", bssCountStatusDTO.Location?.Long);
+                parameters.Add("ActivityType", activityType);
+                parameters.Add("TotalAmount", bssCountStatusDTO.TotalAmount);
+
+                var result = await con.ExecuteAsync("spCrewTaskDetails", parameters, commandType: CommandType.StoredProcedure);
+                return result > 0;
+            }
+        }
     }
 }
