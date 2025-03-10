@@ -23,26 +23,30 @@ namespace CIT.API.Controllers
         private readonly IUserRepository _userRepo;
         protected APIResponse _response;
         private readonly IMapper _mapper;
-        public UsersController(IUserRepository userRepo, IMapper mapper)
+        private readonly ILogger<UsersController> _logger;
+        public UsersController(IUserRepository userRepo, IMapper mapper, ILogger<UsersController> logger)
         {
             _userRepo = userRepo;
             _mapper = mapper;
             _response = new();
+            _logger = logger;
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDTO model)
         {
+            _logger.LogInformation("Login attempt for user: {Username}", model.UserName);
             var loginResponse = await _userRepo.Login(model);
 
             if (loginResponse.User == null || string.IsNullOrEmpty(loginResponse.Token))
             {
+                _logger.LogWarning("Invalid login attempt for user: {Username}", model.UserName);
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 _response.IsSuccess = false;
                 _response.ErrorMessages.Add("Username or password is incorrect");
                 return BadRequest(_response);
             }
-
+            _logger.LogInformation("User {Username} logged in successfully", model.UserName);
             _response.StatusCode = HttpStatusCode.OK;
             _response.IsSuccess = true;
             _response.Result = loginResponse;
@@ -56,8 +60,10 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> CreateCrewUser([FromBody] UserCreateDTO crewUser)
         {
+            _logger.LogInformation("Creating new user");
             if (!ModelState.IsValid)
             {
+                _logger.LogWarning("Invalid user creation request");
                 _response.StatusCode = HttpStatusCode.BadRequest;
                 _response.IsSuccess = false;
                 _response.ErrorMessages.Add("Invalid data provided");
@@ -76,7 +82,7 @@ namespace CIT.API.Controllers
 
                 // Call the repository method to create the user
                 var createdUser = await _userRepo.CrewUserCreate(crewUser);
-
+                _logger.LogInformation("User created successfully");
                 _response.StatusCode = HttpStatusCode.OK;
                 _response.IsSuccess = true;
                 _response.Result = createdUser;
@@ -84,6 +90,7 @@ namespace CIT.API.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error occurred while creating user");
                 // Populate the APIResponse with error details
                 _response.StatusCode = HttpStatusCode.InternalServerError;
                 _response.IsSuccess = false;
@@ -98,12 +105,14 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<APIResponse>> GetAllUserList()
         {
+            _logger.LogInformation("Fetching all users");
             try
             {
                 IEnumerable<UserMasterModel> userModels = await _userRepo.GetAllUsers();
 
                 if (userModels == null || !userModels.Any())
                 {
+                    _logger.LogWarning("No users found");
                     _response.StatusCode = HttpStatusCode.NotFound;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("No User found.");
@@ -132,6 +141,7 @@ namespace CIT.API.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error occurred while fetching users");
                 _response.StatusCode = HttpStatusCode.InternalServerError;
                 _response.IsSuccess = false;
                 _response.ErrorMessages.Add(ex.Message);
@@ -148,6 +158,7 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<APIResponse>> GetSingleUser(int id)
         {
+            _logger.LogInformation("Fetching single users");
             try
             {
                 if (id == 0)
@@ -173,6 +184,7 @@ namespace CIT.API.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error occurred while fetching users");
                 _response.IsSuccess = false;
                 _response.ErrorMessages = new List<string>() { ex.ToString() };
             }
@@ -187,11 +199,13 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<APIResponse>> UpdateUser(int userId, [FromBody] UserUpdateDTO updateDTO)
         {
-
+            _logger.LogInformation("UpdateUser called with userId: {UserId}", userId);
             try
             {
                 if (updateDTO == null || userId != updateDTO.UserId)
                 {
+                    _logger.LogWarning("UpdateUser failed - Invalid userId: {UserId}", userId);
+
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("Invalid  userId.");
@@ -207,6 +221,7 @@ namespace CIT.API.Controllers
 
                 UserMasterModel user = _mapper.Map<UserMasterModel>(updateDTO);
                 var updatedUser = await _userRepo.UpdateUser(user);
+                _logger.LogInformation("User with ID {UserId} updated successfully.", userId);
 
                 _response.StatusCode = HttpStatusCode.NoContent;
                 _response.IsSuccess = true;
@@ -215,6 +230,8 @@ namespace CIT.API.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error updating user with ID {UserId}", userId);
+
                 //return Problem(ex.Message, ex.StackTrace);
                 _response.IsSuccess = false;
                 _response.ErrorMessages = new List<string>() { ex.ToString() };
@@ -232,10 +249,14 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<APIResponse>> DeleteUserRecord(int userId)
         {
+            _logger.LogInformation("DeleteUserRecord called with userId: {UserId}", userId);
+
             try
             {
                 if (userId == 0)
                 {
+                    _logger.LogWarning("DeleteUserRecord failed - Invalid userId: {UserId}", userId);
+
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("Invalid user Id.");
@@ -247,6 +268,8 @@ namespace CIT.API.Controllers
 
                 if (userData == null)
                 {
+                    _logger.LogWarning("DeleteUserRecord failed - User not found: {UserId}", userId);
+
                     _response.StatusCode = HttpStatusCode.NotFound;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("user not found.");
@@ -255,6 +278,7 @@ namespace CIT.API.Controllers
                 }
 
                 var deletedUser = await _userRepo.DeleteUser( userId);
+                _logger.LogInformation("User with ID {UserId} deleted successfully.", userId);
 
                 _response.StatusCode = HttpStatusCode.NoContent;
                 _response.IsSuccess = true;
@@ -263,6 +287,8 @@ namespace CIT.API.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error deleting user with ID {UserId}", userId);
+
                 _response.IsSuccess = false;
                 _response.ErrorMessages = new List<string>() { ex.ToString() };
 

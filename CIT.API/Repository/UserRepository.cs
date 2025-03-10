@@ -267,7 +267,7 @@ namespace CIT.API.Repository
                 user = await connection.QuerySingleOrDefaultAsync<UserMasterModel>("spUserMaster", parameters, commandType: CommandType.StoredProcedure);
             }
             return user;
-        }
+        }   
         public async Task<int> DeleteUser(int userId)
         {
             int Res = 0;
