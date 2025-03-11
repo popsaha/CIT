@@ -26,5 +26,6 @@ namespace CIT.API.Repository.IRepository
 
         Task<bool> SaveAmountAsync(int crewCommanderId, int taskId, string status, CrewTaskBssCountStatusDTO bssCountStatusDTO , string activityType, int userId);
 
+        public Task<ParcelCountDTO> GetParclesCountsByTaskId(int taskId);
     }
 }

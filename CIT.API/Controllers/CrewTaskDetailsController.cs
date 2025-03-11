@@ -1353,10 +1353,24 @@ namespace CIT.API.Controllers
                 //    return BadRequest(_response);
                 //}
 
+
                 _logger.LogInformation("User {UserId} attempting to complete task {TaskId}.", authenticatedUserId, taskId);
-                string status = "Completed";
-                string activityType = "Completed";
-                updateDTO.NextScreenId = "1";
+                var parcelCounts = await _crewTaskDetailsRepository.GetParclesCountsByTaskId(taskId);
+                string status;
+                string activityType;
+                if (parcelCounts.ParcelsLoaded != parcelCounts.ParcelsUnloaded)
+                {
+                    updateDTO.NextScreenId = "CIT-5";
+                    status = "PartialCompleted";
+                    activityType = "PartialCompleted";
+                }
+                else
+                {
+                    updateDTO.NextScreenId = "1";
+                    status = "Completed";
+                    activityType = "Completed";
+                }
+
                 bool updateResult = await _crewTaskDetailsRepository.UpdateTaskStatusAsync(authenticatedUserId, taskId, status, updateDTO, activityType, userId);
 
                 if (!updateResult)

@@ -589,5 +589,29 @@ namespace CIT.API.Repository
                 throw;
             }
         }
+        //GetParclesCountsByTaskId
+
+        public async Task<ParcelCountDTO> GetParclesCountsByTaskId(int taskId)
+        {
+            using (var con = _db.CreateConnection())
+            {
+                const string query = @"
+        SELECT 
+            SUM(LEN(ParcelsLoaded) - LEN(REPLACE(ParcelsLoaded, ',', '')) + 1) AS ParcelsLoaded,
+            SUM(LEN(ParcelsUnloaded) - LEN(REPLACE(ParcelsUnloaded, ',', '')) + 1) AS ParcelsUnloaded
+        FROM CitTaskDetail
+        WHERE TaskID = @TaskID;";
+
+                return await con.QueryFirstOrDefaultAsync<ParcelCountDTO>(query, new { TaskID = taskId })
+                       ?? new ParcelCountDTO { ParcelsLoaded = 0, ParcelsUnloaded = 0 };
+            }
+        }
+
+
+
+
+
+
+
     }
 }

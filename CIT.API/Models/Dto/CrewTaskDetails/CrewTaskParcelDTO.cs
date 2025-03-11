@@ -30,4 +30,11 @@ namespace CIT.API.Models.Dto.CrewTaskDetails
         public string PickupReceiptNumber { get; set; }
     }
 
+    public class ParcelCountDTO
+    {
+        public int ParcelsLoaded { get; set; }
+        public int ParcelsUnloaded { get; set; }
+    }
+
+
 }
