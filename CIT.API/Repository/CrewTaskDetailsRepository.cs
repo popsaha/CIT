@@ -555,40 +555,7 @@ namespace CIT.API.Repository
                 throw;
             }
         }
-
-
-        public async Task<bool> SaveAmountAsync(int crewCommanderId, int taskId, string status, CrewTaskBssCountStatusDTO bssCountStatusDTO, string activityType, int userId)
-        {
-            try
-            {
-                _logger.LogInformation("Saving amount for TaskID={TaskId} by UserID={UserId}", taskId, userId);
-
-                using (var con = _db.CreateConnection())
-                {
-                    DynamicParameters parameters = new DynamicParameters();
-                    parameters.Add("Flag", 'H');
-                    parameters.Add("CrewCommanderId", crewCommanderId);
-                    parameters.Add("TaskId", taskId);
-                    parameters.Add("Status", status);
-                    parameters.Add("UserId", userId);
-
-                    parameters.Add("NextScreenId", bssCountStatusDTO.NextScreenId);
-                    parameters.Add("Time", bssCountStatusDTO.Time);
-                    parameters.Add("Lat", bssCountStatusDTO.Location?.Lat);
-                    parameters.Add("Long", bssCountStatusDTO.Location?.Long);
-                    parameters.Add("ActivityType", activityType);
-                    parameters.Add("TotalAmount", bssCountStatusDTO.TotalAmount);
-
-                    var result = await con.ExecuteAsync("spCrewTaskDetails", parameters, commandType: CommandType.StoredProcedure);
-                    return result > 0;
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "An error occurred while saving amount for TaskID={TaskId} by UserID={UserId}", taskId, userId);
-                throw;
-            }
-        }
+    
         //GetParclesCountsByTaskId
 
         public async Task<ParcelCountDTO> GetParclesCountsByTaskId(int taskId)
