@@ -86,7 +86,11 @@ namespace CIT.API.Controllers
                 var crewTasks = await _crewTaskDetailsRepository.GetCrewTasksByCommanderIdAsync(authenticatedUserId, userId, orderDate);
 
                 // Ensure tasks are sorted: Move 'Completed' tasks to the end
-                crewTasks = crewTasks.OrderBy(t => t.Status == "Completed").ToList();
+                // Sort by PickupTime (earliest first) and move 'Completed' tasks to the end
+                crewTasks = crewTasks.OrderBy(t => t.Status == "Completed")
+                                     .ThenBy(t => t.PickupTime)
+                                     .ToList();
+
 
                 if (crewTasks == null || !crewTasks.Any())
                 {
@@ -1207,8 +1211,24 @@ namespace CIT.API.Controllers
                 //    });
                 //}
 
-                string status = "Unloaded";
-                string activityType = "Unloaded";
+
+
+                var parcelCounts = await _crewTaskDetailsRepository.GetParclesCountsByTaskId(taskId);
+                string status;
+                string activityType;
+                if (parcelCounts.ParcelsLoaded != parcelCounts.ParcelsUnloaded)
+                {
+                    parcelDTO.NextScreenId = "CIT-5";
+                    status = "Unloaded";
+                    activityType = "Unloaded";
+                }
+                else
+                {
+                     status = "Unloaded";
+                     activityType = "Unloaded";
+                }
+
+               
                 bool updateResult = await _crewTaskDetailsRepository.parcelUnLoadStatusAsync(authenticatedUserId, taskId, status, parcelDTO, activityType, userId);
 
                 if (!updateResult)
@@ -1363,6 +1383,18 @@ namespace CIT.API.Controllers
                     updateDTO.NextScreenId = "CIT-5";
                     status = "PartialCompleted";
                     activityType = "PartialCompleted";
+
+                    bool updateResultData = await _crewTaskDetailsRepository.UpdateTaskStatusAsync(authenticatedUserId, taskId, status, updateDTO, activityType, userId);
+
+                    _response.StatusCode = HttpStatusCode.PartialContent; // 206 Status Code
+                    _response.IsSuccess = true;
+                    _response.Result = new
+                    {
+                        status = status,
+                        message = "Some parcels are missing. This task cannot be fully completed.",
+                        time = updateDTO.Time.ToString("MM/dd/yyyy HH:mm:ss")
+                    };
+                    return StatusCode((int)HttpStatusCode.PartialContent, _response); // Return 206 response
                 }
                 else
                 {

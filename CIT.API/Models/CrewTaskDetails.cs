@@ -10,6 +10,7 @@
         public string PickupLocation { get; set; }
         public string DeliveryCustomer { get; set; }
         public string DeliveryLocation { get;set; }
+        public TimeSpan PickupTime { get; set; }
         public string Type { get; set; }
         public string status { get; set; }
         public DateTime OrderDate { get; set; }
