@@ -558,15 +558,15 @@ namespace CIT.API.Controllers
                     return Unauthorized(_response);
                 }
 
-                if (bssSaveAmount.SaveAmount == 0 || bssSaveAmount.SaveAmount <= 0)
-                {
-                    _logger.LogWarning("Invalid Save Amount: {SaveAmount}", bssSaveAmount.SaveAmount);
-                    _response.StatusCode = HttpStatusCode.BadRequest;
-                    _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("Please fill the Save Amount field");
-                    _response.Result = new object[0]; // Set Result to an empty array.
-                    return BadRequest(_response);
-                }
+                //if (bssSaveAmount.SaveAmount == 0 || bssSaveAmount.SaveAmount <= 0)
+                //{
+                //    _logger.LogWarning("Invalid Save Amount: {SaveAmount}", bssSaveAmount.SaveAmount);
+                //    _response.StatusCode = HttpStatusCode.BadRequest;
+                //    _response.IsSuccess = false;
+                //    _response.ErrorMessages.Add("Please fill the Save Amount field");
+                //    _response.Result = new object[0]; // Set Result to an empty array.
+                //    return BadRequest(_response);
+                //}
                 if (bssSaveAmount.Location.Long == "string" || bssSaveAmount.Location.Lat == "string")
                 {
                     _logger.LogWarning("Invalid location data: {Location}", bssSaveAmount.Location);
@@ -625,11 +625,11 @@ namespace CIT.API.Controllers
                     _response.Result = new object[0]; // Set Result to an empty array.
                     return BadRequest(_response);
                 }
-
+                var TotalAmount = bssSaveAmount.LocalAmount + bssSaveAmount.Currency.USD + bssSaveAmount.Currency.GBP + bssSaveAmount.Currency.EURO + bssSaveAmount.Currency.ZAR + bssSaveAmount.Currency.Others;
 
                 string status = "SaveAmount";
                 string activityType = "SaveAmount";
-                bool updateResult = await _bssCrewTaskDetailsRepository.SaveAmountAsync(authenticatedUserId, taskId, status, bssSaveAmount, activityType, userId);
+                bool updateResult = await _bssCrewTaskDetailsRepository.SaveAmountAsync(authenticatedUserId, taskId, status, bssSaveAmount, activityType, userId, TotalAmount);
 
                 if (!updateResult)
                 {

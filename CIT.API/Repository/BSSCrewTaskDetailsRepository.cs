@@ -155,7 +155,7 @@ namespace CIT.API.Repository
             }
         }
 
-        public async Task<bool> SaveAmountAsync(int crewCommanderId, int taskId, string status, BssSaveAmountDTO bssCountStatusDTO, string activityType, int userId)
+        public async Task<bool> SaveAmountAsync(int crewCommanderId, int taskId, string status, BssSaveAmountDTO bssCountStatusDTO, string activityType, int userId, double TotalAmount)
         {
             try
             {
@@ -171,8 +171,8 @@ namespace CIT.API.Repository
                     parameters.Add("Status", status);
                     parameters.Add("UserId", userId);
                     parameters.Add("NextScreenId", bssCountStatusDTO.NextScreenId); // Set ScreenId based on activityType  // Set ScreenId to 1 as required by the update
-                    parameters.Add("SaveAmount", bssCountStatusDTO.SaveAmount);
-                    parameters.Add("TotalAmount", bssCountStatusDTO.TotalAmount);                          
+                    parameters.Add("LocalAmount", bssCountStatusDTO.LocalAmount);
+                    parameters.Add("TotalAmount", TotalAmount);                          
                     parameters.Add("Time", bssCountStatusDTO.Time);  // Pass the start time from DTO
                     parameters.Add("Lat", bssCountStatusDTO.Location?.Lat);  // Pass Latitude if available
                     parameters.Add("Long", bssCountStatusDTO.Location?.Long);  // Pass Longitude if available
