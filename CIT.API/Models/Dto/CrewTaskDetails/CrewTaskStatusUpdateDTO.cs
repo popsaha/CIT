@@ -18,9 +18,9 @@ namespace CIT.API.Models.Dto.CrewTaskDetails
 
     public class Location
     {
-        [Required(ErrorMessage = "Lat is required.")]
+        //[Required(ErrorMessage = "Lat is required.")]
         public string Lat { get; set; }
-        [Required(ErrorMessage = "Long is required.")]
+        //[Required(ErrorMessage = "Long is required.")]
         public string Long { get; set; }
     }
     

@@ -25,5 +25,7 @@ namespace CIT.API.Repository.IRepository
         public Task<IEnumerable<ParcelReceiptNo>> GetParcelAsync(int taskId, int authenticatedUserId, int userIdFromDb);
 
         public Task<ParcelCountDTO> GetParclesCountsByTaskId(int taskId);
+
+        
     }
 }

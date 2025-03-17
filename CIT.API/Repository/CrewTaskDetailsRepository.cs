@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using CIT.API.Models;
 using CIT.API.Models.Dto.Order;
 using Microsoft.Extensions.Logging;
+using System.Data.Common;
 
 namespace CIT.API.Repository
 {
@@ -573,12 +574,7 @@ namespace CIT.API.Repository
                        ?? new ParcelCountDTO { ParcelsLoaded = 0, ParcelsUnloaded = 0 };
             }
         }
-
-
-
-
-
-
+     
 
     }
 }

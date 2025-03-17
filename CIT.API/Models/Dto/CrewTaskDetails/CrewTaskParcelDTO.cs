@@ -19,13 +19,13 @@ namespace CIT.API.Models.Dto.CrewTaskDetails
     }
     public class Parcel
     {
-        [Required(ErrorMessage = "ParcelQR is required.")]
+        //[Required(ErrorMessage = "Parcel Number is required.")]
         public string ParcelQR { get; set; }
     }
 
     public class ParcelReceiptNo
     {
-        [Required(ErrorMessage = "ParcelQR is required.")]
+        //[Required(ErrorMessage = "ParcelQR is required.")]
         public string ParcelQR { get; set; }
         public string PickupReceiptNumber { get; set; }
     }
