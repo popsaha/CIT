@@ -7,7 +7,7 @@ namespace CIT.API.Models.Dto.BSSCrewTaskDetails
         public string NextScreenId { get; set; }
         public DateTime Time { get; set; } = DateTime.UtcNow;
         //to store local currency 
-        public double LocalAmount { get; set; }
+        public double TotalLocalAmount { get; set; }
         //Local currency and other currency
         //public int TotalAmount { get; set; }
         public Location Location { get; set; }
@@ -34,6 +34,6 @@ namespace CIT.API.Models.Dto.BSSCrewTaskDetails
         public float GBP { get; set; }
         public float EURO { get; set; }
         public float ZAR { get; set; }
-        public float Others { get; set; }
+       
     }
 }

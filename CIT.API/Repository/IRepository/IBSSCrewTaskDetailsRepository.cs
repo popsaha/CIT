@@ -10,7 +10,7 @@ namespace CIT.API.Repository.IRepository
         Task<string> GetCurrentScreenIdByTaskId(int taskId);
         Task<string> GetNextScreenIdByTaskId(int taskId);
         Task<bool> UpdateTaskStatusAsync(int crewCommanderId, int taskId, string status, BSSCrewTaskStatusUpdateDTO updateDTO, string activityType, int userId);
-        Task<bool> SaveAmountAsync(int crewCommanderId, int taskId, string status, BssSaveAmountDTO bssCountStatusDTO, string activityType, int userId, double TotalAmount);
+        Task<bool> SaveAmountAsync(int crewCommanderId, int taskId, string status, BssSaveAmountDTO bssCountStatusDTO, string activityType, int userId);
         Task<bool> parcelLoadStatusAsync(int crewCommanderId, int taskId, string status, BssParcelLoadDTO parcelDTO, string activityType, int userId);
         Task<bool> arrivedDeliveryAsync(int crewCommanderId, int taskId, string status, BSSCrewTaskStatusUpdateDTO arrivedDTO, string activityType, int userId);
         public Task<IEnumerable<ParcelReceiptNo>> GetParcelAsync(int taskId, int authenticatedUserId, int userIdFromDb);

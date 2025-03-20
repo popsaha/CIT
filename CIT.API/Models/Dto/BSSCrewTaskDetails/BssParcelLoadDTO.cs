@@ -5,7 +5,7 @@ namespace CIT.API.Models.Dto.BSSCrewTaskDetails
 {
     public class BssParcelLoadDTO
     {
-        [Required(ErrorMessage = "ScreenId is required.")]
+        //[Required(ErrorMessage = "ScreenId is required.")]
         public string NextScreenId { get; set; }
 
         public DateTime Time { get; set; } = DateTime.UtcNow;

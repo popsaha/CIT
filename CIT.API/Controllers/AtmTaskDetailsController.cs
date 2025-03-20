@@ -557,7 +557,7 @@ namespace CIT.API.Controllers
         }
 
 
-        [HttpPost("{taskId}/FailedBss")]
+        [HttpPost("{taskId}/FailedAtm")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]

@@ -78,6 +78,17 @@ namespace CIT.API.Controllers
                     return Unauthorized(_response);
                 }
 
+                if (updateDTO.Location.Long == "" || updateDTO.Location.Lat == "")
+                {
+                    _logger.LogWarning("Invalid location data received: Lat={Lat}, Long={Long}", updateDTO.Location.Lat, updateDTO.Location.Long);
+
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("In location Lat and Log is Required.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
+                }
+
                 if (updateDTO.Location.Long == "string" || updateDTO.Location.Lat == "string")
                 {
                     _logger.LogWarning("Invalid location data received: Lat={Lat}, Long={Long}", updateDTO.Location.Lat, updateDTO.Location.Long);
@@ -232,6 +243,17 @@ namespace CIT.API.Controllers
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("User is not authorized.");
                     return Unauthorized(_response);
+                }
+
+                if (updateDTO.Location.Long == "" || updateDTO.Location.Lat == "")
+                {
+                    _logger.LogWarning("Invalid location data received: Lat={Lat}, Long={Long}", updateDTO.Location.Lat, updateDTO.Location.Long);
+
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("In location Lat and Log is Required.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
                 if (updateDTO.Location.Long == "string" || updateDTO.Location.Lat == "string")
@@ -390,6 +412,17 @@ namespace CIT.API.Controllers
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("User is not authorized.");
                     return Unauthorized(_response);
+                }
+
+                if (failedDTO.Location.Long == "" || failedDTO.Location.Lat == "")
+                {
+                    _logger.LogWarning("Invalid location data provided: {Location}", failedDTO.Location);
+
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("In location Lat and Log is Required.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
                 if (failedDTO.Location.Long == "string" || failedDTO.Location.Lat == "string")
@@ -567,6 +600,17 @@ namespace CIT.API.Controllers
                 //    _response.Result = new object[0]; // Set Result to an empty array.
                 //    return BadRequest(_response);
                 //}
+
+                if (bssSaveAmount.Location.Long == "" || bssSaveAmount.Location.Lat == "")
+                {
+                    _logger.LogWarning("Invalid location data: {Location}", bssSaveAmount.Location);
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("In location Lat and Log is Required.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
+                }
+
                 if (bssSaveAmount.Location.Long == "string" || bssSaveAmount.Location.Lat == "string")
                 {
                     _logger.LogWarning("Invalid location data: {Location}", bssSaveAmount.Location);
@@ -625,11 +669,11 @@ namespace CIT.API.Controllers
                     _response.Result = new object[0]; // Set Result to an empty array.
                     return BadRequest(_response);
                 }
-                var TotalAmount = bssSaveAmount.LocalAmount + bssSaveAmount.Currency.USD + bssSaveAmount.Currency.GBP + bssSaveAmount.Currency.EURO + bssSaveAmount.Currency.ZAR + bssSaveAmount.Currency.Others;
+                //var TotalAmount = bssSaveAmount.LocalAmount + bssSaveAmount.Currency.USD + bssSaveAmount.Currency.GBP + bssSaveAmount.Currency.EURO + bssSaveAmount.Currency.ZAR + bssSaveAmount.Currency.Others;
 
                 string status = "SaveAmount";
                 string activityType = "SaveAmount";
-                bool updateResult = await _bssCrewTaskDetailsRepository.SaveAmountAsync(authenticatedUserId, taskId, status, bssSaveAmount, activityType, userId, TotalAmount);
+                bool updateResult = await _bssCrewTaskDetailsRepository.SaveAmountAsync(authenticatedUserId, taskId, status, bssSaveAmount, activityType, userId);
 
                 if (!updateResult)
                 {
@@ -698,6 +742,18 @@ namespace CIT.API.Controllers
                     _response.Result = new object[0]; // Set Result to an empty array.
                     return BadRequest(_response);
                 }
+
+                // Check if any ParcelQR has the value "string"
+                if (parcelDTO.Parcels.Any(p => p.ParcelQR == ""))
+                {
+                    _logger.LogWarning("Parcel Number cannot be empty.");
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Parcel Number cannot be empty. Please enter Parcel Number");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
+                }
+
                 // Check if any ParcelQR has the value "string"
                 if (parcelDTO.Parcels.Any(p => p.ParcelQR == "string"))
                 {
@@ -748,6 +804,15 @@ namespace CIT.API.Controllers
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("User is not authorized.");
                     return Unauthorized(_response);
+                }
+
+                if (parcelDTO.Location.Long == "" || parcelDTO.Location.Lat == "")
+                {
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("In location Lat and Log is Required.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
                 if (parcelDTO.Location.Long == "string" || parcelDTO.Location.Lat == "string")
@@ -901,6 +966,16 @@ namespace CIT.API.Controllers
                     return Unauthorized(_response);
                 }
 
+                if (arrivedDTO.Location.Long == "" || arrivedDTO.Location.Lat == "")
+                {
+                    _logger.LogWarning("Invalid location data received for taskId: {TaskId}", taskId);
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("In location Lat and Log is Required.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
+                }
+
                 if (arrivedDTO.Location.Long == "string" || arrivedDTO.Location.Lat == "string")
                 {
                     _logger.LogWarning("Invalid location data received for taskId: {TaskId}", taskId);
@@ -1041,6 +1116,18 @@ namespace CIT.API.Controllers
                     _response.Result = new object[0];
                     return BadRequest(_response);
                 }
+
+                // Check if any ParcelQR has the value "empty"
+                if (parcelDTO.Parcels.Any(p => p.ParcelQR == ""))
+                {
+                    _logger.LogWarning("Invalid Parcel Number value for Task ID: {TaskId}", taskId);
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Parcel Number cannot be empty");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
+                }
+
                 // Check if any ParcelQR has the value "string"
                 if (parcelDTO.Parcels.Any(p => p.ParcelQR == "string"))
                 {
@@ -1091,6 +1178,15 @@ namespace CIT.API.Controllers
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("User is not authorized.");
                     return Unauthorized(_response);
+                }
+
+                if (parcelDTO.Location.Long == "" || parcelDTO.Location.Lat == "")
+                {
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("In location Lat and Log is Required.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
                 if (parcelDTO.Location.Long == "string" || parcelDTO.Location.Lat == "string")
@@ -1222,6 +1318,8 @@ namespace CIT.API.Controllers
                 return StatusCode((int)HttpStatusCode.InternalServerError, _response);
             }
         }
+
+
         [HttpPost("{taskId}/CompletedBss")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -1267,6 +1365,15 @@ namespace CIT.API.Controllers
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("User is not authorized.");
                     return Unauthorized(_response);
+                }
+
+                if (updateDTO.Location.Long == "" || updateDTO.Location.Lat == "")
+                {
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("In location Lat and Log is Required.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
                 }
 
                 if (updateDTO.Location.Long == "string" || updateDTO.Location.Lat == "string")

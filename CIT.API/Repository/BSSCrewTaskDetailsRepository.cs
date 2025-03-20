@@ -155,7 +155,7 @@ namespace CIT.API.Repository
             }
         }
 
-        public async Task<bool> SaveAmountAsync(int crewCommanderId, int taskId, string status, BssSaveAmountDTO bssCountStatusDTO, string activityType, int userId, double TotalAmount)
+        public async Task<bool> SaveAmountAsync(int crewCommanderId, int taskId, string status, BssSaveAmountDTO bssCountStatusDTO, string activityType, int userId)
         {
             try
             {
@@ -171,8 +171,8 @@ namespace CIT.API.Repository
                     parameters.Add("Status", status);
                     parameters.Add("UserId", userId);
                     parameters.Add("NextScreenId", bssCountStatusDTO.NextScreenId); // Set ScreenId based on activityType  // Set ScreenId to 1 as required by the update
-                    parameters.Add("LocalAmount", bssCountStatusDTO.LocalAmount);
-                    parameters.Add("TotalAmount", TotalAmount);                          
+                    parameters.Add("LocalAmount", bssCountStatusDTO.TotalLocalAmount);
+                    //parameters.Add("TotalAmount", TotalAmount);                          
                     parameters.Add("Time", bssCountStatusDTO.Time);  // Pass the start time from DTO
                     parameters.Add("Lat", bssCountStatusDTO.Location?.Lat);  // Pass Latitude if available
                     parameters.Add("Long", bssCountStatusDTO.Location?.Long);  // Pass Longitude if available
@@ -195,7 +195,6 @@ namespace CIT.API.Repository
                     parameters.Add("GBP", bssCountStatusDTO.Currency.GBP);
                     parameters.Add("EURO", bssCountStatusDTO.Currency.EURO);
                     parameters.Add("ZAR", bssCountStatusDTO.Currency.ZAR);
-                    parameters.Add("Others", bssCountStatusDTO.Currency.Others);
 
                     _logger.LogDebug("Executing stored procedure: spBSSCrewTaskDetails with parameters: {Parameters}", parameters);
 
@@ -494,7 +493,7 @@ namespace CIT.API.Repository
 
         public async Task<int> GetTotalAmountByTaskId(int taskId)
         {
-            const string getAmountQuery = @"SELECT ISNULL(SUM(TotalAmount), 0) FROM BssTaskDetail WHERE TaskID = @TaskId";
+            const string getAmountQuery = @"SELECT ISNULL(SUM(TotalLocalAmount), 0) FROM BssTaskDetail WHERE TaskID = @TaskId";
 
             using (var con = _db.CreateConnection())
             {
