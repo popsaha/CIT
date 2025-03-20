@@ -1,8 +1,8 @@
-﻿namespace CIT.API.Models.Dto
+﻿namespace CIT.API.Models.Dto.Login
 {
     public class LoginResponseDTO
     {
-        public UserDTO User { get; set; }
+        public UserMaster User { get; set; }
         public string Token { get; set; }
     }
 }
