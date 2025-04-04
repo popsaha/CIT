@@ -2,15 +2,17 @@
 
 namespace CIT.API.Models.Dto.AtmCrewTaskDetails
 {
-    public class AtmParcelLoadedAtATMDTO
+    public class ParcelUnLoadedAtBankDTO
     {
         public string NextScreenId { get; set; }
         public DateTime Time { get; set; } = DateTime.UtcNow;
         public Location Location { get; set; }
-        public List<LoadedAtATM> Parcels { get; set; }
+        public List<UnLoadedAtBrank> Parcels { get; set; }
+        public string DeliveryReceiptNumber { get; set; }
+
     }
-    public class LoadedAtATM
+    public class UnLoadedAtBrank
     {
-        public string ParcelQR {  get; set; }
+        public string ParcelQR { get; set; }
     }
 }

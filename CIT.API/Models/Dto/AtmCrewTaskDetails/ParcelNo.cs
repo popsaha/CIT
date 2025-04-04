@@ -2,7 +2,7 @@
 {
     public class ParcelNo
     {
-        public string ParcelNumber { get; set; }
+        public string ParcelQR { get; set; }
        
     }
 }

@@ -378,10 +378,20 @@ namespace CIT.API.Controllers
                 // Retrieve the userId associated with the provided uuid using the repository method
                 int userId = await _atmCrewTaskDetailsRepository.GetUserIdByUuidAsync();
                 _logger.LogDebug("Retrieved userId: {userId}", userId);
-              
 
-                // Check if any ParcelQR has the value "string"
-                if (parcelDTO.ParcelNumber == "")
+
+                var parcelQRs = parcelDTO.Parcels.Select(p => p.ParcelQR).ToList();
+                if (parcelQRs.Count != parcelQRs.Distinct().Count())
+                {
+                    _logger.LogWarning("Duplicate Parcel QR codes detected.");
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Duplicate Parcel QR codes detected.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
+                }
+
+                if (parcelDTO.Parcels.Any(p => p.ParcelQR == ""))
                 {
                     _logger.LogWarning("Parcel Number cannot be empty.");
                     _response.StatusCode = HttpStatusCode.BadRequest;
@@ -392,9 +402,9 @@ namespace CIT.API.Controllers
                 }
 
                 // Check if any ParcelQR has the value "string"
-                if (parcelDTO.ParcelNumber == "string")
+                if (parcelDTO.Parcels.Any(p => p.ParcelQR == "string"))
                 {
-                    _logger.LogWarning("Parcel Number cannot have the value 'string'.");
+                    _logger.LogWarning("ParcelQR cannot have the value 'string'.");
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
                     _response.ErrorMessages.Add("ParcelQR cannot have the value 'string'");
@@ -917,10 +927,22 @@ namespace CIT.API.Controllers
                 // Retrieve the userId associated with the provided uuid using the repository method
                 int userId = await _atmCrewTaskDetailsRepository.GetUserIdByUuidAsync();
                 _logger.LogDebug("Retrieved User ID: {UserId}", userId);
-                
+
+
+                // Validate for duplicate ParcelQR values
+                var parcelQRs = parcelDTO.Parcels.Select(p => p.ParcelQR).ToList();
+                if (parcelQRs.Count != parcelQRs.Distinct().Count())
+                {
+                    _logger.LogWarning("Duplicate Parcel QR codes detected for Task ID: {TaskId}", taskId);
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Duplicate Parcel QR codes detected.");
+                    _response.Result = new object[0];
+                    return BadRequest(_response);
+                }
 
                 // Check if any ParcelQR has the value "empty"
-                if (parcelDTO.ParcelNumber == "")
+                if (parcelDTO.Parcels.Any(p => p.ParcelQR == ""))
                 {
                     _logger.LogWarning("Invalid Parcel Number value for Task ID: {TaskId}", taskId);
                     _response.StatusCode = HttpStatusCode.BadRequest;
@@ -931,7 +953,7 @@ namespace CIT.API.Controllers
                 }
 
                 // Check if any ParcelQR has the value "string"
-                if (parcelDTO.ParcelNumber == "string")
+                if (parcelDTO.Parcels.Any(p => p.ParcelQR == "string"))
                 {
                     _logger.LogWarning("Invalid Parcel QR value for Task ID: {TaskId}", taskId);
                     _response.StatusCode = HttpStatusCode.BadRequest;
@@ -1039,11 +1061,12 @@ namespace CIT.API.Controllers
 
                 // Fetch loaded parcels for the task
                 var loadedParcels = await _atmCrewTaskDetailsRepository.GetParcelLoadedAtBankAsync(taskId, authenticatedUserId);
-                var loadedParcelQRs = loadedParcels.Select(p => p.ParcelNumber).ToHashSet();
+                var loadedParcelQRs = loadedParcels.Select(p => p.ParcelQR).ToHashSet();
 
                 // Compare unloaded parcels with loaded parcels 
-                var unloadedParcelQRs = new HashSet<string> { parcelDTO.ParcelNumber };
-                var unmatchedParcels = unloadedParcelQRs.Except(loadedParcelQRs).ToList();
+                // Compare unloaded parcels with loaded parcels
+                var loadedParcelAtATMQRs = parcelDTO.Parcels.Select(p => p.ParcelQR).ToHashSet();
+                var unmatchedParcels = loadedParcelAtATMQRs.Except(loadedParcelQRs).ToList();
 
                 if (unmatchedParcels.Any())
                 {
@@ -1121,8 +1144,20 @@ namespace CIT.API.Controllers
                 _logger.LogDebug("Retrieved User ID: {UserId}", userId);
 
 
+                // Validate for duplicate ParcelQR values
+                var parcelQRs = parcelDTO.Parcels.Select(p => p.ParcelQR).ToList();
+                if (parcelQRs.Count != parcelQRs.Distinct().Count())
+                {
+                    _logger.LogWarning("Duplicate Parcel QR codes detected for Task ID: {TaskId}", taskId);
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Duplicate Parcel QR codes detected.");
+                    _response.Result = new object[0];
+                    return BadRequest(_response);
+                }
+
                 // Check if any ParcelQR has the value "empty"
-                if (parcelDTO.ParcelNumber == "")
+                if (parcelDTO.Parcels.Any(p => p.ParcelQR == ""))
                 {
                     _logger.LogWarning("Invalid Parcel Number value for Task ID: {TaskId}", taskId);
                     _response.StatusCode = HttpStatusCode.BadRequest;
@@ -1133,7 +1168,7 @@ namespace CIT.API.Controllers
                 }
 
                 // Check if any ParcelQR has the value "string"
-                if (parcelDTO.ParcelNumber == "string")
+                if (parcelDTO.Parcels.Any(p => p.ParcelQR == "string"))
                 {
                     _logger.LogWarning("Invalid Parcel QR value for Task ID: {TaskId}", taskId);
                     _response.StatusCode = HttpStatusCode.BadRequest;
@@ -1294,7 +1329,7 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<APIResponse>> CompletedTask(int taskId, [FromBody] AtmCrewTaskStatusUpdateDTO updateDTO)
+        public async Task<ActionResult<APIResponse>> CompletedTask(int taskId, [FromBody] ParcelUnLoadedAtBankDTO updateDTO)
         {
             _logger.LogInformation("Completed Task  in ATM api called with taskId: {TaskId}, FieldData : {FieldData} ", taskId, updateDTO);
 
@@ -1411,10 +1446,26 @@ namespace CIT.API.Controllers
                     return BadRequest(_response);
                 }
 
+                // Fetch loaded parcels for the task
+                var loadedParcels = await _atmCrewTaskDetailsRepository.GetParcelUnLoadedAtAtmAsync(taskId, authenticatedUserId);
+                var loadedParcelQRs = loadedParcels.Select(p => p.ParcelQR).ToHashSet();
+
+                // Compare unloaded parcels with loaded parcels 
+                // Compare unloaded parcels with loaded parcels
+                var unloadedParcelAtATMQRs = updateDTO.Parcels.Select(p => p.ParcelQR).ToHashSet();
+                var unmatchedParcels = unloadedParcelAtATMQRs.Except(loadedParcelQRs).ToList();
+
+                if (unmatchedParcels.Any())
+                {
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add($"The following Parcel are not loaded: {string.Join(", ", unmatchedParcels)}");
+                    return BadRequest(_response);
+                }
 
                 string status = "Completed";
                 string activityType = "Completed";
-                bool updateResult = await _atmCrewTaskDetailsRepository.UpdateTaskStatusAsync(authenticatedUserId, taskId, status, updateDTO, activityType, userId);
+                bool updateResult = await _atmCrewTaskDetailsRepository.ParcelUnLoadAtBankStatusAsync(authenticatedUserId, taskId, status, updateDTO, activityType, userId);
 
                 if (!updateResult)
                 {
