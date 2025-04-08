@@ -1505,5 +1505,202 @@ namespace CIT.API.Controllers
                 return StatusCode((int)HttpStatusCode.InternalServerError, _response);
             }
         }
+
+        [HttpGet("GetParcelsLoadedAtBank/{taskId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetParcelsLoadedAtBankAsync(int taskId)
+        {
+            _logger.LogInformation("GetParcels method called with taskId: {TaskId}", taskId);
+            try
+            {
+                // Check if the user is authenticated
+                if (!User.Identity.IsAuthenticated)
+                {
+                    _logger.LogWarning("User is not authenticated.");
+                    _response.StatusCode = HttpStatusCode.Unauthorized;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("User is not authenticated.");
+                    _response.Result = new object[0];
+                    return Unauthorized(_response);
+                }
+
+                // Retrieve user ID from claims
+                var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int authenticatedUserId))
+                {
+                    _logger.LogWarning("Invalid or missing user claim.");
+                    _response.StatusCode = HttpStatusCode.Unauthorized;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Invalid or missing user claim.");
+                    _response.Result = new object[0];
+                    return Unauthorized(_response);
+                }
+                _logger.LogInformation("Authenticated User ID: {UserId}", authenticatedUserId);
+
+                // Get user ID from the database
+                int userIdFromDb = await _atmCrewTaskDetailsRepository.GetUserIdByUuidAsync();
+
+                // Check if the authenticated user matches the database user
+                if (authenticatedUserId != userIdFromDb)
+                {
+                    _logger.LogWarning("User {UserId} does not have access to task {TaskId}", authenticatedUserId, taskId);
+                    _response.StatusCode = HttpStatusCode.Unauthorized;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("User does not have access to this task.");
+                    _response.Result = new object[0];
+                    return Unauthorized(_response);
+                }
+
+                // Validate task ID
+                if (taskId <= 0)
+                {
+                    _logger.LogWarning("Invalid task ID: {TaskId}", taskId);
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Invalid task ID.");
+                    _response.Result = new object[0];
+                    return BadRequest(_response);
+                }
+
+                _logger.LogInformation("Fetching parcels for task {TaskId}", taskId);
+                // Fetch parcels from the repository
+                var parcels = await _atmCrewTaskDetailsRepository.GetParcelAsync(taskId, authenticatedUserId, userIdFromDb);
+                _logger.LogInformation("Successfully fetched {ParcelCount} parcels for task {TaskId}", parcels.Count(), taskId);
+
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.IsSuccess = true;
+                _response.Result = parcels;
+                return Ok(_response);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogError(ex, "Unauthorized access exception for task {TaskId}", taskId);
+                _response.StatusCode = HttpStatusCode.Unauthorized;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add(ex.Message);
+                _response.Result = new object[0];
+                return Unauthorized(_response);
+            }
+            catch (SqlException ex) when (ex.Number == 50000)
+            {
+                _logger.LogError(ex, "SQL Exception for task {TaskId}", taskId);
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add(ex.Message);
+                _response.Result = new object[0];
+                return BadRequest(_response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error occurred while fetching parcels for task {TaskId}", taskId);
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add(ex.Message);
+                _response.Result = new object[0];
+                return StatusCode((int)HttpStatusCode.InternalServerError, _response);
+            }
+        }
+
+
+        [HttpGet("GetParcelsUnLoadedAtAtm/{taskId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetParcelsUnloadAtAtmAsync(int taskId)
+        {
+            _logger.LogInformation("GetParcels method called with taskId: {TaskId}", taskId);
+            try
+            {
+                // Check if the user is authenticated
+                if (!User.Identity.IsAuthenticated)
+                {
+                    _logger.LogWarning("User is not authenticated.");
+                    _response.StatusCode = HttpStatusCode.Unauthorized;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("User is not authenticated.");
+                    _response.Result = new object[0];
+                    return Unauthorized(_response);
+                }
+
+                // Retrieve user ID from claims
+                var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int authenticatedUserId))
+                {
+                    _logger.LogWarning("Invalid or missing user claim.");
+                    _response.StatusCode = HttpStatusCode.Unauthorized;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Invalid or missing user claim.");
+                    _response.Result = new object[0];
+                    return Unauthorized(_response);
+                }
+                _logger.LogInformation("Authenticated User ID: {UserId}", authenticatedUserId);
+
+                // Get user ID from the database
+                int userIdFromDb = await _atmCrewTaskDetailsRepository.GetUserIdByUuidAsync();
+
+                // Check if the authenticated user matches the database user
+                if (authenticatedUserId != userIdFromDb)
+                {
+                    _logger.LogWarning("User {UserId} does not have access to task {TaskId}", authenticatedUserId, taskId);
+                    _response.StatusCode = HttpStatusCode.Unauthorized;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("User does not have access to this task.");
+                    _response.Result = new object[0];
+                    return Unauthorized(_response);
+                }
+
+                // Validate task ID
+                if (taskId <= 0)
+                {
+                    _logger.LogWarning("Invalid task ID: {TaskId}", taskId);
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Invalid task ID.");
+                    _response.Result = new object[0];
+                    return BadRequest(_response);
+                }
+
+                _logger.LogInformation("Fetching parcels for task {TaskId}", taskId);
+                // Fetch parcels from the repository
+                var parcels = await _atmCrewTaskDetailsRepository.GetParcelUnloadedAsync(taskId, authenticatedUserId, userIdFromDb);
+                _logger.LogInformation("Successfully fetched {ParcelCount} parcels for task {TaskId}", parcels.Count(), taskId);
+
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.IsSuccess = true;
+                _response.Result = parcels;
+                return Ok(_response);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogError(ex, "Unauthorized access exception for task {TaskId}", taskId);
+                _response.StatusCode = HttpStatusCode.Unauthorized;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add(ex.Message);
+                _response.Result = new object[0];
+                return Unauthorized(_response);
+            }
+            catch (SqlException ex) when (ex.Number == 50000)
+            {
+                _logger.LogError(ex, "SQL Exception for task {TaskId}", taskId);
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add(ex.Message);
+                _response.Result = new object[0];
+                return BadRequest(_response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error occurred while fetching parcels for task {TaskId}", taskId);
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add(ex.Message);
+                _response.Result = new object[0];
+                return StatusCode((int)HttpStatusCode.InternalServerError, _response);
+            }
+        }
     }
 }

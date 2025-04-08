@@ -587,5 +587,160 @@ namespace CIT.API.Repository
                 throw;
             }
         }
+
+        //GetParcelDetail Method to fetch parcel data as comma-separated values
+        public async Task<IEnumerable<ParcelReceiptNos>> GetParcelAsync(int taskId, int authenticatedUserId, int userIdFromDb)
+        {
+            try
+            {
+                _logger.LogInformation("Fetching parcel details for TaskID={TaskId} by UserID={UserId}", taskId, authenticatedUserId);
+                // First, get the PickupType for the given TaskID
+                const string pickupTypeQuery = @"SELECT PickupType FROM Task WHERE TaskID = @TaskId";
+
+                using (var connection = _db.CreateConnection())
+                {
+                    int pickupType = await connection.ExecuteScalarAsync<int>(pickupTypeQuery, new { TaskId = taskId });
+
+                    _logger.LogDebug("Retrieved PickupType={PickupType} for TaskID={TaskId}", pickupType, taskId);
+
+                    // Determine which table to query based on PickupType
+                    string query;
+                    if (pickupType == 3)
+                    {
+                        query = @"
+                        SELECT btd.ParcelLoadedAtBank, btd.PickupReceiptNumber
+                        FROM AtmTaskDetail btd
+                        INNER JOIN Task t ON btd.TaskID = t.TaskID
+                        INNER JOIN TeamAssignments ta ON t.OrderID = ta.OrderID
+                        INNER JOIN UserMaster u ON ta.CrewID = u.UserID
+                        WHERE btd.TaskID = @TaskId
+                        AND ta.CrewID = @CrewCommanderId
+                        AND ta.IsActive = 1
+                        AND u.UserID = @CrewCommanderId";
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Invalid PickupType={PickupType} for TaskID={TaskId}", pickupType, taskId);
+                        throw new Exception("Invalid PickupType.");
+                    }
+
+                    // Fetch rows from the database
+                    var results = await connection.QueryAsync<(string ParcelLoaded, string PickupReceiptNumber)>(
+                            query,
+                            new
+                            {
+                                TaskId = taskId,
+                                CrewCommanderId = authenticatedUserId
+                            }
+                        );
+
+                    // If no rows are returned, the user isn't authorized or the task doesn't exist
+                    if (!results.Any())
+                    {
+                        _logger.LogWarning("Unauthorized access attempt or invalid TaskID={TaskId} by UserID={UserId}", taskId, authenticatedUserId);
+                        throw new UnauthorizedAccessException("User is not authorized to access this task or task ID is invalid.");
+                    }
+
+                    // Process the parcel data
+                    var parcels = results
+                        .Where(row => !string.IsNullOrWhiteSpace(row.ParcelLoaded)) // Exclude NULL or empty rows
+                        .SelectMany(row => row.ParcelLoaded.Split(',', StringSplitOptions.RemoveEmptyEntries) // Split by comma
+                            .Select(parcelQr => new ParcelReceiptNos
+                            {
+                                ParcelQR = parcelQr.Trim(),
+                                PickupReceiptNumber = row.PickupReceiptNumber
+                            })); // Map to ParcelReceiptNo objects
+                    _logger.LogInformation("Successfully retrieved {Count} parcels for TaskID={TaskId}", parcels.Count(), taskId);
+                    return parcels;
+                }
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogError(ex, "Unauthorized access while fetching parcels for TaskID={TaskId} by UserID={UserId}", taskId, authenticatedUserId);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while fetching parcels for TaskID={TaskId} by UserID={UserId}", taskId, authenticatedUserId);
+                throw;
+            }
+        }
+
+        //GetParcelDetail Method to fetch parcel data as comma-separated values
+        public async Task<IEnumerable<ParcelNo>> GetParcelUnloadedAsync(int taskId, int authenticatedUserId, int userIdFromDb)
+        {
+            try
+            {
+                _logger.LogInformation("Fetching parcel details for TaskID={TaskId} by UserID={UserId}", taskId, authenticatedUserId);
+                // First, get the PickupType for the given TaskID
+                const string pickupTypeQuery = @"SELECT PickupType FROM Task WHERE TaskID = @TaskId";
+
+                using (var connection = _db.CreateConnection())
+                {
+                    int pickupType = await connection.ExecuteScalarAsync<int>(pickupTypeQuery, new { TaskId = taskId });
+
+                    _logger.LogDebug("Retrieved PickupType={PickupType} for TaskID={TaskId}", pickupType, taskId);
+
+                    // Determine which table to query based on PickupType
+                    string query;
+                    if (pickupType == 3)
+                    {
+                        query = @"
+                        SELECT btd.ParcelUnloadAtAtm
+                        FROM AtmTaskDetail btd
+                        INNER JOIN Task t ON btd.TaskID = t.TaskID
+                        INNER JOIN TeamAssignments ta ON t.OrderID = ta.OrderID
+                        INNER JOIN UserMaster u ON ta.CrewID = u.UserID
+                        WHERE btd.TaskID = @TaskId
+                        AND ta.CrewID = @CrewCommanderId
+                        AND ta.IsActive = 1
+                        AND u.UserID = @CrewCommanderId";
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Invalid PickupType={PickupType} for TaskID={TaskId}", pickupType, taskId);
+                        throw new Exception("Invalid PickupType.");
+                    }
+
+                    // Fetch rows from the database
+                    var results = await connection.QueryAsync<(string ParcelLoaded, string PickupReceiptNumber)>(
+                            query,
+                            new
+                            {
+                                TaskId = taskId,
+                                CrewCommanderId = authenticatedUserId
+                            }
+                        );
+
+                    // If no rows are returned, the user isn't authorized or the task doesn't exist
+                    if (!results.Any())
+                    {
+                        _logger.LogWarning("Unauthorized access attempt or invalid TaskID={TaskId} by UserID={UserId}", taskId, authenticatedUserId);
+                        throw new UnauthorizedAccessException("User is not authorized to access this task or task ID is invalid.");
+                    }
+
+                    // Process the parcel data
+                    var parcels = results
+                        .Where(row => !string.IsNullOrWhiteSpace(row.ParcelLoaded)) // Exclude NULL or empty rows
+                        .SelectMany(row => row.ParcelLoaded.Split(',', StringSplitOptions.RemoveEmptyEntries) // Split by comma
+                            .Select(parcelQr => new ParcelNo
+                            {
+                                ParcelQR = parcelQr.Trim(),
+                            })); // Map to ParcelReceiptNo objects
+                    _logger.LogInformation("Successfully retrieved {Count} parcels for TaskID={TaskId}", parcels.Count(), taskId);
+                    return parcels;
+                }
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogError(ex, "Unauthorized access while fetching parcels for TaskID={TaskId} by UserID={UserId}", taskId, authenticatedUserId);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while fetching parcels for TaskID={TaskId} by UserID={UserId}", taskId, authenticatedUserId);
+                throw;
+            }
+        }
     }
 } 
