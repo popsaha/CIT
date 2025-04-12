@@ -13,12 +13,16 @@ namespace CIT.API.Models.Dto.AtmCrewTaskDetails
         public string PickupReceiptNumber { get; set; }
         [Required]
         public Location Location { get; set; }
-        public string ParcelNumber { get; set; }
+        public List<ATMParcels> Parcels { get; set; }
     }
     public class AtmParcelCountDTO
     {
         public int ParcelLoadedAtBank {  get; set; }
         public int ParcelLoadedAtAtm {get;set; }
+    }
+    public class ATMParcels
+    {
+        public string ParcelQR { get; set; }
     }
    
 }

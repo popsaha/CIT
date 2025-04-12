@@ -168,6 +168,14 @@ namespace CIT.API.Repository
 
                 using (var con = _db.CreateConnection())
                 {
+                    // Check for duplicate ParcelQR values
+                    var parcelQRs = loadedDTO.Parcels.Select(p => p.ParcelQR).ToList();
+                    if (parcelQRs.Count != parcelQRs.Distinct().Count())
+                    {
+                        _logger.LogWarning("Duplicate Parcel QR codes detected for TaskID={TaskId}", taskId);
+                        Console.WriteLine("Duplicate Parcel QR codes detected.");
+                        return false; // Duplicate ParcelQR codes detected
+                    }
 
                     DynamicParameters parameters = new DynamicParameters();
                     parameters.Add("Flag", 'B');
@@ -181,8 +189,15 @@ namespace CIT.API.Repository
                     parameters.Add("PickupReceiptNumber", loadedDTO.PickupReceiptNumber);
                     parameters.Add("Lat", loadedDTO.Location?.Lat);  // Pass Latitude if available
                     parameters.Add("Long", loadedDTO.Location?.Long);  // Pass Longitude if available
-                    parameters.Add("ParcelNumber", loadedDTO.ParcelNumber);
+                    //parameters.Add("ParcelNumber", loadedDTO.ParcelNumber);
                     parameters.Add("ActivityType", activityType);
+
+                    // Create a comma-separated string from unique ParcelQR values
+                    var parcelsCsv = string.Join(",", parcelQRs);
+                    parameters.Add("PrcelLoadedAtBank", parcelsCsv);
+                    //parameters.Add("ParcelsUnloaded", parcelsCsv);
+
+                    var parcelsCsv2 = string.Join(",", loadedDTO.Parcels.Select(p => p.ParcelQR));
 
                     _logger.LogDebug("Executing stored procedure: spAtmCrewTaskDetails with parameters: {Parameters}", parameters);
 
@@ -242,6 +257,14 @@ namespace CIT.API.Repository
                                         taskId, crewCommanderId, status, activityType, userId);
                 using (var con = _db.CreateConnection())
                 {
+                    // Check for duplicate ParcelQR values
+                    var parcelQRs = cassetteDTO.Parcels.Select(p => p.ParcelQR).ToList();
+                    if (parcelQRs.Count != parcelQRs.Distinct().Count())
+                    {
+                        _logger.LogWarning("Duplicate Parcel QR codes detected for TaskID={TaskId}", taskId);
+                        Console.WriteLine("Duplicate Parcel QR codes detected.");
+                        return false; // Duplicate ParcelQR codes detected
+                    }
 
                     DynamicParameters parameters = new DynamicParameters();
                     parameters.Add("Flag", 'D');
@@ -254,8 +277,14 @@ namespace CIT.API.Repository
                     parameters.Add("Lat", cassetteDTO.Location?.Lat);
                     parameters.Add("Long", cassetteDTO.Location?.Long);
                     parameters.Add("ActivityType", activityType);
-                    parameters.Add("ParcelNumber", cassetteDTO.ParcelNumber);
+                    //parameters.Add("ParcelNumber", cassetteDTO.ParcelNumber);
 
+                    var parcelsCsv = string.Join(",", parcelQRs);
+                    parameters.Add("PrcelLoadedAtBank", parcelsCsv);
+                    parameters.Add("ParcelLoadedAtAtm", parcelsCsv);
+
+                    var parcelsCsv2 = string.Join(",", cassetteDTO.Parcels.Select(p => p.ParcelQR));
+                    parameters.Add("ParcelLoadedAtAtm", parcelsCsv2);
 
                     _logger.LogDebug("Executing stored procedure: spAtmCrewTaskDetails with parameters: {Parameters}", parameters);
 
@@ -291,9 +320,14 @@ namespace CIT.API.Repository
                       AND ta.IsActive = 1
                       AND u.UserID = @CrewCommanderId";
 
-                    var results = await connection.QueryAsync<string>(
+                      // Fetch rows from the database
+                    var results = await connection.QueryAsync<(string ParcelLoadedAtBank, string PickupReceiptNumber)>(
                         query,
-                        new { TaskId = taskId, CrewCommanderId = authenticatedUserId }
+                        new
+                        {
+                            TaskId = taskId,
+                            CrewCommanderId = authenticatedUserId
+                        }
                     );
 
                     if (!results.Any())
@@ -302,13 +336,15 @@ namespace CIT.API.Repository
                         throw new UnauthorizedAccessException("User is not authorized or no data found.");
                     }
 
+                    // Process the parcel data
                     var parcels = results
-                     .Where(parcel => !string.IsNullOrWhiteSpace(parcel)) // Ignore empty/null data
-                     .Select(parcel => new ParcelNo
-                     {
-                         ParcelNumber = parcel.Trim()
-                     });
-
+                        .Where(row => !string.IsNullOrWhiteSpace(row.ParcelLoadedAtBank)) // Exclude NULL or empty rows
+                        .SelectMany(row => row.ParcelLoadedAtBank.Split(',', StringSplitOptions.RemoveEmptyEntries) // Split by comma
+                            .Select(parcelQr => new ParcelNo
+                            {
+                                ParcelQR = parcelQr.Trim()
+                               
+                            })); // Map to ParcelReceiptNo objects
                     _logger.LogInformation("Successfully retrieved {Count} parcels for TaskID={TaskId}", parcels.Count(), taskId);
                     return parcels;
                 }
@@ -349,6 +385,14 @@ namespace CIT.API.Repository
                                         taskId, crewCommanderId, status, activityType, userId);
                 using (var con = _db.CreateConnection())
                 {
+                    // Check for duplicate ParcelQR values
+                    var parcelQRs = parcelDTO.Parcels.Select(p => p.ParcelQR).ToList();
+                    if (parcelQRs.Count != parcelQRs.Distinct().Count())
+                    {
+                        _logger.LogWarning("Duplicate Parcel QR codes detected for TaskID={TaskId}", taskId);
+                        Console.WriteLine("Duplicate Parcel QR codes detected.");
+                        return false; // Duplicate ParcelQR codes detected
+                    }
 
                     DynamicParameters parameters = new DynamicParameters();
                     parameters.Add("Flag", 'E');
@@ -361,8 +405,15 @@ namespace CIT.API.Repository
                     parameters.Add("Lat", parcelDTO.Location?.Lat);
                     parameters.Add("Long", parcelDTO.Location?.Long);
                     parameters.Add("ActivityType", activityType);
-                    parameters.Add("ParcelNumber", parcelDTO.ParcelNumber);
+                    //parameters.Add("ParcelNumber", parcelDTO.ParcelNumber);
 
+                    // Create a comma-separated string from unique ParcelQR values
+                    var parcelsCsv = string.Join(",", parcelQRs);
+                    parameters.Add("ParcelUnLoadedAtAtm", parcelsCsv);
+                    //parameters.Add("ParcelsUnloaded", parcelsCsv);
+
+                    var parcelsCsv2 = string.Join(",", parcelDTO.Parcels.Select(p => p.ParcelQR));
+                    //parameters.Add("ParcelsUnloaded", parcelsCsv2);
 
                     _logger.LogDebug("Executing stored procedure: spAtmCrewTaskDetails with parameters: {Parameters}", parameters);
 
@@ -418,6 +469,276 @@ namespace CIT.API.Repository
             {
                 _logger.LogError(ex, "Error occurred while updating Crew Task Failed Status for TaskID={TaskId}, CrewCommanderID={CrewCommanderId}, ActivityType={ActivityType}, UserID={UserId}",
                                  taskId, crewCommanderId, activityType, userId);
+                throw;
+            }
+        }
+
+
+
+        public async Task<bool> ParcelUnLoadAtBankStatusAsync(int crewCommanderId, int taskId, string status, ParcelUnLoadedAtBankDTO cassetteDTO, string activityType, int userId)
+        {
+            try
+            {
+                _logger.LogInformation("Updating Parcel loaded at ATM Status: TaskID={TaskId}, CrewCommanderID={CrewCommanderId}, Status={Status}, ActivityType={ActivityType}, UserID={UserId}",
+                                        taskId, crewCommanderId, status, activityType, userId);
+                using (var con = _db.CreateConnection())
+                {
+                    // Check for duplicate ParcelQR values
+                    var parcelQRs = cassetteDTO.Parcels.Select(p => p.ParcelQR).ToList();
+                    if (parcelQRs.Count != parcelQRs.Distinct().Count())
+                    {
+                        _logger.LogWarning("Duplicate Parcel QR codes detected for TaskID={TaskId}", taskId);
+                        Console.WriteLine("Duplicate Parcel QR codes detected.");
+                        return false; // Duplicate ParcelQR codes detected
+                    }
+
+                    DynamicParameters parameters = new DynamicParameters();
+                    parameters.Add("Flag", 'G');
+                    parameters.Add("CrewCommanderId", crewCommanderId);
+                    parameters.Add("TaskId", taskId);
+                    parameters.Add("Status", status);
+                    parameters.Add("UserId", userId);
+                    parameters.Add("NextScreenId", cassetteDTO.NextScreenId);
+                    parameters.Add("Time", cassetteDTO.Time);
+                    parameters.Add("Lat", cassetteDTO.Location?.Lat);
+                    parameters.Add("Long", cassetteDTO.Location?.Long);
+                    parameters.Add("ActivityType", activityType);
+                    parameters.Add("DeliveryReceiptNumber", cassetteDTO.DeliveryReceiptNumber);
+                    //parameters.Add("ParcelNumber", cassetteDTO.ParcelNumber);
+
+                    var parcelsCsv = string.Join(",", parcelQRs);
+                    parameters.Add("ParcelUnLoadedAtAtm", parcelsCsv);
+                    parameters.Add("ParcelUnLoadedAtBank", parcelsCsv);
+
+                    var parcelsCsv2 = string.Join(",", cassetteDTO.Parcels.Select(p => p.ParcelQR));
+                    parameters.Add("ParcelUnLoadedAtBank", parcelsCsv2);
+
+                    _logger.LogDebug("Executing stored procedure: spAtmCrewTaskDetails with parameters: {Parameters}", parameters);
+
+                    var result = await con.ExecuteAsync("spAtmCrewTaskDetails", parameters, commandType: CommandType.StoredProcedure);
+
+                    return result > 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while updating Parcel loaded at atm Status for TaskID={TaskId}, CrewCommanderID={CrewCommanderId}, ActivityType={ActivityType}, UserID={UserId}",
+                                 taskId, crewCommanderId, activityType, userId);
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<ParcelNo>> GetParcelUnLoadedAtAtmAsync(int taskId, int authenticatedUserId)
+        {
+            try
+            {
+                _logger.LogInformation("Fetching ParcelUnLoadAtAtm for TaskID={TaskId} by UserID={UserId}", taskId, authenticatedUserId);
+
+                using (var connection = _db.CreateConnection())
+                {
+                    string query = @"
+                      SELECT atd.ParcelUnLoadAtAtm
+                      FROM AtmTaskDetail atd
+                      INNER JOIN Task t ON atd.TaskID = t.TaskID
+                      INNER JOIN TeamAssignments ta ON t.OrderID = ta.OrderID
+                      INNER JOIN UserMaster u ON ta.CrewID = u.UserID
+                      WHERE atd.TaskID = @TaskId
+                      AND ta.CrewID = @CrewCommanderId
+                      AND ta.IsActive = 1
+                      AND u.UserID = @CrewCommanderId";
+
+                    // Fetch rows from the database
+                    var results = await connection.QueryAsync<(string ParcelUnLoadedAtAtm, string PickupReceiptNumber)>(
+                        query,
+                        new
+                        {
+                            TaskId = taskId,
+                            CrewCommanderId = authenticatedUserId
+                        }
+                    );
+
+                    if (!results.Any())
+                    {
+                        _logger.LogWarning("No ParcelUnLoadedAtAtm found or unauthorized access for TaskID={TaskId} by UserID={UserId}", taskId, authenticatedUserId);
+                        throw new UnauthorizedAccessException("User is not authorized or no data found.");
+                    }
+
+                    // Process the parcel data
+                    var parcels = results
+                        .Where(row => !string.IsNullOrWhiteSpace(row.ParcelUnLoadedAtAtm)) // Exclude NULL or empty rows
+                        .SelectMany(row => row.ParcelUnLoadedAtAtm.Split(',', StringSplitOptions.RemoveEmptyEntries) // Split by comma
+                            .Select(parcelQr => new ParcelNo
+                            {
+                                ParcelQR = parcelQr.Trim()
+
+                            })); // Map to ParcelReceiptNo objects
+                    _logger.LogInformation("Successfully retrieved {Count} parcels for TaskID={TaskId}", parcels.Count(), taskId);
+                    return parcels;
+                }
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogError(ex, "Unauthorized access while fetching ParcelUnLoadedAtAtm for TaskID={TaskId} by UserID={UserId}", taskId, authenticatedUserId);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while fetching ParcelUnLoadedAtAtm for TaskID={TaskId} by UserID={UserId}", taskId, authenticatedUserId);
+                throw;
+            }
+        }
+
+        //GetParcelDetail Method to fetch parcel data as comma-separated values
+        public async Task<IEnumerable<ParcelReceiptNos>> GetParcelAsync(int taskId, int authenticatedUserId, int userIdFromDb)
+        {
+            try
+            {
+                _logger.LogInformation("Fetching parcel details for TaskID={TaskId} by UserID={UserId}", taskId, authenticatedUserId);
+                // First, get the PickupType for the given TaskID
+                const string pickupTypeQuery = @"SELECT PickupType FROM Task WHERE TaskID = @TaskId";
+
+                using (var connection = _db.CreateConnection())
+                {
+                    int pickupType = await connection.ExecuteScalarAsync<int>(pickupTypeQuery, new { TaskId = taskId });
+
+                    _logger.LogDebug("Retrieved PickupType={PickupType} for TaskID={TaskId}", pickupType, taskId);
+
+                    // Determine which table to query based on PickupType
+                    string query;
+                    if (pickupType == 3)
+                    {
+                        query = @"
+                        SELECT btd.ParcelLoadedAtBank, btd.PickupReceiptNumber
+                        FROM AtmTaskDetail btd
+                        INNER JOIN Task t ON btd.TaskID = t.TaskID
+                        INNER JOIN TeamAssignments ta ON t.OrderID = ta.OrderID
+                        INNER JOIN UserMaster u ON ta.CrewID = u.UserID
+                        WHERE btd.TaskID = @TaskId
+                        AND ta.CrewID = @CrewCommanderId
+                        AND ta.IsActive = 1
+                        AND u.UserID = @CrewCommanderId";
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Invalid PickupType={PickupType} for TaskID={TaskId}", pickupType, taskId);
+                        throw new Exception("Invalid PickupType.");
+                    }
+
+                    // Fetch rows from the database
+                    var results = await connection.QueryAsync<(string ParcelLoaded, string PickupReceiptNumber)>(
+                            query,
+                            new
+                            {
+                                TaskId = taskId,
+                                CrewCommanderId = authenticatedUserId
+                            }
+                        );
+
+                    // If no rows are returned, the user isn't authorized or the task doesn't exist
+                    if (!results.Any())
+                    {
+                        _logger.LogWarning("Unauthorized access attempt or invalid TaskID={TaskId} by UserID={UserId}", taskId, authenticatedUserId);
+                        throw new UnauthorizedAccessException("User is not authorized to access this task or task ID is invalid.");
+                    }
+
+                    // Process the parcel data
+                    var parcels = results
+                        .Where(row => !string.IsNullOrWhiteSpace(row.ParcelLoaded)) // Exclude NULL or empty rows
+                        .SelectMany(row => row.ParcelLoaded.Split(',', StringSplitOptions.RemoveEmptyEntries) // Split by comma
+                            .Select(parcelQr => new ParcelReceiptNos
+                            {
+                                ParcelQR = parcelQr.Trim(),
+                                PickupReceiptNumber = row.PickupReceiptNumber
+                            })); // Map to ParcelReceiptNo objects
+                    _logger.LogInformation("Successfully retrieved {Count} parcels for TaskID={TaskId}", parcels.Count(), taskId);
+                    return parcels;
+                }
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogError(ex, "Unauthorized access while fetching parcels for TaskID={TaskId} by UserID={UserId}", taskId, authenticatedUserId);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while fetching parcels for TaskID={TaskId} by UserID={UserId}", taskId, authenticatedUserId);
+                throw;
+            }
+        }
+
+        //GetParcelDetail Method to fetch parcel data as comma-separated values
+        public async Task<IEnumerable<ParcelNo>> GetParcelUnloadedAsync(int taskId, int authenticatedUserId, int userIdFromDb)
+        {
+            try
+            {
+                _logger.LogInformation("Fetching parcel details for TaskID={TaskId} by UserID={UserId}", taskId, authenticatedUserId);
+                // First, get the PickupType for the given TaskID
+                const string pickupTypeQuery = @"SELECT PickupType FROM Task WHERE TaskID = @TaskId";
+
+                using (var connection = _db.CreateConnection())
+                {
+                    int pickupType = await connection.ExecuteScalarAsync<int>(pickupTypeQuery, new { TaskId = taskId });
+
+                    _logger.LogDebug("Retrieved PickupType={PickupType} for TaskID={TaskId}", pickupType, taskId);
+
+                    // Determine which table to query based on PickupType
+                    string query;
+                    if (pickupType == 3)
+                    {
+                        query = @"
+                        SELECT btd.ParcelUnloadAtAtm
+                        FROM AtmTaskDetail btd
+                        INNER JOIN Task t ON btd.TaskID = t.TaskID
+                        INNER JOIN TeamAssignments ta ON t.OrderID = ta.OrderID
+                        INNER JOIN UserMaster u ON ta.CrewID = u.UserID
+                        WHERE btd.TaskID = @TaskId
+                        AND ta.CrewID = @CrewCommanderId
+                        AND ta.IsActive = 1
+                        AND u.UserID = @CrewCommanderId";
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Invalid PickupType={PickupType} for TaskID={TaskId}", pickupType, taskId);
+                        throw new Exception("Invalid PickupType.");
+                    }
+
+                    // Fetch rows from the database
+                    var results = await connection.QueryAsync<(string ParcelLoaded, string PickupReceiptNumber)>(
+                            query,
+                            new
+                            {
+                                TaskId = taskId,
+                                CrewCommanderId = authenticatedUserId
+                            }
+                        );
+
+                    // If no rows are returned, the user isn't authorized or the task doesn't exist
+                    if (!results.Any())
+                    {
+                        _logger.LogWarning("Unauthorized access attempt or invalid TaskID={TaskId} by UserID={UserId}", taskId, authenticatedUserId);
+                        throw new UnauthorizedAccessException("User is not authorized to access this task or task ID is invalid.");
+                    }
+
+                    // Process the parcel data
+                    var parcels = results
+                        .Where(row => !string.IsNullOrWhiteSpace(row.ParcelLoaded)) // Exclude NULL or empty rows
+                        .SelectMany(row => row.ParcelLoaded.Split(',', StringSplitOptions.RemoveEmptyEntries) // Split by comma
+                            .Select(parcelQr => new ParcelNo
+                            {
+                                ParcelQR = parcelQr.Trim(),
+                            })); // Map to ParcelReceiptNo objects
+                    _logger.LogInformation("Successfully retrieved {Count} parcels for TaskID={TaskId}", parcels.Count(), taskId);
+                    return parcels;
+                }
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                _logger.LogError(ex, "Unauthorized access while fetching parcels for TaskID={TaskId} by UserID={UserId}", taskId, authenticatedUserId);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while fetching parcels for TaskID={TaskId} by UserID={UserId}", taskId, authenticatedUserId);
                 throw;
             }
         }

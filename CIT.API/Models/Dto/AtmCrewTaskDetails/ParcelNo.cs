@@ -2,7 +2,13 @@
 {
     public class ParcelNo
     {
-        public string ParcelNumber { get; set; }
+        public string ParcelQR { get; set; }
        
+    }
+    public class ParcelReceiptNos
+    {
+        //[Required(ErrorMessage = "ParcelQR is required.")]
+        public string ParcelQR { get; set; }
+        public string PickupReceiptNumber { get; set; }
     }
 }
