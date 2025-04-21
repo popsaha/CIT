@@ -24,5 +24,9 @@ namespace CIT.API.Repository.IRepository
         Task<bool> ParcelUnLoadAtBankStatusAsync(int crewCommanderId, int taskId, string status, ParcelUnLoadedAtBankDTO cassetteDTO, string activityType, int userId);
 
         Task<IEnumerable<ParcelNo>> GetParcelUnLoadedAtAtmAsync(int taskId, int authenticatedUserId);
+
+        public Task<ParcelReceiptNos> GetParcelAsync(int taskId, int authenticatedUserId, int userIdFromDb);
+
+        public Task<IEnumerable<ParcelNo>> GetParcelUnloadedAsync(int taskId, int authenticatedUserId, int userIdFromDb);
     }
 }
