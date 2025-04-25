@@ -54,6 +54,33 @@ namespace CIT.API.Controllers
         }
 
 
+        [HttpPost("logout")]
+        public IActionResult Logout()
+        {
+            try
+            {
+                // Your logout logic here (if any, though for JWT it's client-side)
+
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.IsSuccess = true;
+                _response.ErrorMessages = new List<string>(); // No errors
+                _response.Result = new { message = "Logged out successfully." };
+
+                return Ok(_response);
+            }
+            catch (Exception ex)
+            {
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                _response.IsSuccess = false;
+                _response.ErrorMessages = new List<string> { "An error occurred during logout." };
+                _response.Result = null;
+
+                _logger.LogError(ex, "Logout failed");
+
+                return StatusCode((int)HttpStatusCode.InternalServerError, _response);
+            }
+        }
+
         [HttpPost("CreateUser")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
