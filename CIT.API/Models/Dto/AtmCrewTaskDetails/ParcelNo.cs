@@ -8,7 +8,7 @@
     public class ParcelReceiptNos
     {
         //[Required(ErrorMessage = "ParcelQR is required.")]
-        public List<ParcelInfo> ParcelQR { get; set; }
+        public List<ParcelInfo> ParcelQRs { get; set; }
         public string PickupReceiptNumber { get; set; }
     }
     public class ParcelInfo

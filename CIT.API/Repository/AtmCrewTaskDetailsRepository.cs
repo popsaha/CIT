@@ -656,7 +656,7 @@ namespace CIT.API.Repository
                     return new ParcelReceiptNos
                     {
                         PickupReceiptNumber = pickupReceiptNumber,
-                        ParcelQR = allParcels
+                        ParcelQRs = allParcels
                     };
 
                 }
