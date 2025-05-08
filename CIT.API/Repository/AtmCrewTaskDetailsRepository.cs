@@ -589,7 +589,7 @@ namespace CIT.API.Repository
         }
 
         //GetParcelDetail Method to fetch parcel data as comma-separated values
-        public async Task<ParcelReceiptNos> GetParcelAsync(int taskId, int authenticatedUserId, int userIdFromDb)
+        public async Task<IEnumerable<ParcelReceiptNos>> GetParcelAsync(int taskId, int authenticatedUserId, int userIdFromDb)
         {
             try
             {
@@ -642,22 +642,23 @@ namespace CIT.API.Repository
                     }
 
                     // Process the parcel data
-                    var allParcels = results
-      .Where(row => !string.IsNullOrWhiteSpace(row.ParcelLoaded))
-      .SelectMany(row => row.ParcelLoaded.Split(',', StringSplitOptions.RemoveEmptyEntries)
-          .Select(parcelQr => new ParcelInfo
-          {
-              ParcelQR = parcelQr.Trim()
-          }))
-      .ToList();
+                    var parcels = results
+                      .Where(row => !string.IsNullOrWhiteSpace(row.ParcelLoaded))
+                      .SelectMany(row => row.ParcelLoaded.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                          .Select(parcelQr => new ParcelReceiptNos
+                          {
+                              ParcelQR = parcelQr.Trim(),
+                              PickupReceiptNumber = row.PickupReceiptNumber
+                          }));
+                      return parcels;
 
-                    string pickupReceiptNumber = results.First().PickupReceiptNumber;
+                    //string pickupReceiptNumber = results.First().PickupReceiptNumber;
 
-                    return new ParcelReceiptNos
-                    {
-                        PickupReceiptNumber = pickupReceiptNumber,
-                        ParcelQRs = allParcels
-                    };
+                    //return new ParcelReceiptNos
+                    //{
+                    //    PickupReceiptNumber = pickupReceiptNumber,
+                    //    ParcelQRs = allParcels
+                    //};
 
                 }
             }

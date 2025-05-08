@@ -25,7 +25,7 @@ namespace CIT.API.Repository.IRepository
 
         Task<IEnumerable<ParcelNo>> GetParcelUnLoadedAtAtmAsync(int taskId, int authenticatedUserId);
 
-        public Task<ParcelReceiptNos> GetParcelAsync(int taskId, int authenticatedUserId, int userIdFromDb);
+        public Task<IEnumerable<ParcelReceiptNos>> GetParcelAsync(int taskId, int authenticatedUserId, int userIdFromDb);
 
         public Task<IEnumerable<ParcelNo>> GetParcelUnloadedAsync(int taskId, int authenticatedUserId, int userIdFromDb);
     }

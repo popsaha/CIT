@@ -1570,9 +1570,28 @@ namespace CIT.API.Controllers
                 var parcels = await _atmCrewTaskDetailsRepository.GetParcelAsync(taskId, authenticatedUserId, userIdFromDb);
                 //_logger.LogInformation("Successfully fetched {ParcelCount} parcels for task {TaskId}", parcels.Count(), taskId);
 
+                var groupedParcels = parcels
+                   .GroupBy(p => p.PickupReceiptNumber)
+                   .Select(group => new
+                   {
+                       PickupReceiptNumber = group.Key,
+                       ParcelQRs = group.Select(p => p.ParcelQR).ToArray()
+                   })
+                   .FirstOrDefault();
+
+
+                if (groupedParcels == null)
+                {
+                    _logger.LogWarning("No parcel data found for taskId: {TaskId}", taskId);
+                    _response.StatusCode = HttpStatusCode.NotFound;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("No data found for the provided task ID.");
+                    return NotFound(_response);
+                }
+
                 _response.StatusCode = HttpStatusCode.OK;
                 _response.IsSuccess = true;
-                _response.Result = parcels;
+                _response.Result = groupedParcels;
                 return Ok(_response);
             }
             catch (UnauthorizedAccessException ex)
@@ -1668,9 +1687,24 @@ namespace CIT.API.Controllers
                 var parcels = await _atmCrewTaskDetailsRepository.GetParcelUnloadedAsync(taskId, authenticatedUserId, userIdFromDb);
                 _logger.LogInformation("Successfully fetched {ParcelCount} parcels for task {TaskId}", parcels.Count(), taskId);
 
+                var groupedParcels = new
+                {
+                    ParcelQRs = parcels.Select(p => p.ParcelQR).ToArray()
+                };
+                // Select the first group (or null if no data)
+
+                if (groupedParcels == null)
+                {
+                    _logger.LogWarning("No parcel data found for taskId: {TaskId}", taskId);
+                    _response.StatusCode = HttpStatusCode.NotFound;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("No data found for the provided task ID.");
+                    return NotFound(_response);
+                }
+
                 _response.StatusCode = HttpStatusCode.OK;
                 _response.IsSuccess = true;
-                _response.Result = parcels;
+                _response.Result = groupedParcels;
                 return Ok(_response);
             }
             catch (UnauthorizedAccessException ex)
