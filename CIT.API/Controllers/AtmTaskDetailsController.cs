@@ -1276,7 +1276,7 @@ namespace CIT.API.Controllers
           
                 string status;
                 string activityType;               
-                status = "UnLoadedAtAtm";
+                status = "Unloaded";
                 activityType = "UnLoadedAtAtm";
 
                 bool updateResult = await _atmCrewTaskDetailsRepository.ParcelUnLoadAtAtmStatusAsync(authenticatedUserId, taskId, status, parcelDTO, activityType, userId);
