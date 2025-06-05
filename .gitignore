@@ -364,5 +364,5 @@ FodyWeavers.xsd
 
 # Ignore environment-specific appsettings files
 appsettings.Development.json
-appsettings.Staging.json
+# appsettings.Staging.json
 appsettings.Production.json
