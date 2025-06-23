@@ -1735,5 +1735,93 @@ namespace CIT.API.Controllers
                 return StatusCode((int)HttpStatusCode.InternalServerError, _response);
             }
         }
+
+        [HttpPost("{taskId}/AtmTaskOffline")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<APIResponse>> TaskOfflineTask(int taskId, [FromBody] AtmCrewTaskOffline updateDTO)
+        {
+            _logger.LogInformation("Completed Task  in ATM api called with taskId: {TaskId}, FieldData : {FieldData} ", taskId, updateDTO);
+
+            try
+            {
+                // Retrieve the userId associated with the provided uuid using the repository method
+                int userId = await _atmCrewTaskDetailsRepository.GetUserIdByUuidAsync();
+                _logger.LogDebug("Retrieved userId: {UserId} from UUID", userId);
+                if (taskId <= 0)
+                {
+                    _logger.LogWarning("Invalid taskId: {TaskId}", taskId);
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Invalid task ID.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_response);
+                }
+
+                var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
+
+                int authenticatedUserId;
+                if (!int.TryParse(userIdClaim.Value, out authenticatedUserId) || authenticatedUserId != userId)
+                {
+                    _logger.LogWarning("Unauthorized access attempt. AuthenticatedUserId: {AuthenticatedUserId}, Expected UserId: {UserId}", authenticatedUserId, userId);
+
+                    _response.StatusCode = HttpStatusCode.Unauthorized;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Unauthorized access to tasks.");
+                    return Unauthorized(_response);
+                }
+                // Check if the user is authenticated and has the correct claim
+                if (userIdClaim == null)
+                {
+                    _logger.LogWarning("User claim not found, unauthorized access.");
+                    _response.StatusCode = HttpStatusCode.Unauthorized;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("User is not authorized.");
+                    return Unauthorized(_response);
+                }
+                    
+                bool updateResult = await _atmCrewTaskDetailsRepository.AtmOfflineData(authenticatedUserId, taskId,updateDTO, userId);
+
+                if (!updateResult)
+                {
+                    _logger.LogWarning("UserId: {UserId} is not allowed to update TaskId: {TaskId}", authenticatedUserId, taskId);
+
+                    _response.StatusCode = HttpStatusCode.Forbidden;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("You are not allowed to update this task.");
+                    _response.Result = new object[0]; // Set Result to an empty array.
+                    return StatusCode((int)HttpStatusCode.Forbidden, _response);
+                }
+                _logger.LogInformation("TaskId: {TaskId} successfully started by UserId: {UserId}", taskId, authenticatedUserId);
+
+                _response.StatusCode = HttpStatusCode.OK;
+                _response.IsSuccess = true;
+                _response.Result = new
+                {
+                    status = "Success",
+                    //time = updateDTO.Time.ToString("MM/dd/yyyy HH:mm:ss")
+                };
+                return Ok(_response);
+            }
+            catch (SqlException ex) when (ex.Number == 50000)
+            {
+                _logger.LogError(ex, "SQL Exception occurred while processing TaskId: {TaskId}", taskId);
+                _response.StatusCode = HttpStatusCode.BadRequest;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add(ex.Message);
+                return BadRequest(_response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An unexpected error occurred while starting TaskId: {TaskId}", taskId);
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                _response.IsSuccess = false;
+                _response.ErrorMessages.Add(ex.Message);
+                return StatusCode((int)HttpStatusCode.InternalServerError, _response);
+            }
+        }
     }
 }

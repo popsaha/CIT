@@ -5,6 +5,7 @@ using CIT.API.Models.Dto.BSSCrewTaskDetails;
 using CIT.API.Models.Dto.CrewTaskDetails;
 using CIT.API.Repository.IRepository;
 using Dapper;
+using Microsoft.Data.SqlClient;
 using System.Data;
 
 namespace CIT.API.Repository
@@ -750,5 +751,153 @@ namespace CIT.API.Repository
                 throw;
             }
         }
+
+        public async Task<bool> AtmOfflineData(int crewCommanderId, int taskId, AtmCrewTaskOffline atmCrewTaskOffline, int userId)
+        {
+            try
+            {
+                _logger.LogInformation("Processing full ATM offline data for TaskID={TaskId} by UserID={UserId}", taskId, userId);
+
+                using (var rawConnection = _db.CreateConnection())
+                {
+                    var connection = (SqlConnection)rawConnection;
+                    await connection.OpenAsync();
+
+                    using (var transaction = connection.BeginTransaction())
+                    {
+                        var existing = await connection.ExecuteScalarAsync<int>(
+                            "SELECT COUNT(1) FROM AtmTaskDetail WHERE TaskID = @TaskId",
+                            new { TaskId = taskId }, transaction);
+
+                        if (existing == 0)
+                        {
+                            await connection.ExecuteAsync(
+                                "INSERT INTO AtmTaskDetail (TaskID, UserID) VALUES (@TaskId, @UserId)",
+                                new { TaskId = taskId, UserId = userId }, transaction);
+                        }
+
+                        var updates = new List<string>();
+                        var parameters = new DynamicParameters();
+                        parameters.Add("@TaskId", taskId);
+
+                        var collection = atmCrewTaskOffline.AtmCollection;
+                        string nextScreenId = null;
+                        int taskStatusId = 0;
+
+                        if (collection.Start != null && !string.IsNullOrWhiteSpace(collection.Start.Status))
+                        {
+                            updates.Add("StartTime = @StartTime");
+                            parameters.Add("@StartTime", collection.Start.Time);
+                            nextScreenId = "ATM-Arrived";
+                            taskStatusId = 3;
+                        }
+                         if (collection.Arrived != null && !string.IsNullOrWhiteSpace(collection.Arrived.Status))
+                        {
+                            updates.Add("ArrivedTime = @ArrivedTime");
+                            parameters.Add("@ArrivedTime", collection.Arrived.Time);
+                            nextScreenId = "ATM-LoadedAtBank";
+                            taskStatusId = 4;
+                        }
+                         if (collection.LoadedAtBank != null && !string.IsNullOrWhiteSpace(collection.LoadedAtBank.Status))
+                        {
+                            updates.Add("ParcelLoadedTimeAtBank = @LoadedAtBankTime");
+                            updates.Add("ParcelLoadedAtBank = @LoadedAtBankParcels");
+                            updates.Add("PickupReceiptNumber = @PickupReceiptNumber");
+                            parameters.Add("@LoadedAtBankTime", collection.LoadedAtBank.Time);
+                            parameters.Add("@LoadedAtBankParcels", string.Join(",", collection.LoadedAtBank.Parcels ?? new List<string>()));
+                            parameters.Add("@PickupReceiptNumber", collection.LoadedAtBank.PickupReceiptNumber);
+                            nextScreenId = "ATM-ArrivedDelivery";
+                            taskStatusId = 6;
+                        }
+                         if (collection.ArrivedDelivery != null && !string.IsNullOrWhiteSpace(collection.ArrivedDelivery.Status))
+                        {
+                            updates.Add("ArrivedDeliveryTime = @ArrivedDeliveryTime");
+                            parameters.Add("@ArrivedDeliveryTime", collection.ArrivedDelivery.Time);
+                            nextScreenId = "ATM-LoadedAtATM";
+                            taskStatusId = 7;
+                        }
+                         if (collection.LoadedAtAtm != null && !string.IsNullOrWhiteSpace(collection.LoadedAtAtm.Status))
+                        {
+                            updates.Add("ParcelLoadedTimeAtAtm = @LoadedAtAtmTime");
+                            updates.Add("ParcelLoadedAtAtm = @LoadedAtAtmParcels");
+                            parameters.Add("@LoadedAtAtmTime", collection.LoadedAtAtm.Time);
+                            parameters.Add("@LoadedAtAtmParcels", string.Join(",", collection.LoadedAtAtm.Parcels ?? new List<string>()));
+                            nextScreenId = "ATM-UnloadedAtAtm";
+                            taskStatusId = 8;
+                        }
+                         if (collection.UnloadedAtAtm != null && !string.IsNullOrWhiteSpace(collection.UnloadedAtAtm.Status))
+                        {
+                            updates.Add("ParcelUnloadAtAtm = @UnloadedAtAtmParcels");
+                            parameters.Add("@UnloadedAtAtmParcels", string.Join(",", collection.UnloadedAtAtm.Parcels ?? new List<string>()));
+                            nextScreenId = "ATM-Completed";
+                            taskStatusId = 8;
+                        }
+                         if (collection.Complete != null && !string.IsNullOrWhiteSpace(collection.Complete.Status))
+                        {
+                            updates.Add("ParcelUnloadedAtBank = @CompletedParcels");
+                            updates.Add("CompletedTime = @CompletedTime");
+                            updates.Add("DeliveryReceiptNumber = @DeliveryReceiptNumber");
+                            parameters.Add("@CompletedParcels", string.Join(",", collection.Complete.Parcels ?? new List<string>()));
+                            parameters.Add("@CompletedTime", collection.Complete.Time);
+                            parameters.Add("@DeliveryReceiptNumber", collection.Complete.DeliveryReceiptNumber);
+                            nextScreenId = "1";
+                            taskStatusId = 9;
+                        }
+
+                        if (!string.IsNullOrEmpty(nextScreenId) && taskStatusId != 0)
+                        {
+                            string updateQuery = $@"
+                        UPDATE AtmTaskDetail
+                        SET {string.Join(", ", updates)},
+                            NextScreenId = @NextScreenId
+                        WHERE TaskID = @TaskId;
+
+                        UPDATE Task
+                        SET NextScreenId = @NextScreenId,
+                            TaskStatusId = @TaskStatusId
+                        WHERE TaskID = @TaskId;";
+
+                            parameters.Add("@NextScreenId", nextScreenId);
+                            parameters.Add("@TaskStatusId", taskStatusId);
+
+                            await connection.ExecuteAsync(updateQuery, parameters, transaction);
+                        }
+
+                        if (collection.Fail != null && !string.IsNullOrWhiteSpace(collection.Fail.Status))
+                        {
+                            string failUpdate = @"
+                        UPDATE AtmTaskDetail
+                        SET NextScreenId = '-1'
+                        WHERE TaskID = @TaskId;
+
+                        UPDATE Task
+                        SET NextScreenId = '-1',
+                            TaskStatusId = 10
+                        WHERE TaskID = @TaskId;
+
+                        INSERT INTO AtmTaskFailed (TaskId, FailureReason, FailedDate)
+                        VALUES (@TaskId, @FailureReason, @FailedDate);";
+
+                            var failParams = new DynamicParameters();
+                            failParams.Add("@TaskId", taskId);
+                            failParams.Add("@FailureReason", $"Task failed at stage: {collection.Fail.Status}");
+                            failParams.Add("@FailedDate", collection.Fail.Time);
+
+                            await connection.ExecuteAsync(failUpdate, failParams, transaction);
+                        }
+
+                        transaction.Commit();
+                        return true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while processing full AtmOfflineData.");
+                return false;
+            }
+        }
+
+
     }
 } 
