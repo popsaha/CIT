@@ -62,19 +62,20 @@ namespace CIT.API.Repository
             {
                 using (var connection = _db.CreateConnection())
                 {
-                    string query = @"
-                        SELECT u.UserId, u.UserName, r.RoleName AS Role, u.UUID 
-                        FROM UserMaster u
-                        INNER JOIN UserRoleMapping urm ON u.UserId = urm.UserId
-                        INNER JOIN RoleMaster r ON u.RoleId = r.RoleId
-                        WHERE LOWER(u.UserName) = LOWER(@UserName) AND u.Password = @Password";
-                    var user = await connection.QueryFirstOrDefaultAsync<UserMaster>(query, new
+                    // Step 1: Fetch Username from Callsign
+                    string getUserNameQuery = @"
+                SELECT TOP 1 UserName
+                FROM UserMaster
+                WHERE LOWER(Callsign) = LOWER(@Callsign)";
+
+                    var userName = await connection.QueryFirstOrDefaultAsync<string>(getUserNameQuery, new
                     {
-                        UserName = loginRequestDTO.UserName,
-                        Password = loginRequestDTO.Password
+                        Callsign = loginRequestDTO.UserName // Assuming frontend sends Callsign in UserName field
                     });
-                    if (user == null)
+
+                    if (string.IsNullOrEmpty(userName))
                     {
+                        _logger.LogWarning("Invalid Callsign: {Callsign}", loginRequestDTO.UserName);
                         return new LoginResponseDTO
                         {
                             User = null,
@@ -82,10 +83,33 @@ namespace CIT.API.Repository
                         };
                     }
 
-                    // if user was found Generate JWT token 
+                    // Step 2: Validate login using fetched Username and Password
+                    string query = @"
+                SELECT u.UserId, u.UserName, r.RoleName AS Role, u.UUID 
+                FROM UserMaster u
+                INNER JOIN UserRoleMapping urm ON u.UserId = urm.UserId
+                INNER JOIN RoleMaster r ON u.RoleId = r.RoleId
+                WHERE LOWER(u.UserName) = LOWER(@UserName) AND u.Password = @Password";
+
+                    var user = await connection.QueryFirstOrDefaultAsync<UserMaster>(query, new
+                    {
+                        UserName = userName,
+                        Password = loginRequestDTO.Password
+                    });
+
+                    if (user == null)
+                    {
+                        _logger.LogWarning("Invalid password for Callsign: {Callsign}", loginRequestDTO.UserName);
+                        return new LoginResponseDTO
+                        {
+                            User = null,
+                            Token = ""
+                        };
+                    }
+
+                    // Step 3: Generate JWT token if login successful
                     var token = GenerateJwtToken(user);
 
-                    // If login is successful, return a successful response with user details
                     return new LoginResponseDTO
                     {
                         User = user,
@@ -95,14 +119,12 @@ namespace CIT.API.Repository
             }
             catch (SqlException sqlEx)
             {
-                // Log SQL exception (using Serilog, if configured)
-                _logger.LogError(sqlEx, "SQL Error occurred while logging in user {UserName}", loginRequestDTO.UserName);
+                _logger.LogError(sqlEx, "SQL Error occurred while logging in user with Callsign {Callsign}", loginRequestDTO.UserName);
                 throw;
             }
             catch (Exception ex)
             {
-                // Log general exception
-                _logger.LogError(ex, "An error occurred while logging in user {UserName}", loginRequestDTO.UserName);
+                _logger.LogError(ex, "An error occurred while logging in user with Callsign {Callsign}", loginRequestDTO.UserName);
                 throw;
             }
         }
