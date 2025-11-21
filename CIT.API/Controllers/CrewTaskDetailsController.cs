@@ -5,9 +5,11 @@ using CIT.API.Models.Dto.CrewTaskDetails;
 using CIT.API.Repository;
 using CIT.API.Repository.IRepository;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using System;
+using System.Data;
 using System.Linq;
 using System.Net;
 using System.Security.Claims;
@@ -23,6 +25,7 @@ namespace CIT.API.Controllers
         private readonly ICrewTaskDetailsRepository _crewTaskDetailsRepository;
         private readonly IMapper _mapper;
         protected APIResponse _response;
+        protected APIOtpResponse _OtpResponse;
         private readonly ILogger<CrewTaskDetailsController> _logger;
 
         public CrewTaskDetailsController(ICrewTaskDetailsRepository crewTaskDetailsRepository, IMapper mapper, ILogger<CrewTaskDetailsController> logger)
@@ -30,6 +33,7 @@ namespace CIT.API.Controllers
             _crewTaskDetailsRepository = crewTaskDetailsRepository;
             _mapper = mapper;
             _response = new APIResponse();
+            _OtpResponse = new APIOtpResponse();
             _logger = logger;
         }
 
@@ -385,7 +389,7 @@ namespace CIT.API.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<APIResponse>> ArriveTask(int taskId, [FromBody] CrewTaskStatusUpdateDTO updateDTO)
+        public async Task<ActionResult<APIOtpResponse>> ArriveTask(int taskId, [FromBody] CrewTaskStatusUpdateDTO updateDTO)
         {
             _logger.LogInformation("ArriveTask endpoint hit with taskId: {TaskId}, FieldData : {FieldData} ", taskId, updateDTO);
             try
@@ -397,11 +401,11 @@ namespace CIT.API.Controllers
                 if (taskId <= 0)
                 {
                     _logger.LogWarning("Invalid task ID: {TaskId}", taskId);
-                    _response.StatusCode = HttpStatusCode.BadRequest;
-                    _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("Invalid task ID.");
-                    _response.Result = new object[0]; // Set Result to an empty array.
-                    return BadRequest(_response);
+                    _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("Invalid task ID.");
+                    _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_OtpResponse);
                 }
 
                 var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
@@ -411,43 +415,43 @@ namespace CIT.API.Controllers
                 {
                     _logger.LogWarning("Unauthorized access attempt. AuthenticatedUserId: {AuthenticatedUserId}, ExpectedUserId: {ExpectedUserId}", authenticatedUserId, userId);
 
-                    _response.StatusCode = HttpStatusCode.Unauthorized;
-                    _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("Unauthorized access to tasks.");
-                    return Unauthorized(_response);
+                    _OtpResponse.StatusCode = HttpStatusCode.Unauthorized;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("Unauthorized access to tasks.");
+                    return Unauthorized(_OtpResponse);
                 }
                 // Check if the user is authenticated and has the correct claim
                 if (userIdClaim == null)
                 {
                     _logger.LogWarning("Unauthorized access attempt. AuthenticatedUserId: {AuthenticatedUserId}, ExpectedUserId: {ExpectedUserId}", authenticatedUserId, userId);
 
-                    _response.StatusCode = HttpStatusCode.Unauthorized;
-                    _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("User is not authorized.");
-                    return Unauthorized(_response);
+                    _OtpResponse.StatusCode = HttpStatusCode.Unauthorized;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("User is not authorized.");
+                    return Unauthorized(_OtpResponse);
                 }
 
                 if (updateDTO.Location.Long == "" || updateDTO.Location.Lat == "")
                 {
                     _logger.LogWarning("Invalid location data received: Lat={Lat}, Long={Long}", updateDTO.Location.Lat, updateDTO.Location.Long);
 
-                    _response.StatusCode = HttpStatusCode.BadRequest;
-                    _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("In location Lat and Log is Required.");
-                    _response.Result = new object[0]; // Set Result to an empty array.
-                    return BadRequest(_response);
+                    _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("In location Lat and Log is Required.");
+                    _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_OtpResponse);
                 }
 
                 if (updateDTO.Location.Long == "string" || updateDTO.Location.Lat == "string")
                 {
                     _logger.LogWarning("Invalid location data provided: {Location}", updateDTO.Location);
-                    _response.StatusCode = HttpStatusCode.BadRequest;
-                    _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("In location Lat and Log is Required.");
-                    _response.Result = new object[0]; // Set Result to an empty array.
-                    return BadRequest(_response);
+                    _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("In location Lat and Log is Required.");
+                    _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_OtpResponse);
                 }
-             
+
 
                 //// Retrieve the current ScreenId for validation
                 //var currentScreenId = await _crewTaskDetailsRepository.GetCurrentScreenIdByTaskId(taskId);
@@ -464,33 +468,33 @@ namespace CIT.API.Controllers
                 if (currentScreenId == null)
                 {
                     _logger.LogWarning("Task screen ID could not be retrieved for TaskId: {TaskId}", taskId);
-                    _response.StatusCode = HttpStatusCode.BadRequest;
-                    _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("Task screen ID could not be retrieved.");
-                    _response.Result = new object[0]; // Set Result to an empty array.
-                    return BadRequest(_response);
+                    _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("Task screen ID could not be retrieved.");
+                    _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_OtpResponse);
                 }
 
                 // Prevent further modification if ScreenId is already "CIT-6"
                 if (currentScreenId == "1")
                 {
                     _logger.LogWarning("Task {TaskId} is already completed and cannot be modified.", taskId);
-                    _response.StatusCode = HttpStatusCode.BadRequest;
-                    _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("Task is already marked as completed and cannot be modified further.");
-                    _response.Result = new object[0]; // Set Result to an empty array.
-                    return BadRequest(_response);
+                    _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("Task is already marked as completed and cannot be modified further.");
+                    _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_OtpResponse);
                 }
 
                 // Prevent further modification if the task is already marked as failed with ScreenId "CIT-7"
                 if (currentScreenId == "-1")
                 {
                     _logger.LogWarning("Task {TaskId} has already been marked as failed.", taskId);
-                    _response.StatusCode = HttpStatusCode.BadRequest;
-                    _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("Task has already been marked as failed and cannot be modified further.");
-                    _response.Result = new object[0]; // Set Result to an empty array.
-                    return BadRequest(_response);
+                    _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("Task has already been marked as failed and cannot be modified further.");
+                    _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_OtpResponse);
                 }
 
                 // Step 2: Calculate the next expected screen ID
@@ -501,57 +505,272 @@ namespace CIT.API.Controllers
                 {
                     _logger.LogWarning("Invalid screen transition for TaskId: {TaskId}. Expected: {ExpectedNextScreenId}, Provided: {ProvidedScreenId}",
                      taskId, expectedNextScreenId, updateDTO.NextScreenId);
-                    _response.StatusCode = HttpStatusCode.BadRequest;
-                    _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("Invalid screen transition or The task has already passed this stage.");
-                    _response.Result = new object[0]; // Set Result to an empty array.
-                    return BadRequest(_response);
+                    _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("Invalid screen transition or The task has already passed this stage.");
+                    _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_OtpResponse);
                 }
 
-                string status = "Arrived";
-                string activityType = "Arrived";
-                bool updateResult = await _crewTaskDetailsRepository.UpdateTaskStatusAsync(authenticatedUserId, taskId, status, updateDTO, activityType, userId);
 
-                if (!updateResult)
+                bool isOtpRequired = await _crewTaskDetailsRepository.CheckOtpRequiredAsync(taskId);
+                //_OtpResponse.OTPcheck = isOtpRequired;
+                if (isOtpRequired = true)
                 {
-                    _logger.LogWarning("User {UserId} is not allowed to update task {TaskId}.", authenticatedUserId, taskId);
-                    _response.StatusCode = HttpStatusCode.Forbidden;
-                    _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("You are not allowed to update this task.");
-                    _response.Result = new object[0]; // Set Result to an empty array.
-                    return StatusCode((int)HttpStatusCode.Forbidden, _response);
+                    string status = "Arrived";
+                    string activityType = "Arrived";
+
+                    //bool otpCheck;
+                    _OtpResponse.StatusCode = HttpStatusCode.OK;
+                    _OtpResponse.IsSuccess = true;
+                    _OtpResponse.otpCheck = isOtpRequired;
+                    _OtpResponse.Result = new
+                    {
+                        status = status,
+                        time = updateDTO.Time.ToString("MM/dd/yyyy HH:mm:ss")
+                    };
+                    return Ok(_OtpResponse);
                 }
-                _logger.LogInformation("Task {TaskId} successfully marked as {Status} by User {UserId}.", taskId, status, authenticatedUserId);
-
-                _response.StatusCode = HttpStatusCode.OK;
-                _response.IsSuccess = true;
-                _response.Result = new
+                else
                 {
-                    status = status,
-                    time = updateDTO.Time.ToString("MM/dd/yyyy HH:mm:ss")
-                };
-                return Ok(_response);
+                    string status = "Arrived";
+                    string activityType = "Arrived";
+                    bool updateResult = await _crewTaskDetailsRepository.UpdateTaskStatusAsync(authenticatedUserId, taskId, status, updateDTO, activityType, userId);
+
+                    if (!updateResult)
+                    {
+                        _logger.LogWarning("User {UserId} is not allowed to update task {TaskId}.", authenticatedUserId, taskId);
+                        _OtpResponse.StatusCode = HttpStatusCode.Forbidden;
+                        _OtpResponse.IsSuccess = false;
+                        _OtpResponse.ErrorMessages.Add("You are not allowed to update this task.");
+                        _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                        return StatusCode((int)HttpStatusCode.Forbidden, _OtpResponse);
+                    }
+                    _logger.LogInformation("Task {TaskId} successfully marked as {Status} by User {UserId}.", taskId, status, authenticatedUserId);
+                    //bool otpCheck;
+                    _OtpResponse.StatusCode = HttpStatusCode.OK;
+                    _OtpResponse.IsSuccess = true;
+                    _OtpResponse.otpCheck = isOtpRequired;
+                    _OtpResponse.Result = new
+                    {
+                        status = status,
+                        time = updateDTO.Time.ToString("MM/dd/yyyy HH:mm:ss")
+                    };
+                    return Ok(_OtpResponse);
+                }
+
+
             }
             catch (SqlException ex) when (ex.Number == 50000) // Check for the custom SQL error number
             {
                 _logger.LogError(ex, "SQL error occurred while processing ArriveTask for TaskId: {TaskId}", taskId);
 
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.IsSuccess = false;
-                _response.Result = new object[0]; // Set Result to an empty array.
-                _response.ErrorMessages.Add(ex.Message); // Display the custom message from the procedure
-                return BadRequest(_response);
+                _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                _OtpResponse.IsSuccess = false;
+                _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                _OtpResponse.ErrorMessages.Add(ex.Message); // Display the custom message from the procedure
+                return BadRequest(_OtpResponse);
             }
 
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An unexpected error occurred while processing ArriveTask for TaskId: {TaskId}", taskId);
 
-                _response.StatusCode = HttpStatusCode.InternalServerError;
-                _response.IsSuccess = false;
-                _response.ErrorMessages.Add(ex.Message);
-                _response.Result = new object[0]; // Set Result to an empty array.
-                return StatusCode((int)HttpStatusCode.InternalServerError, _response);
+                _OtpResponse.StatusCode = HttpStatusCode.InternalServerError;
+                _OtpResponse.IsSuccess = false;
+                _OtpResponse.ErrorMessages.Add(ex.Message);
+                _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                return StatusCode((int)HttpStatusCode.InternalServerError, _OtpResponse);
+            }
+        }
+
+        [HttpPost("{taskId}/OtpValidation")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<APIOtpResponse>> OtpValidation(int taskId, [FromBody] OptValidationStatusUpdateDTO updateDTO)
+        {
+            _logger.LogInformation("ArriveTask endpoint hit with taskId: {TaskId}, FieldData : {FieldData} ", taskId, updateDTO);
+            try
+            {
+
+                // Retrieve the userId associated with the provided uuid using the repository method
+                int userId = await _crewTaskDetailsRepository.GetUserIdByUuidAsync();
+                _logger.LogDebug("Retrieved userId: {UserId} for UUID", userId);
+                if (taskId <= 0)
+                {
+                    _logger.LogWarning("Invalid task ID: {TaskId}", taskId);
+                    _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("Invalid task ID.");
+                    _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_OtpResponse);
+                }
+
+                var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
+
+                int authenticatedUserId;
+                if (!int.TryParse(userIdClaim.Value, out authenticatedUserId) || authenticatedUserId != userId)
+                {
+                    _logger.LogWarning("Unauthorized access attempt. AuthenticatedUserId: {AuthenticatedUserId}, ExpectedUserId: {ExpectedUserId}", authenticatedUserId, userId);
+
+                    _OtpResponse.StatusCode = HttpStatusCode.Unauthorized;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("Unauthorized access to tasks.");
+                    return Unauthorized(_OtpResponse);
+                }
+                // Check if the user is authenticated and has the correct claim
+                if (userIdClaim == null)
+                {
+                    _logger.LogWarning("Unauthorized access attempt. AuthenticatedUserId: {AuthenticatedUserId}, ExpectedUserId: {ExpectedUserId}", authenticatedUserId, userId);
+
+                    _OtpResponse.StatusCode = HttpStatusCode.Unauthorized;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("User is not authorized.");
+                    return Unauthorized(_OtpResponse);
+                }
+
+                if (updateDTO.Location.Long == "" || updateDTO.Location.Lat == "")
+                {
+                    _logger.LogWarning("Invalid location data received: Lat={Lat}, Long={Long}", updateDTO.Location.Lat, updateDTO.Location.Long);
+
+                    _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("In location Lat and Log is Required.");
+                    _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_OtpResponse);
+                }
+
+                if (updateDTO.Location.Long == "string" || updateDTO.Location.Lat == "string")
+                {
+                    _logger.LogWarning("Invalid location data provided: {Location}", updateDTO.Location);
+                    _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("In location Lat and Log is Required.");
+                    _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_OtpResponse);
+                }
+
+
+                //// Retrieve the current ScreenId for validation
+                //var currentScreenId = await _crewTaskDetailsRepository.GetCurrentScreenIdByTaskId(taskId);
+                //string expectedNextScreenId = "CIT-3"; // Define the expected ScreenId based on your workflow
+
+                //if (currentScreenId != null && currentScreenId != expectedNextScreenId)
+                //{
+                //    return BadRequest(new { message = "Invalid screen transition. The task has already passed this stage." });
+                //}
+
+
+                // Step 1: Retrieve the current screen ID for this task
+                var currentScreenId = await _crewTaskDetailsRepository.GetCurrentScreenIdByTaskId(taskId);
+                if (currentScreenId == null)
+                {
+                    _logger.LogWarning("Task screen ID could not be retrieved for TaskId: {TaskId}", taskId);
+                    _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("Task screen ID could not be retrieved.");
+                    _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_OtpResponse);
+                }
+
+                // Prevent further modification if ScreenId is already "CIT-6"
+                if (currentScreenId == "1")
+                {
+                    _logger.LogWarning("Task {TaskId} is already completed and cannot be modified.", taskId);
+                    _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("Task is already marked as completed and cannot be modified further.");
+                    _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_OtpResponse);
+                }
+
+                // Prevent further modification if the task is already marked as failed with ScreenId "CIT-7"
+                if (currentScreenId == "-1")
+                {
+                    _logger.LogWarning("Task {TaskId} has already been marked as failed.", taskId);
+                    _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("Task has already been marked as failed and cannot be modified further.");
+                    _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_OtpResponse);
+                }
+
+                // Step 2: Calculate the next expected screen ID
+                var expectedNextScreenId = await _crewTaskDetailsRepository.GetNextScreenIdByTaskId(taskId);
+
+                // Step 3: Check if the request ScreenId matches the expected next ScreenId
+                if (updateDTO.NextScreenId != expectedNextScreenId)
+                {
+                    _logger.LogWarning("Invalid screen transition for TaskId: {TaskId}. Expected: {ExpectedNextScreenId}, Provided: {ProvidedScreenId}",
+                     taskId, expectedNextScreenId, updateDTO.NextScreenId);
+                    _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("Invalid screen transition or The task has already passed this stage.");
+                    _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_OtpResponse);
+                }
+
+
+
+                bool isOtpRequired = await _crewTaskDetailsRepository.CheckOtpRequiredAsync(taskId);
+
+                string status = "Arrived";
+                    string activityType = "Arrived";
+                    bool updateResult = await _crewTaskDetailsRepository.OtpStutasValidation(authenticatedUserId, taskId, status, updateDTO, activityType, userId);
+                if(updateResult)
+                {
+                    bool updateResult1 = await _crewTaskDetailsRepository.ArrivedUpdateTaskStatusAsync(authenticatedUserId, taskId, status, updateDTO, activityType, userId);
+
+                }
+                if (!updateResult)
+                    {
+                        _logger.LogWarning("User {UserId} is not allowed to update task {TaskId}.", authenticatedUserId, taskId);
+                        _OtpResponse.StatusCode = HttpStatusCode.Forbidden;
+                        _OtpResponse.IsSuccess = false;
+                        _OtpResponse.ErrorMessages.Add("You are not allowed to update this task.");
+                        _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                        return StatusCode((int)HttpStatusCode.Forbidden, _OtpResponse);
+                    }
+               // bool updateResult = await _crewTaskDetailsRepository.OtpStutasValidation(authenticatedUserId, taskId, status, updateDTO, activityType, userId);
+               
+                _logger.LogInformation("Task {TaskId} successfully marked as {Status} by User {UserId}.", taskId, status, authenticatedUserId);
+                    //bool otpCheck;
+                    _OtpResponse.StatusCode = HttpStatusCode.OK;
+                    _OtpResponse.IsSuccess = true;
+                    _OtpResponse.otpCheck = isOtpRequired;
+                    _OtpResponse.Result = new
+                    {
+                        status = status,
+                        time = updateDTO.Time.ToString("MM/dd/yyyy HH:mm:ss")
+                    };
+                    return Ok(_OtpResponse);
+                
+
+
+            }
+            catch (SqlException ex) when (ex.Number == 50000) // Check for the custom SQL error number
+            {
+                _logger.LogError(ex, "SQL error occurred while processing ArriveTask for TaskId: {TaskId}", taskId);
+
+                _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                _OtpResponse.IsSuccess = false;
+                _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                _OtpResponse.ErrorMessages.Add(ex.Message); // Display the custom message from the procedure
+                return BadRequest(_OtpResponse);
+            }
+
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An unexpected error occurred while processing ArriveTask for TaskId: {TaskId}", taskId);
+
+                _OtpResponse.StatusCode = HttpStatusCode.InternalServerError;
+                _OtpResponse.IsSuccess = false;
+                _OtpResponse.ErrorMessages.Add(ex.Message);
+                _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                return StatusCode((int)HttpStatusCode.InternalServerError, _OtpResponse);
             }
         }
 
@@ -942,13 +1161,15 @@ namespace CIT.API.Controllers
             }
         }
 
+        
+
         [HttpPost("{taskId}/Arrived_at_Delivery")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<APIResponse>> ArrivedDeliveryTask(int taskId, [FromBody] CrewTaskStatusUpdateDTO arrivedDTO)
+        public async Task<ActionResult<APIOtpResponse>> ArrivedDeliveryTask(int taskId, [FromBody] CrewTaskStatusUpdateDTO arrivedDTO)
         {
             _logger.LogInformation("ArrivedDeliveryTask started for taskId: {TaskId}, FieldData : {FieldData} ", taskId, arrivedDTO);
             try
@@ -961,11 +1182,11 @@ namespace CIT.API.Controllers
                 if (taskId <= 0)
                 {
                     _logger.LogWarning("Invalid task ID: {TaskId}", taskId);
-                    _response.StatusCode = HttpStatusCode.BadRequest;
-                    _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("Invalid task ID.");
-                    _response.Result = new object[0]; // Set Result to an empty array.
-                    return BadRequest(_response);
+                    _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("Invalid task ID.");
+                    _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_OtpResponse);
                 }
 
                 var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
@@ -974,40 +1195,40 @@ namespace CIT.API.Controllers
                 if (!int.TryParse(userIdClaim.Value, out authenticatedUserId) || authenticatedUserId != userId)
                 {
                     _logger.LogWarning("Unauthorized access attempt by userId: {UserId}", authenticatedUserId);
-                    _response.StatusCode = HttpStatusCode.Unauthorized;
-                    _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("Unauthorized access to tasks.");
-                    return Unauthorized(_response);
+                    _OtpResponse.StatusCode = HttpStatusCode.Unauthorized;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("Unauthorized access to tasks.");
+                    return Unauthorized(_OtpResponse);
                 }
                 // Check if the user is authenticated and has the correct claim
                 if (userIdClaim == null)
                 {
                     _logger.LogWarning("Unauthorized access attempt by userId: {UserId}", authenticatedUserId);
-                    _response.StatusCode = HttpStatusCode.Unauthorized;
-                    _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("User is not authorized.");
-                    return Unauthorized(_response);
+                    _OtpResponse.StatusCode = HttpStatusCode.Unauthorized;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("User is not authorized.");
+                    return Unauthorized(_OtpResponse);
                 }
 
                 if (arrivedDTO.Location.Long == "" || arrivedDTO.Location.Lat == "")
                 {
                     _logger.LogWarning("Invalid location data received: Lat={Lat}, Long={Long}", arrivedDTO.Location.Lat, arrivedDTO.Location.Long);
 
-                    _response.StatusCode = HttpStatusCode.BadRequest;
-                    _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("In location Lat and Log is Required.");
-                    _response.Result = new object[0]; // Set Result to an empty array.
-                    return BadRequest(_response);
+                    _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("In location Lat and Log is Required.");
+                    _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_OtpResponse);
                 }
 
                 if (arrivedDTO.Location.Long == "string" || arrivedDTO.Location.Lat == "string")
                 {
                     _logger.LogWarning("Invalid location data received for taskId: {TaskId}", taskId);
-                    _response.StatusCode = HttpStatusCode.BadRequest;
-                    _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("In location Lat and Log is Required.");
-                    _response.Result = new object[0]; // Set Result to an empty array.
-                    return BadRequest(_response);
+                    _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("In location Lat and Log is Required.");
+                    _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_OtpResponse);
                 }
 
                 // Step 1: Retrieve the current screen ID for this task
@@ -1016,33 +1237,33 @@ namespace CIT.API.Controllers
                 if (currentScreenId == null)
                 {
                     _logger.LogWarning("TaskId: {TaskId} is already completed or failed (ScreenId: {ScreenId})", taskId, currentScreenId);
-                    _response.StatusCode = HttpStatusCode.BadRequest;
-                    _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("Task screen ID could not be retrieved.");
-                    _response.Result = new object[0]; // Set Result to an empty array.
-                    return BadRequest(_response);
+                    _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("Task screen ID could not be retrieved.");
+                    _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_OtpResponse);
                 }
 
                 // Prevent further modification if ScreenId is already "CIT-6"
                 if (currentScreenId == "1")
                 {
                     _logger.LogWarning("TaskId: {TaskId} is already completed (ScreenId: {ScreenId})", taskId, currentScreenId);
-                    _response.StatusCode = HttpStatusCode.BadRequest;
-                    _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("Task is already marked as completed and cannot be modified further.");
-                    _response.Result = new object[0]; // Set Result to an empty array.
-                    return BadRequest(_response);
+                    _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("Task is already marked as completed and cannot be modified further.");
+                    _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_OtpResponse);
                 }
 
                 // Prevent further modification if the task is already marked as failed with ScreenId "CIT-7"
                 if (currentScreenId == "-1")
                 {
                     _logger.LogWarning("TaskId: {TaskId} is already failed (ScreenId: {ScreenId})", taskId, currentScreenId);
-                    _response.StatusCode = HttpStatusCode.BadRequest;
-                    _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("Task has already been marked as failed and cannot be modified further.");
-                    _response.Result = new object[0]; // Set Result to an empty array.
-                    return BadRequest(_response);
+                    _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("Task has already been marked as failed and cannot be modified further.");
+                    _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_OtpResponse);
                 }
 
                 // Step 2: Calculate the next expected screen ID
@@ -1052,66 +1273,310 @@ namespace CIT.API.Controllers
                 if (arrivedDTO.NextScreenId != expectedNextScreenId)
                 {
                     _logger.LogWarning("Invalid screen transition for taskId {TaskId}: Expected {Expected}, Received {Received}", taskId, expectedNextScreenId, arrivedDTO.NextScreenId);
-                    _response.StatusCode = HttpStatusCode.BadRequest;
-                    _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("Invalid screen transition. The task has already passed this stage.");
-                    _response.Result = new object[0]; // Set Result to an empty array.
-                    return BadRequest(_response);
+                    _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("Invalid screen transition. The task has already passed this stage.");
+                    _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_OtpResponse);
                 }
 
-
-                string status = "ArrivedAtDelivery";
-                string activityType = "ArrivedDelivery";
-                bool updateResult = await _crewTaskDetailsRepository.arrivedDeliveryAsync(authenticatedUserId, taskId, status, arrivedDTO, activityType, userId);
-
-                if (!updateResult)
+                // 6️⃣ Check if OTP is required
+                bool otpRequired = await _crewTaskDetailsRepository.CheckOtpRequiredAsync(taskId);
+                if (otpRequired = true)
                 {
-                    _logger.LogWarning("User {UserId} is not allowed to update taskId {TaskId}", authenticatedUserId, taskId);
-                    _response.StatusCode = HttpStatusCode.Forbidden;
-                    _response.IsSuccess = false;
-                    _response.ErrorMessages.Add("You are not allowed to update this task.");
-                    _response.Result = new object[0]; // Set Result to an empty array.
-                    return StatusCode((int)HttpStatusCode.Forbidden, _response);
+                    string status = "ArrivedAtDelivery";
+                    string activityType = "ArrivedDelivery";
+                    // Fetch parcel data from repository (stored as comma-separated values in CITTASKDETAIL)
+                    var parcelData = await _crewTaskDetailsRepository.GetParcelAsync(taskId, authenticatedUserId, userId);
+                    _logger.LogInformation("Task {TaskId} successfully updated to ArrivedAtDelivery", taskId);
+                    // Format parcel data for response
+                    //List<object> parcels = parcelData != null
+                    //    ? parcelData.Split(',').Select(qrCode => new { parcelQR = qrCode }).Cast<object>().ToList()
+                    //    : new List<object>();
+
+                    _OtpResponse.StatusCode = HttpStatusCode.OK;
+                    _OtpResponse.IsSuccess = true;
+                    _OtpResponse.otpCheck = otpRequired;
+                    _OtpResponse.Result = new
+                    {
+                        status = status,
+                        time = arrivedDTO.Time.ToString("MM/dd/yyyy HH:mm:ss"),
+                        parcels = parcelData
+                    };
+
+                    return Ok(_OtpResponse);
+                }
+                else
+                {
+
+                    string status = "ArrivedAtDelivery";
+                    string activityType = "ArrivedDelivery";
+                    bool updateResult = await _crewTaskDetailsRepository.arrivedDeliveryAsync(authenticatedUserId, taskId, status, arrivedDTO, activityType, userId);
+
+                    if (!updateResult)
+                    {
+                        _logger.LogWarning("User {UserId} is not allowed to update taskId {TaskId}", authenticatedUserId, taskId);
+                        _OtpResponse.StatusCode = HttpStatusCode.Forbidden;
+                        _OtpResponse.IsSuccess = false;
+                        _OtpResponse.ErrorMessages.Add("You are not allowed to update this task.");
+                        _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                        return StatusCode((int)HttpStatusCode.Forbidden, _OtpResponse);
+                    }
+                    var parcelData = await _crewTaskDetailsRepository.GetParcelAsync(taskId, authenticatedUserId, userId);
+
+                    _logger.LogInformation("Task {TaskId} successfully updated to ArrivedAtDelivery", taskId);
+                    // Format parcel data for response
+                    //List<object> parcels = parcelData != null
+                    //    ? parcelData.Split(',').Select(qrCode => new { parcelQR = qrCode }).Cast<object>().ToList()
+                    //    : new List<object>();
+
+                    _OtpResponse.StatusCode = HttpStatusCode.OK;
+                    _OtpResponse.IsSuccess = true;
+                    _OtpResponse.otpCheck = otpRequired;
+                    _OtpResponse.Result = new
+                    {
+                        status = status,
+                        time = arrivedDTO.Time.ToString("MM/dd/yyyy HH:mm:ss"),
+                        parcels = parcelData
+                    };
+                    return Ok(_OtpResponse);
                 }
 
-                // Fetch parcel data from repository (stored as comma-separated values in CITTASKDETAIL)
-                var parcelData = await _crewTaskDetailsRepository.GetParcelAsync(taskId, authenticatedUserId, userId);
-                _logger.LogInformation("Task {TaskId} successfully updated to ArrivedAtDelivery", taskId);
-                // Format parcel data for response
-                //List<object> parcels = parcelData != null
-                //    ? parcelData.Split(',').Select(qrCode => new { parcelQR = qrCode }).Cast<object>().ToList()
-                //    : new List<object>();
-
-                _response.StatusCode = HttpStatusCode.OK;
-                _response.IsSuccess = true;
-                _response.Result = new
-                {
-                    status = status,
-                    time = arrivedDTO.Time.ToString("MM/dd/yyyy HH:mm:ss"),
-                    parcels = parcelData
-                };
-
-                return Ok(_response);
             }
 
             catch (SqlException ex) when (ex.Number == 50000) // Check for the custom SQL error number
             {
                 _logger.LogError(ex, "SQL Exception occurred for TaskId: {TaskId}", taskId);
-                _response.StatusCode = HttpStatusCode.BadRequest;
-                _response.IsSuccess = false;
-                _response.ErrorMessages.Add(ex.Message); // Display the custom message from the procedure
-                _response.Result = new object[0]; // Set Result to an empty array.
-                return BadRequest(_response);
+                _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                _OtpResponse.IsSuccess = false;
+                _OtpResponse.ErrorMessages.Add(ex.Message); // Display the custom message from the procedure
+                _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                return BadRequest(_OtpResponse);
             }
 
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error occurred for TaskId: {TaskId}", taskId);
-                _response.StatusCode = HttpStatusCode.InternalServerError;
-                _response.IsSuccess = false;
-                _response.ErrorMessages.Add(ex.Message);
-                _response.Result = new object[0]; // Set Result to an empty array.
-                return StatusCode((int)HttpStatusCode.InternalServerError, _response);
+                _OtpResponse.StatusCode = HttpStatusCode.InternalServerError;
+                _OtpResponse.IsSuccess = false;
+                _OtpResponse.ErrorMessages.Add(ex.Message);
+                _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                return StatusCode((int)HttpStatusCode.InternalServerError, _OtpResponse);
+            }
+        }
+
+
+        [HttpPost("{taskId}/OtpValidationDelivary")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<APIOtpResponse>> ArrivedDeliveryTask(int taskId, [FromBody] OptValidationStatusUpdateDTO arrivedDTO)
+        {
+            _logger.LogInformation("ArrivedDeliveryTask started for taskId: {TaskId}, FieldData : {FieldData} ", taskId, arrivedDTO);
+            try
+            {
+                // Retrieve the userId associated with the provided uuid using the repository method
+                int userId = await _crewTaskDetailsRepository.GetUserIdByUuidAsync();
+                _logger.LogDebug("Retrieved userId: {UserId} for taskId: {TaskId}", userId, taskId);
+
+
+                if (taskId <= 0)
+                {
+                    _logger.LogWarning("Invalid task ID: {TaskId}", taskId);
+                    _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("Invalid task ID.");
+                    _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_OtpResponse);
+                }
+
+                var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
+
+                int authenticatedUserId;
+                if (!int.TryParse(userIdClaim.Value, out authenticatedUserId) || authenticatedUserId != userId)
+                {
+                    _logger.LogWarning("Unauthorized access attempt by userId: {UserId}", authenticatedUserId);
+                    _OtpResponse.StatusCode = HttpStatusCode.Unauthorized;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("Unauthorized access to tasks.");
+                    return Unauthorized(_OtpResponse);
+                }
+                // Check if the user is authenticated and has the correct claim
+                if (userIdClaim == null)
+                {
+                    _logger.LogWarning("Unauthorized access attempt by userId: {UserId}", authenticatedUserId);
+                    _OtpResponse.StatusCode = HttpStatusCode.Unauthorized;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("User is not authorized.");
+                    return Unauthorized(_OtpResponse);
+                }
+
+                if (arrivedDTO.Location.Long == "" || arrivedDTO.Location.Lat == "")
+                {
+                    _logger.LogWarning("Invalid location data received: Lat={Lat}, Long={Long}", arrivedDTO.Location.Lat, arrivedDTO.Location.Long);
+
+                    _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("In location Lat and Log is Required.");
+                    _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_OtpResponse);
+                }
+
+                if (arrivedDTO.Location.Long == "string" || arrivedDTO.Location.Lat == "string")
+                {
+                    _logger.LogWarning("Invalid location data received for taskId: {TaskId}", taskId);
+                    _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("In location Lat and Log is Required.");
+                    _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_OtpResponse);
+                }
+
+                // Step 1: Retrieve the current screen ID for this task
+                var currentScreenId = await _crewTaskDetailsRepository.GetCurrentScreenIdByTaskId(taskId);
+                _logger.LogDebug("Current screen ID for taskId {TaskId}: {ScreenId}", taskId, currentScreenId);
+                if (currentScreenId == null)
+                {
+                    _logger.LogWarning("TaskId: {TaskId} is already completed or failed (ScreenId: {ScreenId})", taskId, currentScreenId);
+                    _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("Task screen ID could not be retrieved.");
+                    _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_OtpResponse);
+                }
+
+                // Prevent further modification if ScreenId is already "CIT-6"
+                if (currentScreenId == "1")
+                {
+                    _logger.LogWarning("TaskId: {TaskId} is already completed (ScreenId: {ScreenId})", taskId, currentScreenId);
+                    _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("Task is already marked as completed and cannot be modified further.");
+                    _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_OtpResponse);
+                }
+
+                // Prevent further modification if the task is already marked as failed with ScreenId "CIT-7"
+                if (currentScreenId == "-1")
+                {
+                    _logger.LogWarning("TaskId: {TaskId} is already failed (ScreenId: {ScreenId})", taskId, currentScreenId);
+                    _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("Task has already been marked as failed and cannot be modified further.");
+                    _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_OtpResponse);
+                }
+
+                // Step 2: Calculate the next expected screen ID
+                var expectedNextScreenId = await _crewTaskDetailsRepository.GetNextScreenIdByTaskId(taskId);
+
+                // Step 3: Check if the request ScreenId matches the expected next ScreenId
+                if (arrivedDTO.NextScreenId != expectedNextScreenId)
+                {
+                    _logger.LogWarning("Invalid screen transition for taskId {TaskId}: Expected {Expected}, Received {Received}", taskId, expectedNextScreenId, arrivedDTO.NextScreenId);
+                    _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                    _OtpResponse.IsSuccess = false;
+                    _OtpResponse.ErrorMessages.Add("Invalid screen transition. The task has already passed this stage.");
+                    _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                    return BadRequest(_OtpResponse);
+                }
+                string status = "ArrivedAtDelivery";
+                string activityType = "ArrivedDelivery";
+                // 6️⃣ Check if OTP is required
+                bool otpRequired = await _crewTaskDetailsRepository.CheckOtpRequiredAsync(taskId);
+               
+                
+                bool updateResult = await _crewTaskDetailsRepository.OtpStutasValidation(authenticatedUserId, taskId, status, arrivedDTO, activityType, userId);
+                if (updateResult)
+                {
+                 bool updateResult1 = await _crewTaskDetailsRepository.arrivedDeliveryOtpVarification(authenticatedUserId, taskId, status, arrivedDTO, activityType, userId);
+                }
+
+                //if (otpRequired = true)
+                //{
+
+                //    //string status = "ArrivedAtDelivery";
+                //    //string activityType = "ArrivedDelivery";
+
+
+                //    // Fetch parcel data from repository (stored as comma-separated values in CITTASKDETAIL)
+                //    var parcelData = await _crewTaskDetailsRepository.GetParcelAsync(taskId, authenticatedUserId, userId);
+                //    _logger.LogInformation("Task {TaskId} successfully updated to ArrivedAtDelivery", taskId);
+                //    // Format parcel data for response
+                //    //List<object> parcels = parcelData != null
+                //    //    ? parcelData.Split(',').Select(qrCode => new { parcelQR = qrCode }).Cast<object>().ToList()
+                //    //    : new List<object>();
+
+                //    _OtpResponse.StatusCode = HttpStatusCode.OK;
+                //    _OtpResponse.IsSuccess = true;
+                //    _OtpResponse.otpCheck = otpRequired;
+                //    _OtpResponse.Result = new
+                //    {
+                //        status = status,
+                //        time = arrivedDTO.Time.ToString("MM/dd/yyyy HH:mm:ss"),
+                //        parcels = parcelData
+                //    };
+
+                //    return Ok(_OtpResponse);
+                //}
+                
+                
+
+                    //string status = "ArrivedAtDelivery";
+                    //string activityType = "ArrivedDelivery";
+                    //bool updateResult = await _crewTaskDetailsRepository.OtpStutasValidationDelivary(authenticatedUserId, taskId, status, arrivedDTO, activityType, userId);
+
+                    if (!updateResult)
+                    {
+                        _logger.LogWarning("User {UserId} is not allowed to update taskId {TaskId}", authenticatedUserId, taskId);
+                        _OtpResponse.StatusCode = HttpStatusCode.Forbidden;
+                        _OtpResponse.IsSuccess = false;
+                        _OtpResponse.ErrorMessages.Add("You are not allowed to update this task.");
+                        _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                        return StatusCode((int)HttpStatusCode.Forbidden, _OtpResponse);
+                    }
+                    var parcelData = await _crewTaskDetailsRepository.GetParcelAsync(taskId, authenticatedUserId, userId);
+
+                    _logger.LogInformation("Task {TaskId} successfully updated to ArrivedAtDelivery", taskId);
+                    // Format parcel data for response
+                    //List<object> parcels = parcelData != null
+                    //    ? parcelData.Split(',').Select(qrCode => new { parcelQR = qrCode }).Cast<object>().ToList()
+                    //    : new List<object>();
+
+                    _OtpResponse.StatusCode = HttpStatusCode.OK;
+                    _OtpResponse.IsSuccess = true;
+                    _OtpResponse.otpCheck = otpRequired;
+                    _OtpResponse.Result = new
+                    {
+                        status = status,
+                        time = arrivedDTO.Time.ToString("MM/dd/yyyy HH:mm:ss"),
+                        parcels = parcelData
+                    };
+                    return Ok(_OtpResponse);
+                
+
+            }
+
+            catch (SqlException ex) when (ex.Number == 50000) // Check for the custom SQL error number
+            {
+                _logger.LogError(ex, "SQL Exception occurred for TaskId: {TaskId}", taskId);
+                _OtpResponse.StatusCode = HttpStatusCode.BadRequest;
+                _OtpResponse.IsSuccess = false;
+                _OtpResponse.ErrorMessages.Add(ex.Message); // Display the custom message from the procedure
+                _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                return BadRequest(_OtpResponse);
+            }
+
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error occurred for TaskId: {TaskId}", taskId);
+                _OtpResponse.StatusCode = HttpStatusCode.InternalServerError;
+                _OtpResponse.IsSuccess = false;
+                _OtpResponse.ErrorMessages.Add(ex.Message);
+                _OtpResponse.Result = new object[0]; // Set Result to an empty array.
+                return StatusCode((int)HttpStatusCode.InternalServerError, _OtpResponse);
             }
         }
 

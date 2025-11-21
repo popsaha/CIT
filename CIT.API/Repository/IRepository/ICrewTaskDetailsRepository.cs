@@ -25,7 +25,12 @@ namespace CIT.API.Repository.IRepository
         public Task<IEnumerable<ParcelReceiptNo>> GetParcelAsync(int taskId, int authenticatedUserId, int userIdFromDb);
 
         public Task<ParcelCountDTO> GetParclesCountsByTaskId(int taskId);
+        Task<bool> CheckOtpRequiredAsync(int taskId);
 
-        
+        Task<bool> OtpStutasValidation(int crewCommanderId, int taskId, string status, OptValidationStatusUpdateDTO updateDTO, string activityType, int userId);
+        Task<bool> OtpStutasValidationDelivary(int crewCommanderId, int taskId, string status, OptValidationStatusUpdateDTO arrivedDTO, string activityType, int userId);
+
+        Task<bool> ArrivedUpdateTaskStatusAsync(int crewCommanderId, int taskId, string status, OptValidationStatusUpdateDTO updateDTO, string activityType, int userId);
+        Task<bool> arrivedDeliveryOtpVarification(int crewCommanderId, int taskId, string status, OptValidationStatusUpdateDTO arrivedDTO, string activityType, int userId);
     }
 }

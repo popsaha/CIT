@@ -199,6 +199,23 @@ namespace CIT.API.Repository
             }
         }
 
+        public async Task<bool> CheckOtpRequiredAsync(int taskId)
+        {
+            using (var con = _db.CreateConnection())
+            {
+                string sql = @"
+            SELECT Otpvalidation 
+                FROM Customer C
+                INNER JOIN Orders O ON C.CustomerID = O.CustomerId
+                INNER JOIN Task T ON O.OrderID = T.OrderID
+                WHERE TaskID = @TaskId";
+
+                int optValidation = await con.QuerySingleAsync<int>(sql, new { TaskId = taskId });
+
+                return optValidation == 1;  // true if OTP is required
+            }
+        }
+
         public async Task<bool> UpdateTaskStatusAsync(int crewCommanderId, int taskId, string status, CrewTaskStatusUpdateDTO updateDTO, string activityType, int userId)
         {
 
@@ -574,7 +591,123 @@ namespace CIT.API.Repository
                        ?? new ParcelCountDTO { ParcelsLoaded = 0, ParcelsUnloaded = 0 };
             }
         }
-     
 
+        public async Task<bool> OtpStutasValidation(int crewCommanderId, int taskId, string status, OptValidationStatusUpdateDTO updateDTO, string activityType, int userId)
+        {
+            if (updateDTO.Otp == "123456")
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public async Task<bool> OtpStutasValidationDelivary(int crewCommanderId, int taskId, string status, OptValidationStatusUpdateDTO arrivedDTO, string activityType, int userId)
+        {
+            if (arrivedDTO.Otp == "123456")
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public async Task<bool> ArrivedUpdateTaskStatusAsync(int crewCommanderId, int taskId, string status, OptValidationStatusUpdateDTO updateDTO, string activityType, int userId)
+        {
+            try
+            {
+                _logger.LogInformation("Updating Task Status: TaskID={TaskId}, CrewCommanderID={CrewCommanderId}, Status={Status}, ActivityType={ActivityType}, UserID={UserId}",
+                                        taskId, crewCommanderId, status, activityType, userId);
+
+
+                using (var con = _db.CreateConnection())
+                {
+                    // Check if current ScreenId is already CIT-6 before proceeding
+                    //var currentScreenId = await GetCurrentScreenIdByTaskId(taskId);
+                    //if (currentScreenId == "CIT-6")
+                    //{
+                    //    return false; // Prevent update if task is marked as completed
+                    //}
+
+                    DynamicParameters parameters = new DynamicParameters();
+                    parameters.Add("Flag", 'C');
+                    parameters.Add("CrewCommanderId", crewCommanderId);
+                    parameters.Add("TaskId", taskId);
+                    parameters.Add("Status", status);
+                    parameters.Add("UserId", userId);
+                    // Set ScreenId based on specific activity types
+                    //int screenId = activityType switch
+                    //{
+                    //    "Arrived" => 2,                                      
+                    //    "Completed" => 7,
+                    //    _ => 1 // Default screenId for other activity types
+                    //};
+
+                    parameters.Add("NextScreenId", updateDTO.NextScreenId); // Set ScreenId based on activityType  // Set ScreenId to 1 as required by the update
+                    parameters.Add("Time", updateDTO.Time);  // Pass the start time from DTO
+                    parameters.Add("Lat", updateDTO.Location?.Lat);  // Pass Latitude if available
+                    parameters.Add("Long", updateDTO.Location?.Long);  // Pass Longitude if available
+                    parameters.Add("ActivityType", activityType);
+
+                    _logger.LogDebug("Executing stored procedure: spCrewTaskDetails with parameters: {Parameters}", parameters);
+
+                    var result = await con.ExecuteAsync("spCrewTaskDetails", parameters, commandType: CommandType.StoredProcedure);
+
+                    return result > 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while updating Task Status for TaskID={TaskId}, CrewCommanderID={CrewCommanderId}, ActivityType={ActivityType}, UserID={UserId}",
+                                 taskId, crewCommanderId, activityType, userId);
+                throw;
+            }
+        }
+
+        //public Task<bool> arrivedDeliveryOtpVarification(int crewCommanderId, int taskId, string status, OptValidationStatusUpdateDTO updateDTO, string activityType, int userId)
+        //{
+        //    throw new NotImplementedException();
+        //}
+
+        public async Task<bool> arrivedDeliveryOtpVarification(int crewCommanderId, int taskId, string status, OptValidationStatusUpdateDTO arrivedDTO, string activityType, int userId)
+        {
+            try
+            {
+                _logger.LogInformation("Updating Arrived Delivery Status: TaskID={TaskId}, CrewCommanderID={CrewCommanderId}, Status={Status}, ActivityType={ActivityType}, UserID={UserId}",
+                                        taskId, crewCommanderId, status, activityType, userId);
+                using (var con = _db.CreateConnection())
+                {
+                    // Check if current ScreenId is already CIT-6 before proceeding
+                    //var currentScreenId = await GetCurrentScreenIdByTaskId(taskId);
+                    //if (currentScreenId == "CIT-6")
+                    //{
+                    //    return false; // Prevent update if task is marked as completed
+                    //}
+
+                    DynamicParameters parameters = new DynamicParameters();
+                    parameters.Add("Flag", 'F');
+                    parameters.Add("CrewCommanderId", crewCommanderId);
+                    parameters.Add("TaskId", taskId);
+                    parameters.Add("Status", status);
+                    parameters.Add("UserId", userId);
+
+                    //int screenId = activityType == "ArrivedDelivery" ? 5 : 4;
+                    parameters.Add("NextScreenId", arrivedDTO.NextScreenId);
+                    parameters.Add("Time", arrivedDTO.Time);
+                    parameters.Add("Lat", arrivedDTO.Location?.Lat);
+                    parameters.Add("Long", arrivedDTO.Location?.Long);
+                    parameters.Add("ActivityType", activityType);
+
+                    _logger.LogDebug("Executing stored procedure: spCrewTaskDetails with parameters: {Parameters}", parameters);
+
+                    var result = await con.ExecuteAsync("spCrewTaskDetails", parameters, commandType: CommandType.StoredProcedure);
+                    return result > 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while updating Arrived Delivery Status for TaskID={TaskId}, CrewCommanderID={CrewCommanderId}, ActivityType={ActivityType}, UserID={UserId}",
+                                 taskId, crewCommanderId, activityType, userId);
+                throw;
+            }
+        }
     }
 }
