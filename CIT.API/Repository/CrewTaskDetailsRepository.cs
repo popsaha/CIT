@@ -4,6 +4,7 @@ using CIT.API.Models.Dto.CrewTaskDetails;
 using CIT.API.Repository.IRepository;
 using Dapper;
 using System.Data;
+using CIT.API.Utility;
 using Newtonsoft.Json;
 using System.Linq;
 using System.Threading.Tasks;
@@ -592,23 +593,143 @@ namespace CIT.API.Repository
             }
         }
 
-        public async Task<bool> OtpStutasValidation(int crewCommanderId, int taskId, string status, OptValidationStatusUpdateDTO updateDTO, string activityType, int userId)
+        //public async Task<bool> OtpStutasValidation(int crewCommanderId, int taskId, string status, OptValidationStatusUpdateDTO updateDTO, string activityType, int userId)
+        //{
+        //    if (updateDTO.Otp == "123456")
+        //    {
+        //        return true;
+        //    }
+        //    return false;
+        //}
+
+        public async Task<bool> OtpStutasValidation(int crewCommanderId,int taskId,string status,OptValidationStatusUpdateDTO updateDTO,string activityType,int userId)
         {
-            if (updateDTO.Otp == "123456")
+            using var con = _db.CreateConnection();
+
+            // 1️⃣ Fetch OTP record
+            string sql = @"
+                    SELECT 
+                OtpTransactionId, 
+                OtpHash, 
+                Salt, 
+                CreatedAtUtc AS CreatedAt,
+                ExpiresAtUtc AS ExpiresAt,
+                UsedAtUtc AS VerifiedAt,
+                Status
+            FROM OtpRecords
+            WHERE OtpTransactionId = @OtpTransactionId
+              AND TaskId = @TaskId
+            ";
+
+            var otpRecord = await con.QueryFirstOrDefaultAsync<dynamic>(sql, new
             {
-                return true;
-            }
-            return false;
+                OtpTransactionId = updateDTO.otpTransactionId,
+                TaskId = taskId
+            });
+
+            if (otpRecord == null)
+                return false;
+
+            // 2️⃣ Check expired
+            if (otpRecord.ExpiresAt < DateTime.UtcNow)
+                return false;
+
+            // 3️⃣ Check already used
+            if (otpRecord.VerifiedAt != null)
+                return false;
+
+            // 4️⃣ Validate OTP using hashing
+            string enteredOtpHash = OtpHelper.HashOtp(updateDTO.otp, otpRecord.Salt);
+
+            if (enteredOtpHash != otpRecord.OtpHash)
+                return false;
+
+            // 5️⃣ Mark verified
+            string updateSql = @"
+        UPDATE OtpRecords
+        SET UsedAtUtc = GETDATE(), Status = 'VERIFIED'
+        WHERE OtpTransactionId = @OtpTransactionId";
+
+            await con.ExecuteAsync(updateSql, new { updateDTO.otpTransactionId });
+
+            return true;
         }
 
-        public async Task<bool> OtpStutasValidationDelivary(int crewCommanderId, int taskId, string status, OptValidationStatusUpdateDTO arrivedDTO, string activityType, int userId)
+
+        //public async Task<bool> OtpStutasValidationDelivary(int crewCommanderId, int taskId, string status, OptValidationStatusUpdateDTO arrivedDTO, string activityType, int userId)
+        //{
+        //    if (arrivedDTO.otp == "123456")
+        //    {
+        //        return true;
+        //    }
+        //    return false;
+        //}
+
+        public async Task<bool> OtpStutasValidationDelivary(
+    int crewCommanderId,
+    int taskId,
+    string status,
+    OptValidationStatusUpdateDTO arrivedDTO,
+    string activityType,
+    int userId)
         {
-            if (arrivedDTO.Otp == "123456")
+            using var con = _db.CreateConnection();
+
+            // 1️⃣ Fetch OTP record for delivery
+            string sql = @"
+        SELECT 
+            OtpTransactionId, 
+            OtpHash, 
+            Salt, 
+            CreatedAtUtc AS CreatedAt,
+            ExpiresAtUtc AS ExpiresAt,
+            UsedAtUtc AS VerifiedAt,
+            Status
+        FROM OtpRecords
+        WHERE OtpTransactionId = @OtpTransactionId
+          AND TaskId = @TaskId";
+
+            var otpRecord = await con.QueryFirstOrDefaultAsync<dynamic>(sql, new
             {
-                return true;
-            }
-            return false;
+                OtpTransactionId = arrivedDTO.otpTransactionId,
+                TaskId = taskId
+            });
+
+            // 2️⃣ Not found → invalid OTP or wrong OTP TXN ID
+            if (otpRecord == null)
+                return false;
+
+            // 3️⃣ Expired
+            if (otpRecord.ExpiresAt < DateTime.UtcNow)
+                return false;
+
+            // 4️⃣ Already used
+            if (otpRecord.VerifiedAt != null)
+                return false;
+
+            // 5️⃣ Hash the OTP entered by user
+            string enteredOtpHash = OtpHelper.HashOtp(arrivedDTO.otp, otpRecord.Salt);
+
+            // 6️⃣ Wrong OTP
+            if (enteredOtpHash != otpRecord.OtpHash)
+                return false;
+
+            // 7️⃣ Mark verified
+            string updateSql = @"
+        UPDATE OtpRecords
+        SET 
+            UsedAtUtc = GETDATE(),
+            Status = 'VERIFIED'
+        WHERE OtpTransactionId = @OtpTransactionId";
+
+            await con.ExecuteAsync(updateSql, new
+            {
+                arrivedDTO.otpTransactionId
+            });
+
+            return true;
         }
+
 
         public async Task<bool> ArrivedUpdateTaskStatusAsync(int crewCommanderId, int taskId, string status, OptValidationStatusUpdateDTO updateDTO, string activityType, int userId)
         {
@@ -641,10 +762,10 @@ namespace CIT.API.Repository
                     //    _ => 1 // Default screenId for other activity types
                     //};
 
-                    parameters.Add("NextScreenId", updateDTO.NextScreenId); // Set ScreenId based on activityType  // Set ScreenId to 1 as required by the update
-                    parameters.Add("Time", updateDTO.Time);  // Pass the start time from DTO
-                    parameters.Add("Lat", updateDTO.Location?.Lat);  // Pass Latitude if available
-                    parameters.Add("Long", updateDTO.Location?.Long);  // Pass Longitude if available
+                    parameters.Add("NextScreenId", updateDTO.nextScreenId); // Set ScreenId based on activityType  // Set ScreenId to 1 as required by the update
+                    parameters.Add("Time", updateDTO.time);  // Pass the start time from DTO
+                    parameters.Add("Lat", updateDTO.location?.Lat);  // Pass Latitude if available
+                    parameters.Add("Long", updateDTO.location?.Long);  // Pass Longitude if available
                     parameters.Add("ActivityType", activityType);
 
                     _logger.LogDebug("Executing stored procedure: spCrewTaskDetails with parameters: {Parameters}", parameters);
@@ -690,10 +811,10 @@ namespace CIT.API.Repository
                     parameters.Add("UserId", userId);
 
                     //int screenId = activityType == "ArrivedDelivery" ? 5 : 4;
-                    parameters.Add("NextScreenId", arrivedDTO.NextScreenId);
-                    parameters.Add("Time", arrivedDTO.Time);
-                    parameters.Add("Lat", arrivedDTO.Location?.Lat);
-                    parameters.Add("Long", arrivedDTO.Location?.Long);
+                    parameters.Add("NextScreenId", arrivedDTO.nextScreenId);
+                    parameters.Add("Time", arrivedDTO.time);
+                    parameters.Add("Lat", arrivedDTO.location?.Lat);
+                    parameters.Add("Long", arrivedDTO.location?.Long);
                     parameters.Add("ActivityType", activityType);
 
                     _logger.LogDebug("Executing stored procedure: spCrewTaskDetails with parameters: {Parameters}", parameters);
@@ -709,5 +830,63 @@ namespace CIT.API.Repository
                 throw;
             }
         }
+        public async Task<(Guid otpTxnId, string otp)> CreateOtpAsync(
+    int taskId,
+    string purpose,
+    int createdByUserId)
+        {
+            try
+            {
+
+            using var con = _db.CreateConnection();
+
+            // 1️⃣ Generate OTP
+            string otp = OtpHelper.GenerateOtp(6);
+
+            // 2️⃣ Generate Salt
+            string salt = OtpHelper.GenerateSalt();
+
+            // 3️⃣ Hash OTP
+            string otpHash = OtpHelper.HashOtp(otp, salt);
+
+            // 4️⃣ Insert into OtpRecords
+            string sql = @"
+        INSERT INTO OtpRecords
+        (
+            TaskId, Purpose,
+            OtpHash, Salt,
+            ExpiresAtUtc, Status,
+            CreatedByUserId
+        )
+        OUTPUT INSERTED.OtpTransactionId
+        VALUES
+        (
+             @TaskId, @Purpose,
+            @OtpHash, @Salt,
+            DATEADD(MINUTE, 5, SYSUTCDATETIME()), 'ACTIVE',
+            @CreatedByUserId
+        );
+    ";
+
+            Guid otpTxnId = await con.ExecuteScalarAsync<Guid>(sql, new
+            {
+                //Mobile = mobile,
+                TaskId = taskId,
+                Purpose = purpose,
+                OtpHash = otpHash,
+                Salt = salt,
+                CreatedByUserId = createdByUserId
+            });
+
+            // Return OTP + TransactionId
+            return (otpTxnId, otp);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+
     }
 }
