@@ -2,6 +2,7 @@
 using CIT.API.Models;
 using CIT.API.Repository;
 using CIT.API.Repository.IRepository;
+using CIT.API.Services;
 
 namespace CIT.API
 {
@@ -41,6 +42,8 @@ namespace CIT.API
             services.AddScoped<IChaseVehicleRepository, ChaseVehicleRepository>();
             services.AddScoped<IBSSCrewTaskDetailsRepository, BSSCrewTaskDetailsRepository>();
             services.AddScoped<IAtmCrewTaskDetailsRepository, AtmCrewTaskDetailsRepository>();
+            services.AddScoped<EmailService>();
+
         }
     }
 }

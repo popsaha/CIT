@@ -4,6 +4,7 @@ using CIT.API.Models;
 using CIT.API.Models.Dto.CrewTaskDetails;
 using CIT.API.Repository;
 using CIT.API.Repository.IRepository;
+using CIT.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -27,14 +28,16 @@ namespace CIT.API.Controllers
         protected APIResponse _response;
         protected APIOtpResponse _OtpResponse;
         protected APIOtpValidateResponse _OtpValidateResponse;
+        private EmailService _emailService;
         private readonly ILogger<CrewTaskDetailsController> _logger;
 
-        public CrewTaskDetailsController(ICrewTaskDetailsRepository crewTaskDetailsRepository, IMapper mapper, ILogger<CrewTaskDetailsController> logger)
+        public CrewTaskDetailsController(ICrewTaskDetailsRepository crewTaskDetailsRepository, IMapper mapper, EmailService emailService,ILogger<CrewTaskDetailsController> logger)
         {
             _crewTaskDetailsRepository = crewTaskDetailsRepository;
             _mapper = mapper;
             _response = new APIResponse();
             _OtpResponse = new APIOtpResponse();
+            _emailService = emailService;
             _logger = logger;
         }
 
@@ -518,6 +521,7 @@ namespace CIT.API.Controllers
                 //_OtpResponse.OTPcheck = isOtpRequired;
                 if (isOtpRequired)
                 {
+
                     // 2️⃣ Generate OTP
                     var otpResult = await _crewTaskDetailsRepository.CreateOtpAsync(
                         //mobile: customerMobile,
@@ -525,6 +529,47 @@ namespace CIT.API.Controllers
                         purpose: "ARRIVED",
                         createdByUserId: authenticatedUserId
                     );
+                    string userEmail = await _crewTaskDetailsRepository.GetEmailByTaskId(taskId);
+                    string emailBody = $@"
+                    <html>
+                    <body style='font-family: Arial, sans-serif; background-color:#f5f5f5; padding:20px;'>
+                    
+                        <div style='max-width:500px; margin:auto; background:white; padding:25px; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.1);'>
+                            
+                            <h2 style='color:#333; text-align:center;'>CIT - OTP Verification</h2>
+                    
+                            <p style='font-size:16px; color:#555;'>
+                                Dear User,
+                                <br/><br/>
+                                Your One-Time Password (OTP) for verifying the <strong>Arrived at pickup</strong> action is:
+                            </p>
+                    
+                            <div style='text-align:center; margin:25px 0;'>
+                                <div style='display:inline-block; padding:15px 25px; background:#007bff; color:white; font-size:28px; letter-spacing:5px; border-radius:6px;'>
+                                    <strong>{otpResult.otp}</strong>
+                                </div>
+                            </div>
+                    
+                            <p style='font-size:14px; color:#666;'>
+                                This OTP is valid for <strong>5 minutes</strong>.  
+                                Please do not share this OTP with anyone for security reasons.
+                            </p>
+                    
+                            <hr style='margin:25px 0;' />
+                    
+                            <p style='font-size:12px; color:#999; text-align:center;'>
+                                If you did not request this OTP, please ignore this email.<br/>
+                                © RMS Security System
+                            </p>
+                        </div>
+
+                    </body>
+                    </html>";
+                    await _emailService.SendEmailAsync(
+                         toEmail: userEmail,
+                         subject: "CIT OTP Verification",
+                         body: emailBody
+                            );
                     // 2️⃣ Generate OTP
                     //var (otpTxnId, otp) = await _crewTaskDetailsRepository.CreateOtpAsync(
                     //    taskId: taskId,
@@ -1279,12 +1324,56 @@ namespace CIT.API.Controllers
                     //    purpose: "ARRIVED",
                     //    createdByUserId: authenticatedUserId
                     //);
+
                     var otpResult = await _crewTaskDetailsRepository.CreateOtpAsync(
                         //mobile: customerMobile,
                         taskId: taskId,
-                        purpose: "ARRIVED",
+                        purpose: "ArrivedAtDelivery",
                         createdByUserId: authenticatedUserId
                     );
+
+                    string userEmail = await _crewTaskDetailsRepository.GetEmailByTaskId(taskId);
+                    string emailBody = $@"
+                    <html>
+                    <body style='font-family: Arial, sans-serif; background-color:#f5f5f5; padding:20px;'>
+                    
+                        <div style='max-width:500px; margin:auto; background:white; padding:25px; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.1);'>
+                            
+                            <h2 style='color:#333; text-align:center;'>RMS - OTP Verification</h2>
+                    
+                            <p style='font-size:16px; color:#555;'>
+                                Dear User,
+                                <br/><br/>
+                                Your One-Time Password (OTP) for verifying the <strong>Arrived at pickup</strong> action is:
+                            </p>
+                    
+                            <div style='text-align:center; margin:25px 0;'>
+                                <div style='display:inline-block; padding:15px 25px; background:#007bff; color:white; font-size:28px; letter-spacing:5px; border-radius:6px;'>
+                                    <strong>{otpResult.otp}</strong>
+                                </div>
+                            </div>
+                    
+                            <p style='font-size:14px; color:#666;'>
+                                This OTP is valid for <strong>5 minutes</strong>.  
+                                Please do not share this OTP with anyone for security reasons.
+                            </p>
+                    
+                            <hr style='margin:25px 0;' />
+                    
+                            <p style='font-size:12px; color:#999; text-align:center;'>
+                                If you did not request this OTP, please ignore this email.<br/>
+                                © RMS Security System
+                            </p>
+                        </div>
+
+                    </body>
+                    </html>";
+                    await _emailService.SendEmailAsync(
+                         toEmail: userEmail,
+                         subject: "CIT OTP Verification",
+                         body: emailBody
+                            );
+
                     string status = "ArrivedAtDelivery";
                     string activityType = "ArrivedDelivery";
                     // Fetch parcel data from repository (stored as comma-separated values in CITTASKDETAIL)

@@ -205,7 +205,7 @@ namespace CIT.API.Repository
             using (var con = _db.CreateConnection())
             {
                 string sql = @"
-            SELECT Otpvalidation 
+            SELECT C.Otpvalidation,C.Email 
                 FROM Customer C
                 INNER JOIN Orders O ON C.CustomerID = O.CustomerId
                 INNER JOIN Task T ON O.OrderID = T.OrderID
@@ -891,6 +891,28 @@ namespace CIT.API.Repository
             }
         }
 
+        public async Task<string> GetEmailByTaskId(int taskId)
+        {
+            try
+            {
+
+            using var con = _db.CreateConnection();
+            string sql = @"
+        SELECT C.Email 
+        FROM Customer C
+        INNER JOIN Orders O ON C.CustomerID = O.CustomerId
+        INNER JOIN Task T ON O.OrderID = T.OrderID
+        WHERE TaskId = @TaskId
+    ";
+
+            return await con.QueryFirstOrDefaultAsync<string>(sql, new { TaskId = taskId });
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
 
     }
+
 }
