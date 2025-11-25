@@ -6,13 +6,14 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using System.Net.Http.Headers;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var logger = new LoggerConfiguration()
     .WriteTo.Console()
-    .WriteTo.File("Logs/Cit_Log.txt", rollingInterval: RollingInterval.Day)
+    .WriteTo.File("CIT_API_LOGS/Cit_Log.txt", rollingInterval: RollingInterval.Day)
     .MinimumLevel.Information()
     .CreateLogger();
 
@@ -64,6 +65,12 @@ builder.Services.AddAuthentication(x =>
      }
 
 );
+
+builder.Services.AddHttpClient("SmsApi", client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["SmsAPI:BaseUrl"]);
+});
+
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers();

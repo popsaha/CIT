@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Azure.Core;
+using CIT.API.Data;
 using CIT.API.Models;
 using CIT.API.Models.Dto.CrewTaskDetails;
 using CIT.API.Repository;
@@ -29,15 +30,17 @@ namespace CIT.API.Controllers
         protected APIOtpResponse _OtpResponse;
         protected APIOtpValidateResponse _OtpValidateResponse;
         private EmailService _emailService;
+        private WebApiExecutor _webApiExecutor;
         private readonly ILogger<CrewTaskDetailsController> _logger;
 
-        public CrewTaskDetailsController(ICrewTaskDetailsRepository crewTaskDetailsRepository, IMapper mapper, EmailService emailService,ILogger<CrewTaskDetailsController> logger)
+        public CrewTaskDetailsController(ICrewTaskDetailsRepository crewTaskDetailsRepository, IMapper mapper, EmailService emailService,ILogger<CrewTaskDetailsController> logger,WebApiExecutor webApiExecutor)
         {
             _crewTaskDetailsRepository = crewTaskDetailsRepository;
             _mapper = mapper;
             _response = new APIResponse();
             _OtpResponse = new APIOtpResponse();
             _emailService = emailService;
+            _webApiExecutor = webApiExecutor;
             _logger = logger;
         }
 
@@ -529,6 +532,7 @@ namespace CIT.API.Controllers
                         purpose: "ARRIVED",
                         createdByUserId: authenticatedUserId
                     );
+                   
                     string userEmail = await _crewTaskDetailsRepository.GetEmailByTaskId(taskId);
                     string emailBody = $@"
                     <html>
@@ -660,7 +664,7 @@ namespace CIT.API.Controllers
             // ✅ MUST BE THE FIRST LINE IN THIS METHOD
             _OtpValidateResponse = new APIOtpValidateResponse();
 
-            _logger.LogInformation("ArriveTask endpoint hit with taskId: {TaskId}, FieldData : {FieldData} ", taskId, updateDTO);
+            _logger.LogInformation("Request body at otp validation: FieldData ", updateDTO);
 
             try
             {
@@ -1331,6 +1335,14 @@ namespace CIT.API.Controllers
                         purpose: "ArrivedAtDelivery",
                         createdByUserId: authenticatedUserId
                     );
+
+                    string customerMobile = "0745972721";
+
+                    string smsMessage = $"Your One-Time Password (OTP) for verifying the 'Arrived at Pickup' " +
+                        $"action is:\n\n{otpResult.otp}\n\nThis OTP is valid for 5 minutes.";
+
+                    // CALL SMS API HERE
+                    var smsResponse = await _webApiExecutor.SendSmsOtpAsync(customerMobile, smsMessage);
 
                     string userEmail = await _crewTaskDetailsRepository.GetEmailByTaskId(taskId);
                     string emailBody = $@"

@@ -898,7 +898,7 @@ namespace CIT.API.Repository
 
             using var con = _db.CreateConnection();
             string sql = @"
-        SELECT C.Email 
+        SELECT C.Email.Mobile 
         FROM Customer C
         INNER JOIN Orders O ON C.CustomerID = O.CustomerId
         INNER JOIN Task T ON O.OrderID = T.OrderID

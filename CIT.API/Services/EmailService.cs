@@ -30,7 +30,7 @@ public class EmailService
 
             using (var mailMessage = new MailMessage())
             {
-                mailMessage.From = new MailAddress(userName, "RMS");
+                mailMessage.From = new MailAddress(userName, "Fargo");
                 mailMessage.To.Add(toEmail);
                 mailMessage.Subject = subject;
                 mailMessage.Body = body;

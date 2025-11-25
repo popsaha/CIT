@@ -1,4 +1,5 @@
 ﻿using CIT.API.Context;
+using CIT.API.Data;
 using CIT.API.Models;
 using CIT.API.Repository;
 using CIT.API.Repository.IRepository;
@@ -43,6 +44,7 @@ namespace CIT.API
             services.AddScoped<IBSSCrewTaskDetailsRepository, BSSCrewTaskDetailsRepository>();
             services.AddScoped<IAtmCrewTaskDetailsRepository, AtmCrewTaskDetailsRepository>();
             services.AddScoped<EmailService>();
+            services.AddScoped<IWebApiExecutor, WebApiExecutor>();
 
         }
     }
