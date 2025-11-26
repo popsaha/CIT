@@ -257,6 +257,33 @@ public class WebApiExecutor : IWebApiExecutor
     }
 
 
+    //public async Task<SmsApiResponseWrapper?> SendSmsOtpAsync(string mobile, string message)
+    //{
+    //    var httpClient = httpClientFactory.CreateClient("SmsApi");
+
+    //    var apiKey = configuration["SmsAPI:ApiKey"];
+    //    var partnerId = configuration["SmsAPI:PartnerID"];
+    //    var shortcode = configuration["SmsAPI:ShortCode"];
+
+    //    string encodedMessage = Uri.EscapeDataString(message);
+
+    //    string query =
+    //        $"?apikey={apiKey}&partnerID={partnerId}&message={encodedMessage}&shortcode={shortcode}&mobile={mobile}";
+
+    //    var response = await httpClient.GetAsync(query);
+    //    var json = await response.Content.ReadAsStringAsync();
+
+    //    if (!response.IsSuccessStatusCode)
+    //        throw new Exception($"SMS API failed: {json}");
+
+    //    var smsResponse = JsonSerializer.Deserialize<SmsApiResponseWrapper>(
+    //        json,
+    //        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+    //    );
+
+    //    return smsResponse;
+    //}
+
     public async Task<SmsApiResponseWrapper?> SendSmsOtpAsync(string mobile, string message)
     {
         var httpClient = httpClientFactory.CreateClient("SmsApi");
@@ -270,42 +297,41 @@ public class WebApiExecutor : IWebApiExecutor
         string query =
             $"?apikey={apiKey}&partnerID={partnerId}&message={encodedMessage}&shortcode={shortcode}&mobile={mobile}";
 
+        var fullUrl = httpClient.BaseAddress + query;
+
+        _logger?.LogInformation("?? Sending SMS OTP request: {Url}", fullUrl);
+
         var response = await httpClient.GetAsync(query);
         var json = await response.Content.ReadAsStringAsync();
 
+        _logger?.LogInformation("?? SMS API Status: {StatusCode}", response.StatusCode);
+
+        // Log trimmed raw response
+        var trimmedResponse = json.Length > 500 ? json.Substring(0, 500) + "..." : json;
+        _logger?.LogInformation("?? SMS API Response JSON (raw): {Response}", trimmedResponse);
+
         if (!response.IsSuccessStatusCode)
+        {
+            _logger?.LogError("? SMS API FAILED. Status: {Status}, Response: {Response}",
+                response.StatusCode, trimmedResponse);
+
             throw new Exception($"SMS API failed: {json}");
+        }
 
         var smsResponse = JsonSerializer.Deserialize<SmsApiResponseWrapper>(
             json,
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
         );
 
+        // Log full deserialized object as JSON
+        _logger?.LogInformation("?? Parsed SmsResponse JSON:\n{Json}",
+            JsonSerializer.Serialize(smsResponse, new JsonSerializerOptions
+            {
+                WriteIndented = true
+            }));
+
         return smsResponse;
     }
 
-
-
-    ////public async Task<TResponse?> InvokePostWithBearer<TRequest, TResponse>(
-    ////string relativeUrl,
-    ////TRequest obj,
-    ////string PriceApiName = "PriceApi")
-    ////{
-    ////    var httpClient = httpClientFactory.CreateClient(PriceApiName);
-    ////    await AddBearerAuthHeader(httpClient);
-
-    ////    var json = JsonSerializer.Serialize(obj, new JsonSerializerOptions { PropertyNamingPolicy = null });
-    ////    _logger?.LogInformation("API Request with Bearer to {Url}: {Json}", relativeUrl, json);
-
-    ////    var content = new StringContent(json, Encoding.UTF8, "application/json");
-    ////    var response = await httpClient.PostAsync(relativeUrl, content);
-    ////    var responseText = await response.Content.ReadAsStringAsync();
-
-    ////    _logger?.LogInformation("API Response from {Url}: {Response}", relativeUrl, responseText);
-
-    ////    await HandlePotentialError(response);
-
-    ////    return JsonSerializer.Deserialize<TResponse>(responseText, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-    ////}
 
 }

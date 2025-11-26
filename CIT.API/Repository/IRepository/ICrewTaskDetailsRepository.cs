@@ -34,7 +34,7 @@ namespace CIT.API.Repository.IRepository
         Task<bool> arrivedDeliveryOtpVarification(int crewCommanderId, int taskId, string status, OptValidationStatusUpdateDTO arrivedDTO, string activityType, int userId);
         public Task<(Guid otpTxnId, string otp)> CreateOtpAsync(int taskId,string purpose,int createdByUserId);
 
-        public Task<string> GetEmailByTaskId(int taskId);
+        public Task<ContactDetailsDTO> GetContactDetailsByTaskId(int taskId);
 
 
     }

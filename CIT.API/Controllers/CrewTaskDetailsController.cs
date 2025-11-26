@@ -15,6 +15,7 @@ using System.Data;
 using System.Linq;
 using System.Net;
 using System.Security.Claims;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace CIT.API.Controllers
@@ -30,18 +31,18 @@ namespace CIT.API.Controllers
         protected APIOtpResponse _OtpResponse;
         protected APIOtpValidateResponse _OtpValidateResponse;
         private EmailService _emailService;
-        private WebApiExecutor _webApiExecutor;
+        private readonly IWebApiExecutor _webApiExecutor;
         private readonly ILogger<CrewTaskDetailsController> _logger;
 
-        public CrewTaskDetailsController(ICrewTaskDetailsRepository crewTaskDetailsRepository, IMapper mapper, EmailService emailService,ILogger<CrewTaskDetailsController> logger,WebApiExecutor webApiExecutor)
+        public CrewTaskDetailsController(ICrewTaskDetailsRepository crewTaskDetailsRepository, IMapper mapper, EmailService emailService,ILogger<CrewTaskDetailsController> logger, IWebApiExecutor webApiExecutor)
         {
             _crewTaskDetailsRepository = crewTaskDetailsRepository;
             _mapper = mapper;
             _response = new APIResponse();
             _OtpResponse = new APIOtpResponse();
             _emailService = emailService;
-            _webApiExecutor = webApiExecutor;
             _logger = logger;
+            _webApiExecutor = webApiExecutor;
         }
 
 
@@ -532,8 +533,17 @@ namespace CIT.API.Controllers
                         purpose: "ARRIVED",
                         createdByUserId: authenticatedUserId
                     );
-                   
-                    string userEmail = await _crewTaskDetailsRepository.GetEmailByTaskId(taskId);
+
+                    var contactDetails = await _crewTaskDetailsRepository.GetContactDetailsByTaskId(taskId);
+                    //string customerMobile = "0745972721";
+                    string pikupEmail = contactDetails.PickupEmail;
+                    string pickupContact = contactDetails.PickupContact;
+                    string smsMessage = $"Your One-Time Password (OTP) for verifying the 'Arrived at Pickup' " +
+                        $"action is:\n\n{otpResult.otp}\n\nThis OTP is valid for 5 minutes.";
+
+                    // CALL SMS API HERE
+                    var smsResponse = await _webApiExecutor.SendSmsOtpAsync(pickupContact, smsMessage);
+
                     string emailBody = $@"
                     <html>
                     <body style='font-family: Arial, sans-serif; background-color:#f5f5f5; padding:20px;'>
@@ -570,7 +580,7 @@ namespace CIT.API.Controllers
                     </body>
                     </html>";
                     await _emailService.SendEmailAsync(
-                         toEmail: userEmail,
+                         toEmail: pikupEmail,
                          subject: "CIT OTP Verification",
                          body: emailBody
                             );
@@ -663,8 +673,8 @@ namespace CIT.API.Controllers
         {
             // ✅ MUST BE THE FIRST LINE IN THIS METHOD
             _OtpValidateResponse = new APIOtpValidateResponse();
-
-            _logger.LogInformation("Request body at otp validation: FieldData ", updateDTO);
+           var jsonRequestBody = JsonSerializer.Serialize(updateDTO);
+            _logger.LogInformation("Request body for otp validation:{jsonRequestBody} ", jsonRequestBody);
 
             try
             {
@@ -763,7 +773,7 @@ namespace CIT.API.Controllers
                     return BadRequest(_OtpValidateResponse);
                 }
 
-                bool isOtpRequired = await _crewTaskDetailsRepository.CheckOtpRequiredAsync(taskId);
+                //bool isOtpRequired = await _crewTaskDetailsRepository.CheckOtpRequiredAsync(taskId);
 
                 string status = "Arrived";
                 string activityType = "Arrived";
@@ -1336,15 +1346,18 @@ namespace CIT.API.Controllers
                         createdByUserId: authenticatedUserId
                     );
 
-                    string customerMobile = "0745972721";
+                    var contactDetails = await _crewTaskDetailsRepository.GetContactDetailsByTaskId(taskId);
+                    //string customerMobile = "0745972721";
 
-                    string smsMessage = $"Your One-Time Password (OTP) for verifying the 'Arrived at Pickup' " +
+                    string deliveryEmail = contactDetails?.DeliveryEmail;
+                    string customerMobile = contactDetails?.DeliveryContact;
+
+                    string smsMessage = $"Your One-Time Password (OTP) for verifying the 'Arrived at Delivery' " +
                         $"action is:\n\n{otpResult.otp}\n\nThis OTP is valid for 5 minutes.";
 
                     // CALL SMS API HERE
                     var smsResponse = await _webApiExecutor.SendSmsOtpAsync(customerMobile, smsMessage);
 
-                    string userEmail = await _crewTaskDetailsRepository.GetEmailByTaskId(taskId);
                     string emailBody = $@"
                     <html>
                     <body style='font-family: Arial, sans-serif; background-color:#f5f5f5; padding:20px;'>
@@ -1381,7 +1394,7 @@ namespace CIT.API.Controllers
                     </body>
                     </html>";
                     await _emailService.SendEmailAsync(
-                         toEmail: userEmail,
+                         toEmail: deliveryEmail,
                          subject: "CIT OTP Verification",
                          body: emailBody
                             );

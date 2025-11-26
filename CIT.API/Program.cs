@@ -11,14 +11,18 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var logger = new LoggerConfiguration()
-    .WriteTo.Console()
-    .WriteTo.File("CIT_API_LOGS/Cit_Log.txt", rollingInterval: RollingInterval.Day)
-    .MinimumLevel.Information()
-    .CreateLogger();
+//var logger = new LoggerConfiguration()
+//    .WriteTo.Console()
+//    .WriteTo.File("CIT_API_LOGS/Cit_Log.txt", rollingInterval: RollingInterval.Day)
+//    .MinimumLevel.Information()
+//    .CreateLogger();
 
-builder.Logging.ClearProviders();
-builder.Logging.AddSerilog(logger);
+//builder.Logging.ClearProviders();
+//builder.Logging.AddSerilog(logger);
+builder.Host.UseSerilog((ctx, config) =>
+    config.WriteTo.Console()
+    .ReadFrom.Configuration(ctx.Configuration)
+);
 
 //Hangfire
 builder.Services.AddHangfire(config =>

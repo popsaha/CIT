@@ -891,21 +891,32 @@ namespace CIT.API.Repository
             }
         }
 
-        public async Task<string> GetEmailByTaskId(int taskId)
+        public async Task<ContactDetailsDTO> GetContactDetailsByTaskId(int taskId)
         {
             try
             {
 
             using var con = _db.CreateConnection();
             string sql = @"
-        SELECT C.Email.Mobile 
-        FROM Customer C
-        INNER JOIN Orders O ON C.CustomerID = O.CustomerId
-        INNER JOIN Task T ON O.OrderID = T.OrderID
-        WHERE TaskId = @TaskId
-    ";
+                    SELECT 
+                --COALESCE(B1.ContactNumber, C1.ContactNumber) AS ContactNumber,
+                --COALESCE(B1.Email, C1.Email) AS Email
+            COALESCE(B1.ContactNumber, C1.ContactNumber) AS PickupContact,
+            COALESCE(B1.Email, C1.Email) AS PickupEmail,
+            COALESCE(B2.ContactNumber, C2.ContactNumber) AS DeliveryContact,
+            COALESCE(B2.Email, C2.Email) AS DeliveryEmail
+            FROM Task T
+            INNER JOIN DeliveryRoutes DR ON T.DeliveryRouteID = DR.DeliveryRouteID
+            INNER JOIN CustomerBranch CB1 ON DR.StartCustomerBranchID = CB1.CustomerBranchId
+            INNER JOIN CustomerBranch CB2 ON DR.EndCustomerBranchID = CB2.CustomerBranchId
+            INNER JOIN Customer C1 ON CB1.CustomerId = C1.CustomerId
+            INNER JOIN Customer C2 ON CB2.CustomerId = C2.CustomerId
+            INNER JOIN Branch B1 ON CB1.BranchId = B1.BranchId
+            INNER JOIN Branch B2 ON CB2.BranchId = B2.BranchId
+            WHERE T.TaskId = @TaskId
+                ";
 
-            return await con.QueryFirstOrDefaultAsync<string>(sql, new { TaskId = taskId });
+            return await con.QueryFirstOrDefaultAsync<ContactDetailsDTO>(sql, new { TaskId = taskId });
             }
             catch (Exception ex)
             {

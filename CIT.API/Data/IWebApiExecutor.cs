@@ -1,5 +1,7 @@
 ﻿
 
+using CIT.API.Models;
+
 namespace CIT.API.Data;
 
 public interface IWebApiExecutor
@@ -10,5 +12,6 @@ public interface IWebApiExecutor
     Task<TResponse?> InvokePost<TRequest, TResponse>(string relativeUrl, TRequest obj);
     Task<TResponse?> InvokePostWithBearer<TRequest, TResponse>(string relativeUrl, TRequest obj);
 
+    public Task<SmsApiResponseWrapper?> SendSmsOtpAsync(string mobile, string message);
 
 }
