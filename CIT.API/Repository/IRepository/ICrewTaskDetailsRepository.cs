@@ -32,7 +32,7 @@ namespace CIT.API.Repository.IRepository
 
         Task<bool> ArrivedUpdateTaskStatusAsync(int crewCommanderId, int taskId, string status, OptValidationStatusUpdateDTO updateDTO, string activityType, int userId);
         Task<bool> arrivedDeliveryOtpVarification(int crewCommanderId, int taskId, string status, OptValidationStatusUpdateDTO arrivedDTO, string activityType, int userId);
-        public Task<(Guid otpTxnId, string otp)> CreateOtpAsync(int taskId,string purpose,int createdByUserId);
+        public Task<(Guid otpTxnId, string otp)> CreateOtpAsync(int taskId,string purpose,int createdByUserId, string mobile, string email);
 
         public Task<ContactDetailsDTO> GetContactDetailsByTaskId(int taskId);
 

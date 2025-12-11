@@ -523,21 +523,23 @@ namespace CIT.API.Controllers
 
                 bool isOtpRequired = await _crewTaskDetailsRepository.CheckOtpRequiredAsync(taskId);
                 //_OtpResponse.OTPcheck = isOtpRequired;
+
                 if (isOtpRequired)
                 {
-
-                    // 2️⃣ Generate OTP
-                    var otpResult = await _crewTaskDetailsRepository.CreateOtpAsync(
-                        //mobile: customerMobile,
-                        taskId: taskId,
-                        purpose: "ARRIVED",
-                        createdByUserId: authenticatedUserId
-                    );
-
                     var contactDetails = await _crewTaskDetailsRepository.GetContactDetailsByTaskId(taskId);
                     //string customerMobile = "0745972721";
                     string pikupEmail = contactDetails.PickupEmail;
                     string pickupContact = contactDetails.PickupContact;
+
+                    // 2️⃣ Generate OTP
+                    var otpResult = await _crewTaskDetailsRepository.CreateOtpAsync(
+                        mobile: pickupContact,
+                        taskId: taskId,
+                        purpose: "ARRIVED",
+                        createdByUserId: authenticatedUserId,
+                        email: pikupEmail
+                    );
+
                     string smsMessage = $"Your One-Time Password (OTP) for verifying the 'Arrived at Pickup' " +
                         $"action is:\n\n{otpResult.otp}\n\nThis OTP is valid for 5 minutes.";
 
@@ -1333,24 +1335,19 @@ namespace CIT.API.Controllers
                 bool otpRequired = await _crewTaskDetailsRepository.CheckOtpRequiredAsync(taskId);
                 if (otpRequired)
                 {
-                    //var (otpTxnId, otp) = await _crewTaskDetailsRepository.CreateOtpAsync(
-                    //    taskId: taskId,
-                    //    purpose: "ARRIVED",
-                    //    createdByUserId: authenticatedUserId
-                    //);
+                    
+                    var contactDetails = await _crewTaskDetailsRepository.GetContactDetailsByTaskId(taskId);
+                    string deliveryEmail = contactDetails?.DeliveryEmail;
+                    string customerMobile = contactDetails?.DeliveryContact;
 
                     var otpResult = await _crewTaskDetailsRepository.CreateOtpAsync(
-                        //mobile: customerMobile,
+                        mobile: customerMobile,
+                        email: deliveryEmail,
                         taskId: taskId,
                         purpose: "ArrivedAtDelivery",
                         createdByUserId: authenticatedUserId
                     );
 
-                    var contactDetails = await _crewTaskDetailsRepository.GetContactDetailsByTaskId(taskId);
-                    //string customerMobile = "0745972721";
-
-                    string deliveryEmail = contactDetails?.DeliveryEmail;
-                    string customerMobile = contactDetails?.DeliveryContact;
 
                     string smsMessage = $"Your One-Time Password (OTP) for verifying the 'Arrived at Delivery' " +
                         $"action is:\n\n{otpResult.otp}\n\nThis OTP is valid for 5 minutes.";

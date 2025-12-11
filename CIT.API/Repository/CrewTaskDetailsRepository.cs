@@ -605,8 +605,6 @@ namespace CIT.API.Repository
         public async Task<bool> OtpStutasValidation(int crewCommanderId,int taskId,string status,OptValidationStatusUpdateDTO updateDTO,string activityType,int userId)
         {
             using var con = _db.CreateConnection();
-            if (updateDTO.otp == "123456")
-                return true;
 
             // 1️⃣ Fetch OTP record
             string sql = @"
@@ -676,9 +674,7 @@ namespace CIT.API.Repository
     int userId)
         {
             using var con = _db.CreateConnection();
-            if (arrivedDTO.otp == "123456")
-                return true;
-
+            
             // 1️⃣ Fetch OTP record for delivery
             string sql = @"
         SELECT 
@@ -837,7 +833,9 @@ namespace CIT.API.Repository
         public async Task<(Guid otpTxnId, string otp)> CreateOtpAsync(
     int taskId,
     string purpose,
-    int createdByUserId)
+    int createdByUserId,
+    string mobile,
+    string email)
         {
             try
             {
@@ -858,17 +856,21 @@ namespace CIT.API.Repository
         INSERT INTO OtpRecords
         (
             TaskId, Purpose,
+            Mobile,
             OtpHash, Salt,
             ExpiresAtUtc, Status,
-            CreatedByUserId
+            CreatedByUserId,
+            Email
         )
         OUTPUT INSERTED.OtpTransactionId
         VALUES
         (
              @TaskId, @Purpose,
+            @Mobile,
             @OtpHash, @Salt,
             DATEADD(MINUTE, 5, SYSUTCDATETIME()), 'ACTIVE',
-            @CreatedByUserId
+            @CreatedByUserId,
+            @Email
         );
     ";
 
@@ -879,7 +881,10 @@ namespace CIT.API.Repository
                 Purpose = purpose,
                 OtpHash = otpHash,
                 Salt = salt,
-                CreatedByUserId = createdByUserId
+                CreatedByUserId = createdByUserId,
+                Mobile = mobile,
+                Email = email,
+
             });
 
             // Return OTP + TransactionId
