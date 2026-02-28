@@ -575,7 +575,7 @@ namespace CIT.API.Controllers
                     
                             <p style='font-size:12px; color:#999; text-align:center;'>
                                 If you did not request this OTP, please ignore this email.<br/>
-                                © RMS Security System
+                                © Wells Fargo Security System
                             </p>
                         </div>
 
