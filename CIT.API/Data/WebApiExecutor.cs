@@ -305,6 +305,7 @@ public class WebApiExecutor : IWebApiExecutor
         var json = await response.Content.ReadAsStringAsync();
 
         _logger?.LogInformation("?? SMS API Status: {StatusCode}", response.StatusCode);
+        _logger?.LogInformation("SMS API Raw Response: {Response}", json);
 
         // Log trimmed raw response
         var trimmedResponse = json.Length > 500 ? json.Substring(0, 500) + "..." : json;

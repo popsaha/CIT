@@ -9,8 +9,8 @@
     {
         public int response_code { get; set; }
         public string response_description { get; set; }
-        public long mobile { get; set; }
-        public string messageid { get; set; }
+        public string mobile { get; set; }
+        public int messageid { get; set; }
         public int networkid { get; set; }
     }
 
